@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataBaseToAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class Test1 : Migration
+    public partial class Test5 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -248,7 +248,7 @@ namespace DataBaseToAccess.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<string>(type: "text", nullable: false),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
                     GameId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     GroupAddOnGuid = table.Column<Guid>(type: "uuid", nullable: true),
@@ -342,7 +342,7 @@ namespace DataBaseToAccess.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<string>(type: "text", nullable: false),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -360,7 +360,7 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductsProductItems",
+                name: "ProductTransactionItems",
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
@@ -371,9 +371,9 @@ namespace DataBaseToAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductsProductItems", x => x.Guid);
+                    table.PrimaryKey("PK_ProductTransactionItems", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_ProductsProductItems_ProductTransactionHistories_ProductTra~",
+                        name: "FK_ProductTransactionItems_ProductTransactionHistories_Product~",
                         column: x => x.ProductTransactionHistoryId,
                         principalTable: "ProductTransactionHistories",
                         principalColumn: "Guid",
@@ -439,7 +439,7 @@ namespace DataBaseToAccess.Migrations
                     Type = table.Column<string>(type: "text", nullable: false),
                     EditionName = table.Column<string>(type: "text", nullable: false),
                     Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<string>(type: "text", nullable: false),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
                     Subscription = table.Column<string>(type: "text", nullable: true),
                     Features = table.Column<string>(type: "text", nullable: false),
                     Popular = table.Column<string>(type: "text", nullable: false),
@@ -512,9 +512,9 @@ namespace DataBaseToAccess.Migrations
                 {
                     table.PrimaryKey("PK_Orders", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_Orders_ProductsProductItems_ProductTransactionItemId",
+                        name: "FK_Orders_ProductTransactionItems_ProductTransactionItemId",
                         column: x => x.ProductTransactionItemId,
-                        principalTable: "ProductsProductItems",
+                        principalTable: "ProductTransactionItems",
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -573,6 +573,7 @@ namespace DataBaseToAccess.Migrations
                     PasswordPsStore = table.Column<string>(type: "text", nullable: true),
                     Code = table.Column<string>(type: "text", nullable: true),
                     Email = table.Column<string>(type: "text", nullable: true),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -732,8 +733,8 @@ namespace DataBaseToAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductsProductItems_ProductTransactionHistoryId",
-                table: "ProductsProductItems",
+                name: "IX_ProductTransactionItems_ProductTransactionHistoryId",
+                table: "ProductTransactionItems",
                 column: "ProductTransactionHistoryId");
 
             migrationBuilder.CreateIndex(
@@ -844,7 +845,7 @@ namespace DataBaseToAccess.Migrations
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "ProductsProductItems");
+                name: "ProductTransactionItems");
 
             migrationBuilder.DropTable(
                 name: "Products");

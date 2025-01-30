@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataBaseToAccess.Migrations
 {
     [DbContext(typeof(BaseDbContext))]
-    [Migration("20250130131225_Test1")]
-    partial class Test1
+    [Migration("20250130180713_Test5")]
+    partial class Test5
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,9 +58,8 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
@@ -201,9 +200,8 @@ namespace DataBaseToAccess.Migrations
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Popular")
                         .IsRequired()
@@ -740,7 +738,7 @@ namespace DataBaseToAccess.Migrations
 
                     b.HasIndex("ProductTransactionHistoryId");
 
-                    b.ToTable("ProductsProductItems");
+                    b.ToTable("ProductTransactionItems");
                 });
 
             modelBuilder.Entity("Business.Data.Models.Role", b =>
@@ -825,6 +823,9 @@ namespace DataBaseToAccess.Migrations
                     b.Property<string>("PasswordPsStore")
                         .HasColumnType("text");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -888,9 +889,8 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
