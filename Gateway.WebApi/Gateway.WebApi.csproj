@@ -25,4 +25,8 @@
     <ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="API\" />
+  </ItemGroup>
+
 </Project>

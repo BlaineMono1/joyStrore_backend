@@ -29,7 +29,7 @@ namespace DataBaseToAccess
         public DbSet<PriceSettingSubscription> PriceSettings { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductTransactionHistory> ProductTransactionHistories { get; set; }
-        public DbSet<ProductTransactionItem> ProductsProductItems { get; set; }
+        public DbSet<ProductTransactionItem> ProductTransactionItems { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<Setting> Settings { get; set; }
