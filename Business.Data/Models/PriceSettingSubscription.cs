@@ -13,6 +13,11 @@ namespace Business.Data.Models
         /// Наценка на подписки 
         /// </summary>
         public decimal Percent {  get; set; }
+
+        /// <summary>
+        /// регион (0-украина/1-турция)
+        /// </summary>
+        public int Region { get; set; }
         #endregion
 
 
