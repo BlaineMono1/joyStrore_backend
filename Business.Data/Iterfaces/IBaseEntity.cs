@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace Business.Data.Iterfaces
 {
-    internal interface IBaseEntity
+    public interface IBaseEntity
     {
         // <summary>
         /// Уникальный идентификатор
