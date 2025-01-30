@@ -26,7 +26,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Платформа игры (0 - ps4, 1- ps5, 2- ps4/ps5)
         /// </summary>
-        public string Platform { get; set; }
+        public int Platform { get; set; }
         /// <summary>
         /// Входит в подписку 
         /// </summary>

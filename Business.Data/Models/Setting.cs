@@ -26,6 +26,11 @@ namespace Business.Data.Models
         /// Почта пользователя для отпарвки чека 
         /// </summary>
         public string? Email {  get; set; }
+        /// <summary>
+        /// Платформа игры (0 - ps4, 1- ps5)
+        /// </summary>
+        public int Platform { get; set; }
+
 
         #endregion
 

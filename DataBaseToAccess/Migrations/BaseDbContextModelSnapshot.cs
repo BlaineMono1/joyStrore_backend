@@ -55,9 +55,8 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
@@ -198,9 +197,8 @@ namespace DataBaseToAccess.Migrations
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Popular")
                         .IsRequired()
@@ -822,6 +820,9 @@ namespace DataBaseToAccess.Migrations
                     b.Property<string>("PasswordPsStore")
                         .HasColumnType("text");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -885,9 +886,8 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Platform")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
