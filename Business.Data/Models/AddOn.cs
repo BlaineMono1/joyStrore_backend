@@ -26,6 +26,7 @@ namespace Business.Data.Models
         /// Платформа игры (0 - ps4, 1- ps5, 2- ps4/ps5)
         /// </summary>
         public int Platform { get; set; }
+      
         #endregion
 
         #region связи
