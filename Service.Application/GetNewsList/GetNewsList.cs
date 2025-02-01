@@ -1,4 +1,5 @@
 ﻿using Business.Data.Models;
+using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using System.Collections.Generic;
 
@@ -6,7 +7,7 @@ namespace Service.Application.GetNewsList
 {
     public class GetNewsList
     {
-        private readonly NewsRepository<News> _newsRepository; 
+        private readonly Repository<News> _newsRepository; 
         public async Task<List<NewsDto>> GetNews()
         {
             var news = await _newsRepository.GetAllList();

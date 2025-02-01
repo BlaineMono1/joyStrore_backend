@@ -9,9 +9,9 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
     {
         public ProductRepository(BaseDbContext contex) : base(contex) { }
 
-        private readonly IGameRepository<T> _gameRepository;
-        private readonly IAddOnRepository<T> _addOnRepository;
-        private readonly ISubscriptionRepository<T> _subscriptionRepository;
+        private readonly Repository<Game> _gameRepository;
+        private readonly Repository<AddOn> _addOnRepository;
+        private readonly Repository<Subscription> _subscriptionRepository;
         public async Task<T> GetTypeEntity(Guid id)
         {
             var product = (await GetAllList()).FirstOrDefault(p => p.Guid == id);
