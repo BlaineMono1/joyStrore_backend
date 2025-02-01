@@ -39,10 +39,10 @@ namespace DataBaseToAccess.Repositiory
         }
 
         /// <summary>
-        /// Удалить объект 
+        /// Мягко удалить объект 
         /// </summary>
         /// <returns></returns>
-        public async Task Delete(Guid id)
+        public async Task SoftDelete(Guid id)
         {
             var entity = await GetById(id);
             if (entity != null)
@@ -51,6 +51,22 @@ namespace DataBaseToAccess.Repositiory
                 await Update(entity);
             }
             
+        }
+
+
+        /// <summary>
+        /// Жестко удалить объект 
+        /// </summary>
+        /// <returns></returns>
+        public async Task HardDelete(Guid id)
+        {
+            var entity = await GetById(id);
+            if (entity != null)
+            {
+                _context.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+
         }
 
         /// <summary>
@@ -62,5 +78,7 @@ namespace DataBaseToAccess.Repositiory
             await _context.Set<T>().AddAsync(entity);
             await _context.SaveChangesAsync();
         }
+
+
     }
 }

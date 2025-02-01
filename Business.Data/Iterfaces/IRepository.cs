@@ -7,7 +7,8 @@ namespace Business.Data.Iterfaces
         Task<List<T>> GetAllList();
         Task<T?> GetById(Guid id);
         Task Update(T entity);
-        Task Delete(Guid id);
+        Task SoftDelete(Guid id);
         Task Add(T entity);
+        Task HardDelete(Guid id);
     }
 }
