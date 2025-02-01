@@ -1,6 +1,6 @@
 ﻿using DataBaseToAccess;
 
-namespace Service.Application.GetNewsList
+namespace Service.Application.Service.GetNewsList.Dto
 {
     public class NewsDto
     {
