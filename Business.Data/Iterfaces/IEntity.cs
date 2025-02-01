@@ -1,7 +1,7 @@
 ﻿
 namespace Business.Data.Iterfaces
 {
-    internal interface IEntity
+    public interface IEntity
     {
         /// <summary>
         /// Дата создания записи

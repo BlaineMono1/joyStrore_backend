@@ -34,6 +34,11 @@ namespace Business.Data.Models
         /// </summary>
         public string DiscountPercent {  get; set; }
 
+        /// <summary>
+        /// Длительность скидки 
+        /// </summary>
+        public DateTime? DiscountDate { get; set; }
+
 
         #endregion
 
