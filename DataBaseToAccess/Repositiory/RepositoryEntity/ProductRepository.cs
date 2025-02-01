@@ -1,7 +1,7 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using System.Data;
+
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
@@ -26,10 +26,10 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
                     result = (await _gameRepository.GetAllList()).FirstOrDefault(g => g.Guid == product.TypeId);
                     break;
                 case "AddOn":
-                    result = (await _addOnRepository.GetAllList()).FirstOrDefault(g => g.Guid == product.TypeId);
+                    result = (await _addOnRepository.GetAllList()).FirstOrDefault(a => a.Guid == product.TypeId);
                     break;
                 case "Subscription":
-                    result = (await _subscriptionRepository.GetAllList()).FirstOrDefault(g => g.Guid == product.TypeId);
+                    result = (await _subscriptionRepository.GetAllList()).FirstOrDefault(s => s.Guid == product.TypeId);
                     break;
                 default:
                     throw new KeyNotFoundException($"Type '{product.Type}' is not found.");
