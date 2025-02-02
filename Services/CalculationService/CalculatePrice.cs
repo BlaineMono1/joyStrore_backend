@@ -1,11 +1,12 @@
 ﻿using Business.Data.Models;
 using DataBaseToAccess.Repositiory;
+using Service.Application.Iterfaces;
 using System.Text.Json;
+using EEnum.RegionEnum;
 
-
-namespace Service.Application.Service.CalculationService
+namespace Services.CalculationService
 {
-    public class CalculatePrice
+    public class CalculatePrice : ICalculationService
     {
         private static readonly HttpClient httpClient = new HttpClient();
         private readonly Repository<SettingPrice> _settingPriceRepository;
@@ -58,26 +59,23 @@ namespace Service.Application.Service.CalculationService
         {
             if (price == null) return 0;
 
-            var rubPrice =  type switch
-            {
-                "Game" => await GetPrice(region, price),
-                "AddOn" => await GetPrice(region, price),
-                "Subscription" => await GetPrice(region, price),
-                _ => throw new KeyNotFoundException($"Type '{type}' is not found.")
-            };
+            var rubPrice = await GetPrice(region, price);
 
             decimal priceWithMarkup = 0;
+            //Redis!
             var markupGame = (await _settingPriceRepository.GetAllList()).FirstOrDefault(p => p.Price >= rubPrice);
+
             var markupSub = (await _priceSettingSubscription.GetAllList()).FirstOrDefault(s => Enum.GetName(typeof(Region), s.Region) == region);
+
             switch (type)
             {
                 case "Game":
-                    
+
                     priceWithMarkup = rubPrice * markupGame.Price + rubPrice;
                     break;
 
                 case "AddOn":
-                    
+
                     priceWithMarkup = rubPrice * markupGame.Price + rubPrice;
                     break;
 
@@ -96,10 +94,10 @@ namespace Service.Application.Service.CalculationService
         public async Task<decimal> CalcJprice(decimal? price, string region)
         {
             if (price == null) return 0;
-
+            //Redis!
             var loyality = (await _loyaltySettingRepository.GetAllList()).FirstOrDefault(l => l.PriceValue >= price.Value);
             if (loyality == null) throw new KeyNotFoundException();
-            return price.Value - (price.Value * loyality.DiscountPercent);
+            return price.Value - price.Value * loyality.DiscountPercent;
         }
     }
 }

@@ -12,9 +12,8 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
         private readonly Repository<Game> _gameRepository;
         private readonly Repository<AddOn> _addOnRepository;
         private readonly Repository<Subscription> _subscriptionRepository;
-        public async Task<T> GetTypeEntity(Guid id)
+        public async Task<T> GetTypeEntity(Product product)
         {
-            var product = (await GetAllList()).FirstOrDefault(p => p.Guid == id);
             if (product == null)
                 throw new KeyNotFoundException("Entity not found.");
 
@@ -23,13 +22,13 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             switch (product.Type)
             {
                 case "Game":
-                    result = (await _gameRepository.GetAllList()).FirstOrDefault(g => g.Guid == product.TypeId);
+                    result = await _gameRepository.GetById(product.TypeId);
                     break;
                 case "AddOn":
-                    result = (await _addOnRepository.GetAllList()).FirstOrDefault(a => a.Guid == product.TypeId);
+                    result = await _addOnRepository.GetById(product.TypeId);
                     break;
                 case "Subscription":
-                    result = (await _subscriptionRepository.GetAllList()).FirstOrDefault(s => s.Guid == product.TypeId);
+                    result = await _subscriptionRepository.GetById(product.TypeId);
                     break;
                 default:
                     throw new KeyNotFoundException($"Type '{product.Type}' is not found.");

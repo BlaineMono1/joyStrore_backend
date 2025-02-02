@@ -1,13 +1,16 @@
 using System;
 using System.Reflection;
 using DataBaseToAccess;
+using Services.CalculationService;
 using Microsoft.EntityFrameworkCore;
+using Service.Application.Iterfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
-
+//Calc service
+builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

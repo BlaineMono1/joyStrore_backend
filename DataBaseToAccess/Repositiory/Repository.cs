@@ -25,7 +25,7 @@ namespace DataBaseToAccess.Repositiory
         /// <returns></returns>
         public async Task<T?> GetById(Guid id)
         {
-            return await _context.Set<T>().FindAsync(id);
+            return await _context.Set<T>().FirstOrDefaultAsync(x => x.Guid == id);
         }
 
         /// <summary>

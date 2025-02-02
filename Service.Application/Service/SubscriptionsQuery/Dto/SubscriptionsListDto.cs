@@ -5,9 +5,8 @@
         public Guid id { get; set; }
         public string ImagePath { get; set; }
         public string Name { get; set; }
-        public decimal? JpriceUa { get; set; }
-        public decimal? JpriceTr { get; set; }
-        public decimal? PriceUa { get; set; }
-        public decimal? PriceTr { get; set; }
+        public decimal? Jprice { get; set; }
+        public decimal? Price { get; set; }
+        public string Dicount { get; set; }   
     }
 }
