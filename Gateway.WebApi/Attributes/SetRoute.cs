@@ -15,7 +15,7 @@ namespace Gateway.WebApi.Attributes
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            var prefix = configeraion["RoutePrefix:RouteTracker.WebApi"];
+            var prefix = configeraion["RoutePrefix:GateWay.WebApi"];
             return $"{prefix}/{template}";
         }
     }
