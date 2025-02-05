@@ -12,25 +12,16 @@ namespace Service.Application.Service.SubscriptionsQuery
         private readonly Repository<Subscription> _subscriptionRepository;
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRegionFromCookie _regionFromCookie;
         public SubscriptionsQuerys(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
         }
-        private string GetUserRegion()
-        {
-            var httpContext = _httpContextAccessor.HttpContext;
-
-            if (httpContext?.Request.Cookies.TryGetValue("region", out string region) == true)
-            {
-                return region;
-            }
-
-            return "default"; // Значение по умолчанию, если кука не найдена
-        }
+       
         public async Task<List<SubscriptionsListDto>> GetSubscriptionsList() // Выдача списка подписок
         {
-            string region = GetUserRegion();
+            string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
             var subscriptions = await _subscriptionRepository.GetAllList(); // все подписки 
 

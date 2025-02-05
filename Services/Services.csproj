@@ -10,6 +10,5 @@
 		<ProjectReference Include="..\Business.Data\Business.Data.csproj" />
 		<ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
 		<ProjectReference Include="..\Service.Application\Service.Application.csproj" />
-		<ProjectReference Include="..\Enum\EEnum.csproj" />
 	</ItemGroup>
 </Project>

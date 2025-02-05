@@ -1,7 +1,7 @@
-using System;
 using System.Reflection;
 using DataBaseToAccess;
 using Services.CalculationService;
+using Services.GetRegionFromCookie;
 using Microsoft.EntityFrameworkCore;
 using Service.Application.Iterfaces;
 
@@ -11,7 +11,8 @@ builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
 //Calc service
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
-
+//region Cookie
+builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
