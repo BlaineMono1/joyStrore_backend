@@ -8,6 +8,6 @@ namespace Business.Data.Iterfaces.Store
         /// Получить объект(игру/подписку/аддон) через продукт
         /// </summary>
         /// <returns></returns>
-        Task<T> GetTypeEntity(Guid id);
+        Task<T> GetTypeEntity(Product product);
     }
 }

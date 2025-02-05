@@ -6,11 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.1" />
-  </ItemGroup>
-
 	<ItemGroup>
+		<ProjectReference Include="..\Business.Data\Business.Data.csproj" />
 		<ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
+		<ProjectReference Include="..\Service.Application\Service.Application.csproj" />
 	</ItemGroup>
 </Project>

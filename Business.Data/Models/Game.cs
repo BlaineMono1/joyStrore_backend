@@ -16,12 +16,7 @@ namespace Business.Data.Models
         /// Наименование игры
         /// </summary>
         public string Name { get; set; }
-
-        /// <summary>
-        /// Жанр игры 
-        /// </summary>
-        public string Geners { get; set; }
-        
+               
         /// <summary>
         /// Язык игры
         /// </summary>
@@ -45,6 +40,11 @@ namespace Business.Data.Models
         /// AddOns
         /// </summary>
         public List<AddOn> AddOns { get; set; }
+
+        /// <summary>
+        /// Жанры игры
+        /// </summary>
+        public List<Geners> Geners { get; set; }
         #endregion
 
 
