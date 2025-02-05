@@ -7,7 +7,7 @@ using Service.Application.Service.GamesQuery.Dto;
 
 namespace Service.Application.Service.GamesQuery
 {
-    public class GetGamesList
+    public class GamesQuery
     {
         private readonly Repository<Section> _sectionRepository;
         private readonly Repository<GroupAddOn> _addOnRepository;
@@ -16,7 +16,7 @@ namespace Service.Application.Service.GamesQuery
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
-        public GetGamesList(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
+        public GamesQuery(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
