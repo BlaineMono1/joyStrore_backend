@@ -7,9 +7,9 @@ namespace Business.Data.Models
     {
         #region поля
         /// <summary>
-        /// Настройка для определенного региона (0- украинаб 1 - турция) ToDo Enum
+        /// Настройка для определенного региона UA или TR
         /// </summary>
-        public int IsRegion { get; set; } = default(int);
+        public string IsRegion { get; set; }
         /// <summary>
         /// Почта от аккаунта PsStore
         /// </summary>
@@ -27,9 +27,9 @@ namespace Business.Data.Models
         /// </summary>
         public string? Email {  get; set; }
         /// <summary>
-        /// Платформа игры (0 - ps4, 1- ps5)
+        /// Платформа игры Ps4 или Ps5
         /// </summary>
-        public int Platform { get; set; }
+        public string Platform { get; set; }
 
 
         #endregion

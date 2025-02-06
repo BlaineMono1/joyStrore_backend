@@ -2,7 +2,6 @@
 using DataBaseToAccess.Repositiory;
 using Service.Application.Iterfaces;
 using System.Text.Json;
-using EEnum.RegionEnum;
 
 namespace Services.CalculationService
 {
@@ -65,7 +64,7 @@ namespace Services.CalculationService
             //Redis!
             var markupGame = (await _settingPriceRepository.GetAllList()).FirstOrDefault(p => p.Price >= rubPrice);
 
-            var markupSub = (await _priceSettingSubscription.GetAllList()).FirstOrDefault(s => Enum.GetName(typeof(Region), s.Region) == region);
+            var markupSub = (await _priceSettingSubscription.GetAllList()).FirstOrDefault(s => s.Region == region);
 
             switch (type)
             {
