@@ -9,7 +9,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Куса код аддона
         /// </summary>
-        public string? CusaCode { get; set; }
+        public string CusaCode { get; set; }
         /// <summary>
         /// Наименование Аддона
         /// </summary>
@@ -33,13 +33,13 @@ namespace Business.Data.Models
         /// <summary>
         /// Id игры концепт
         /// </summary>
-        public Guid? GameId { get; set; }
+        public Guid GameId { get; set; }
         [ForeignKey("GameId")]
         public Game? Game { get; set; }
         /// <summary>
         /// Id товара 
         /// </summary>
-        public Guid? ProductId { get; set; }
+        public Guid ProductId { get; set; }
         [ForeignKey("ProductId")]
         public Product? Product { get; set; }
         #endregion

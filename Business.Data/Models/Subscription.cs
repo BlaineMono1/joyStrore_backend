@@ -31,7 +31,7 @@ namespace Business.Data.Models
         #endregion
 
         #region связи
-        public Guid? ProductId { get; set; }
+        public Guid ProductId { get; set; }
         [ForeignKey("ProductId")]
         public Product? Product { get; set; }
 

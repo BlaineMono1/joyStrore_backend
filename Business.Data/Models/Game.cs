@@ -11,7 +11,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Id игры с PsStore
         /// </summary>
-        public string? ConceptId { get; set; }
+        public string ConceptId { get; set; }
         /// <summary>
         /// Наименование игры
         /// </summary>
