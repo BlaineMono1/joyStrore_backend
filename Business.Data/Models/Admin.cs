@@ -9,8 +9,8 @@ namespace Business.Data.Models
     public class Admin:BaseEntity
     {
         #region поля
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string? Email { get; set; }
+        public string? Password { get; set; }
 
         #endregion
 
@@ -19,9 +19,9 @@ namespace Business.Data.Models
         /// <summary>
         /// Пользователь
         /// </summary>
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; }
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User? User { get; set; }
         #endregion
 
     }

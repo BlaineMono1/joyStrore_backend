@@ -9,33 +9,33 @@ namespace Business.Data.Models
         /// <summary>
         /// Куса код Подписки
         /// </summary>
-        public string CusaCode { get; set; }
+        public string? CusaCode { get; set; }
         /// <summary>
         /// Наименование Подписки
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
         /// <summary>
         /// Тип объекта(Subscription)
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
         /// <summary>
         /// Url изображения
         /// </summary>
-        public string Image { get; set; }
+        public string? Image { get; set; }
         /// <summary>
         /// Платформа игры PS4 | PS5
         /// </summary>
-        public string Platform { get; set; }
+        public string? Platform { get; set; }
 
 
         #endregion
 
         #region связи
-        public Guid ProductId { get; set; }
+        public Guid? ProductId { get; set; }
         [ForeignKey("ProductId")]
-        public Product Product { get; set; }
+        public Product? Product { get; set; }
 
-        public PriceSettingSubscription PriceSettingSubscription { get; set; }
+        public PriceSettingSubscription? PriceSettingSubscription { get; set; }
         #endregion
 
 

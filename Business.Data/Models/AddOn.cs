@@ -9,23 +9,23 @@ namespace Business.Data.Models
         /// <summary>
         /// Куса код аддона
         /// </summary>
-        public string CusaCode { get; set; }
+        public string? CusaCode { get; set; }
         /// <summary>
         /// Наименование Аддона
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
         /// <summary>
         /// Тип объекта(AddOn)
         /// </summary>
-        public string Type {  get; set; }
+        public string? Type {  get; set; }
         /// <summary>
         /// Url изображения
         /// </summary>
-        public string Image {  get; set; }
+        public string? Image {  get; set; }
         /// <summary>
         /// Платформа игры PS4 | PS5
         /// </summary>
-        public string Platform { get; set; }
+        public string? Platform { get; set; }
       
         #endregion
 
@@ -33,15 +33,15 @@ namespace Business.Data.Models
         /// <summary>
         /// Id игры концепт
         /// </summary>
-        public Guid GameId { get; set; }
+        public Guid? GameId { get; set; }
         [ForeignKey("GameId")]
-        public Game Game { get; set; }
+        public Game? Game { get; set; }
         /// <summary>
         /// Id товара 
         /// </summary>
-        public Guid ProductId { get; set; }
+        public Guid? ProductId { get; set; }
         [ForeignKey("ProductId")]
-        public Product Product { get; set; }
+        public Product? Product { get; set; }
         #endregion
 
 

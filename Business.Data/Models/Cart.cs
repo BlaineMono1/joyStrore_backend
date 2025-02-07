@@ -13,7 +13,7 @@ namespace Business.Data.Models
         /// Пользователь
         /// </summary>
         public Guid UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
 
         public List<CartItem>? CartItems { get; set; }
         #endregion

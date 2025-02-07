@@ -12,7 +12,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Тип объекта Издания/AddOn/Подписки
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
         /// <summary>
         /// Цена в гривнах
         /// </summary>
@@ -32,7 +32,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Процент скидки
         /// </summary>
-        public string DiscountPercent {  get; set; }
+        public string? DiscountPercent {  get; set; }
 
         /// <summary>
         /// Длительность скидки 
@@ -43,9 +43,9 @@ namespace Business.Data.Models
         #endregion
 
         #region связи
-        public AddOn AddOn { get; set; }
-        public Subscription Subscription { get; set; }
-        public Edition Edition { get; set; }
+        public AddOn? AddOn { get; set; }
+        public Subscription? Subscription { get; set; }
+        public Edition? Edition { get; set; }
         #endregion
 
     }
