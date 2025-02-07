@@ -35,16 +35,16 @@ namespace Business.Data.Models
         /// <summary>
         /// Издания
         /// </summary>
-        public List<Edition>? Editions { get; set; }
+        public List<Edition> Editions { get; set; }
         /// <summary>
         /// AddOns
         /// </summary>
-        public List<AddOn>? AddOns { get; set; }
+        public List<AddOn> AddOns { get; set; }
 
         /// <summary>
         /// Жанры игры
         /// </summary>
-        public List<Geners>? Geners { get; set; }
+        public List<Geners> Geners { get; set; }
         #endregion
 
 
