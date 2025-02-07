@@ -23,9 +23,9 @@ namespace Business.Data.Models
         /// </summary>
         public string Image {  get; set; }
         /// <summary>
-        /// Платформа игры (0 - ps4, 1- ps5, 2- ps4/ps5)
+        /// Платформа игры PS4 | PS5
         /// </summary>
-        public int Platform { get; set; }
+        public string Platform { get; set; }
       
         #endregion
 

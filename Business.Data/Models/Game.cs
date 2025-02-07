@@ -26,9 +26,9 @@ namespace Business.Data.Models
         /// </summary>
         public DateTime? Release {  get; set; }
         /// <summary>
-        /// В каком регионе игра есть (0-украина, 1- турция, 2 - украина/турция) To Do: Сделать Enum
+        /// В каком регионе игра есть (UA | TR)
         /// </summary>
-        public int Region {  get; set; }
+        public string Region {  get; set; }
         #endregion
 
         #region связи

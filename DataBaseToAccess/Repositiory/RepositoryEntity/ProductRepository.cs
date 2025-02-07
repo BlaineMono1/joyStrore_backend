@@ -9,7 +9,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
     {
         public ProductRepository(BaseDbContext contex) : base(contex) { }
 
-        private readonly Repository<Game> _gameRepository;
+        private readonly Repository<Edition> _editionRepository;
         private readonly Repository<AddOn> _addOnRepository;
         private readonly Repository<Subscription> _subscriptionRepository;
         public async Task<T> GetTypeEntity(Product product)
@@ -17,12 +17,12 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             if (product == null)
                 throw new KeyNotFoundException("Entity not found.");
 
-            object result = null;
+            object? result = null;
 
             switch (product.Type)
             {
-                case "Game":
-                    result = await _gameRepository.GetById(product.TypeId);
+                case "Edition":
+                    result = await _editionRepository.GetById(product.TypeId);
                     break;
                 case "AddOn":
                     result = await _addOnRepository.GetById(product.TypeId);
@@ -35,6 +35,15 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             }
 
             return result as T ?? throw new InvalidCastException($"Cannot convert {product.Type} to {typeof(T)}.");
+        }
+
+        public async Task<T> GetEntityType(Guid id)
+        {
+            object? result = (await GetAllList()).FirstOrDefault(e => e.TypeId == id);
+            return result == null
+                ? throw new KeyNotFoundException($"Produnct with type id: {id} not found")
+                : result as T ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");
+            ;
         }
     }
 }

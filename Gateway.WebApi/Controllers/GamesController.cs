@@ -1,0 +1,34 @@
+﻿using Gateway.WebApi.Attributes;
+using Microsoft.AspNetCore.Mvc;
+using Service.Application.Service.GamesQuery;
+using Service.Application.Service.GamesQuery.Dto;
+
+namespace Gateway.WebApi.Controllers
+{
+    [SetRoute("api/[controller]/[action]")]
+    [ApiController]
+    public class GamesController
+    {
+        private readonly GamesQuery _gamesQuery;
+
+        /// <summary>
+        /// Вывод списка игр на главной странице
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<ActionResult<List<GamesListDto>>> GetGamesList()
+        {
+            return await _gamesQuery.GamesList();
+        }
+
+        /// <summary>
+        /// Вывод списка Донатов на главной странице
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<ActionResult<List<AddOnsListDto>>> GetAddOnsList()
+        {
+            return await _gamesQuery.AddOnsList();
+        }
+    }
+}
