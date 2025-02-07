@@ -19,9 +19,9 @@ namespace Business.Data.Models
         /// <summary>
         /// Пользователь
         /// </summary>
-        public Guid? UserId { get; set; }
+        public Guid UserId { get; set; }
         [ForeignKey("UserId")]
-        public User? User { get; set; }
+        public User User { get; set; }
         #endregion
 
     }
