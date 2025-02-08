@@ -13,7 +13,7 @@ namespace Business.Data.Models
         #endregion
 
         #region связи
-        List<Game>? Games { get; set; }
+        public List<Edition>? Editions { get; set; }
         #endregion
     }
 }

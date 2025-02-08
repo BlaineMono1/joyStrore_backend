@@ -13,6 +13,9 @@ namespace Service.Application.Service.GamesQuery
         private readonly Repository<GroupAddOn> _addOnRepository;
         private readonly Repository<Game> _gameRepository;
         private readonly ProductRepository<Product> _productRepository;
+        private readonly EditionRepository<Edition> _editionRepository;
+        private readonly GenersRepository<Geners> _genersRepository;
+
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
@@ -99,6 +102,63 @@ namespace Service.Application.Service.GamesQuery
 
             return result;
             
+        }
+
+        public async Task<GameDto> ShowGame(Guid GameId, string? Edition)
+        {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            GameDto result = new GameDto();
+
+            Edition ??= "Standart Edition";
+
+            var editions = await _editionRepository.GetEditions(GameId);
+
+            var currentEdition = editions.FirstOrDefault(e => e.EditionName == Edition) ?? throw new Exception("current Edition is null");
+
+            var product = await _productRepository.GetEntityType(GameId);
+            
+            var game = await _gameRepository.GetById(GameId);
+
+            result.Id = GameId;
+            result.Image = currentEdition.Image;
+            result.Geners = await _genersRepository.GetGeners(currentEdition.Guid);
+            result.RealiseDate = game.Release.Value;
+            result.Platforms = currentEdition.Platform;
+            result.Languages = game.Languages;
+            result.Editions = editions.Select(e => e.EditionName).ToList();
+            result.Subscription = currentEdition.Subscription;
+            result.Discount = product.DiscountDate >= DateTime.UtcNow ? product.DiscountDate : null;
+            result.Features = currentEdition.Features;
+            
+            if(result.Discount != null)
+            {
+                result.DiscountPercent = product.DiscountPercent;
+                decimal? price = region switch
+                {
+                    "UA" => product.DiscountUa,
+                    "TR" => product.DiscountTr,
+                    _ => throw new Exception("No region")
+
+                };
+                result.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
+                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+            }
+            else
+            {
+                result.DiscountPercent = "0";
+                decimal? price = region switch
+                {
+                    "UA" => product.PriceUa,
+                    "TR" => product.PriceTr,
+                    _ => throw new Exception("No region")
+
+                };
+                result.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
+                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+            }
+
+            return result;
         }
     }
 }
