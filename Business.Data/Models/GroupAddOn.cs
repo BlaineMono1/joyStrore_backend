@@ -8,12 +8,12 @@ namespace Business.Data.Models
         /// <summary>
         /// Наименование подборки Дополнений 
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Для загрузки изображения
         /// </summary>
-        public string FilePathImage { get; set; }
+        public string? FilePathImage { get; set; }
         #endregion
 
 

@@ -13,20 +13,20 @@ namespace Business.Data.Models
         /// <summary>
         /// Тип объекта(Игра)
         /// </summary>
-        public string Type {  get; set; }
+        public string?Type {  get; set; }
 
         /// <summary>
         /// Наименование издания 
         /// </summary>
-        public string EditionName { get; set; }
+        public string? EditionName { get; set; }
         /// <summary>
         /// Url изображения
         /// </summary>
-        public string Image {  get; set; }
+        public string? Image {  get; set; }
         /// <summary>
         /// Платформа игры PS4 | PS5
         /// </summary>
-        public string Platform { get; set; }
+        public string? Platform { get; set; }
         /// <summary>
         /// Входит в подписку 
         /// </summary>
@@ -34,15 +34,15 @@ namespace Business.Data.Models
         /// <summary>
         /// Что входит в издание
         /// </summary>
-        public string Features { get; set; }
+        public string? Features { get; set; }
         /// <summary>
         /// Кол-во оценок 
         /// </summary>
-        public string Popular {  get; set; }
+        public string? Popular {  get; set; }
         /// <summary>
         /// Рейтинг игры 
         /// </summary>
-        public float Rating { get; set; }
+        public float? Rating { get; set; }
 
         #endregion
 
@@ -56,7 +56,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Id товара 
         /// </summary>
-        public Guid ProductId {  get; set; }
+        public Guid  ProductId {  get; set; }
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
         #endregion
