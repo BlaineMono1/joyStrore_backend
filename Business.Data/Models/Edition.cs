@@ -15,6 +15,11 @@ namespace Business.Data.Models
         /// Куса код игры Турция
         /// </summary>
         public string CusaCodeTr { get; set; }
+
+        /// <summary>
+        /// Типо предзаказ - 1, 0 - не предзаказ
+        /// </summary>
+        public bool Typename { get; set; }
         /// <summary>
         /// Тип объекта(Игра)
         /// </summary>
