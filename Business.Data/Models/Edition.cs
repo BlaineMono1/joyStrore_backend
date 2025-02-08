@@ -7,19 +7,10 @@ namespace Business.Data.Models
     {
         #region поля 
         /// <summary>
-        /// Куса код игры Украина 
+        /// Куса код игры 
         /// </summary>
-        public string CusaCodeUa {  get; set; }
+        public string CusaCode {  get; set; }
 
-        /// <summary>
-        /// Куса код игры Турция
-        /// </summary>
-        public string CusaCodeTr { get; set; }
-
-        /// <summary>
-        /// Типо предзаказ - 1, 0 - не предзаказ
-        /// </summary>
-        public bool Typename { get; set; }
         /// <summary>
         /// Тип объекта(Игра)
         /// </summary>
@@ -69,6 +60,11 @@ namespace Business.Data.Models
         public Guid  ProductId {  get; set; }
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
+
+        /// <summary>
+        /// Жанры игры
+        /// </summary>
+        public List<Geners>? Geners { get; set; }
         #endregion
 
     }

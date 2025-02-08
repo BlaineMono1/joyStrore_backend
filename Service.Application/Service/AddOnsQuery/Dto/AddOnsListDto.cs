@@ -1,4 +1,4 @@
-﻿namespace Service.Application.Service.GamesQuery.Dto
+﻿namespace Service.Application.Service.AddOnsQuery.Dto
 {
     public class AddOnsListDto
     {

@@ -7,14 +7,9 @@ namespace Business.Data.Models
     {
         #region поля
         /// <summary>
-        /// Куса код игры Украина 
+        /// Куса код игры 
         /// </summary>
-        public string CusaCodeUa { get; set; }
-
-        /// <summary>
-        /// Куса код игры Турция
-        /// </summary>
-        public string CusaCodeTr { get; set; }
+        public string CusaCode { get; set; }
         /// <summary>
         /// Наименование Подписки
         /// </summary>
