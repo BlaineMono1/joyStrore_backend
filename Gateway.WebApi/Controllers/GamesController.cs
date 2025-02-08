@@ -30,5 +30,15 @@ namespace Gateway.WebApi.Controllers
         {
             return await _gamesQuery.AddOnsList();
         }
+
+        /// <summary>
+        /// Вывод игры по id и edition
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<GameDto> GetGame(Guid GameId, string? Edition)
+        {
+            return await _gamesQuery.ShowGame(GameId, Edition);
+        }
     }
 }

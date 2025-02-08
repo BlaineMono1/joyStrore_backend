@@ -9,5 +9,11 @@ namespace Business.Data.Iterfaces.Store
         /// </summary>
         /// <returns></returns>
         Task<T> GetTypeEntity(Product product);
+
+        /// <summary>
+        /// Получить продукт через объект(игру/подписку/аддон)
+        /// </summary>
+        /// <returns></returns>
+        Task<T> GetEntityType(Guid id);
     }
 }
