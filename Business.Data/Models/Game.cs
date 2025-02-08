@@ -40,11 +40,6 @@ namespace Business.Data.Models
         /// AddOns
         /// </summary>
         public List<AddOn>? AddOns { get; set; }
-
-        /// <summary>
-        /// Жанры игры
-        /// </summary>
-        public List<Geners>? Geners { get; set; }
         #endregion
 
 

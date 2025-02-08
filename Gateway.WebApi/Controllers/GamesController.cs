@@ -1,5 +1,6 @@
 ﻿using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Service.Application.Service.AddOnsQuery.Dto;
 using Service.Application.Service.GamesQuery;
 using Service.Application.Service.GamesQuery.Dto;
 
@@ -19,16 +20,6 @@ namespace Gateway.WebApi.Controllers
         public async Task<ActionResult<List<GamesListDto>>> GetGamesList()
         {
             return await _gamesQuery.GamesList();
-        }
-
-        /// <summary>
-        /// Вывод списка Донатов на главной странице
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<ActionResult<List<AddOnsListDto>>> GetAddOnsList()
-        {
-            return await _gamesQuery.AddOnsList();
         }
 
         /// <summary>

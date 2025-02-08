@@ -10,7 +10,6 @@ namespace Service.Application.Service.GamesQuery
     public class GamesQuery
     {
         private readonly Repository<Section> _sectionRepository;
-        private readonly Repository<GroupAddOn> _addOnRepository;
         private readonly Repository<Game> _gameRepository;
         private readonly ProductRepository<Product> _productRepository;
         private readonly EditionRepository<Edition> _editionRepository;
@@ -84,24 +83,6 @@ namespace Service.Application.Service.GamesQuery
             }
 
             return result;
-        }
-
-        public async Task<List<AddOnsListDto>> AddOnsList()
-        {
-            var result = new List<AddOnsListDto>();
-
-            var AddOns = await _addOnRepository.GetAllList();
-
-            result.AddRange(AddOns.Select(a => new AddOnsListDto
-            {
-                Id = a.Guid,
-                ImagePath = a.FilePathImage
-            }
-
-            ));
-
-            return result;
-            
         }
 
         public async Task<GameDto> ShowGame(Guid GameId, string? Edition)
