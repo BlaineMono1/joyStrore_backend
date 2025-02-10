@@ -16,9 +16,20 @@ namespace Gateway.WebApi.Controllers
         /// <returns></returns>
 
         [HttpGet]
-        public async Task<ActionResult<List<SubscriptionsListDto>>> GetNewsList()
+        public async Task<ActionResult<List<SubscriptionsListDto>>> GetSubscriptionList()
         {
             return await _subscriptoinsQuerys.GetSubscriptionsList();
+        }
+
+        /// <summary>
+        /// Получение подписки
+        /// </summary>
+        /// <returns></returns>
+
+        [HttpGet]
+        public async Task<ActionResult<SubscriptionDto>> GetSubscription(Guid SubscriptionId)
+        {
+            return await _subscriptoinsQuerys.SubscriptionById(SubscriptionId);
         }
 
     }

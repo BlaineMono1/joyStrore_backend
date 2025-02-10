@@ -1,5 +1,6 @@
 ﻿using Business.Data.Models;
 using DataBaseToAccess.Repositiory;
+using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
 using Service.Application.Iterfaces;
 using Service.Application.Service.SubscriptionsQuery.Dto;
@@ -8,8 +9,9 @@ namespace Service.Application.Service.SubscriptionsQuery
 {
     public class SubscriptionsQuerys
     {
-        private readonly Repository<Product> _productRepository;
-        private readonly Repository<Subscription> _subscriptionRepository;
+        private readonly ProductRepository<Product> _productRepository;
+        private readonly SubscriptionRepository<Subscription> _subscriptionRepository;
+
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
@@ -62,6 +64,54 @@ namespace Service.Application.Service.SubscriptionsQuery
                 }
                 result.Add(t);
                 
+            }
+
+            return result;
+        }
+
+        public async Task<SubscriptionDto> SubscriptionById(Guid Id)
+        {
+            var result = new SubscriptionDto();
+
+            string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            var currentSub = await _subscriptionRepository.GetById(Id);
+
+            var subs = await _subscriptionRepository.SubscriptionsByName(currentSub.Name);
+
+            var prod = await _productRepository.GetEntityType(Id);
+
+
+            result.Id = Id;
+            result.Image = currentSub.Image;
+            result.Type = prod.Type;
+            result.Platform = currentSub.Platform;
+
+            if (prod.DiscountDate >= DateTime.UtcNow) // Если скидка есть
+            {
+                result.Discount = prod.DiscountPercent;
+                decimal? price = region switch // Как регион хранится в куки??
+                {
+                    "UA" => prod.DiscountUa,
+                    "TR" => prod.DiscountTr,
+                    _ => throw new Exception("No region")
+
+                };
+                result.Price = await _calculatePrice.CalcPrice(price, prod.Type, region);
+                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+            }
+            else
+            {
+                result.Discount = "0";
+                decimal? price = region switch // Как регион хранится в куки??
+                {
+                    "UA" => prod.PriceUa,
+                    "TR" => prod.PriceTr,
+                    _ => throw new Exception("No region")
+
+                };
+                result.Price = await _calculatePrice.CalcPrice(price, prod.Type, region);
+                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
             }
 
             return result;
