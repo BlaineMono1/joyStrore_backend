@@ -27,6 +27,10 @@ namespace Business.Data.Models
         /// </summary>
         public string? Platform { get; set; }
 
+        /// <summary>
+        /// Платформа игры PS4 | PS5
+        /// </summary>
+        public string? Duration { get; set; }
 
         #endregion
 
