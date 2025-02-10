@@ -7,9 +7,14 @@ namespace Business.Data.Models
     {
         #region поля
         /// <summary>
-        /// Куса код игры 
+        /// Куса код аддона Украина
         /// </summary>
-        public string CusaCode { get; set; }
+        public string CusaCodeUa { get; set; }
+
+        /// <summary>
+        /// Куса код аддона Турция
+        /// </summary>
+        public string CusaCodeTr { get; set; }
 
         /// <summary>
         /// Типо предзаказ - 1, 0 - не предзаказ
