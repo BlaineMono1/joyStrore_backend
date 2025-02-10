@@ -86,6 +86,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             result.Image = currentSub.Image;
             result.Type = prod.Type;
             result.Platform = currentSub.Platform;
+            result.Subscriptions = subs;
 
             if (prod.DiscountDate >= DateTime.UtcNow) // Если скидка есть
             {
