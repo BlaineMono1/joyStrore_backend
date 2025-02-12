@@ -12,5 +12,6 @@ namespace Service.Application.Service.AddOnsQuery.Dto
         public List<AddOn> AddOns { get; set; }
         public decimal Price { get; set; }
         public decimal JPrice { get; set; }
+        public decimal JPlus { get; set; }
     }
 }

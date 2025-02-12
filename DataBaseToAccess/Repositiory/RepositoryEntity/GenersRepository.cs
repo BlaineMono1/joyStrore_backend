@@ -8,11 +8,10 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
     {
         public GenersRepository(BaseDbContext contex) : base(contex) { }
 
-        public async Task<List<string>> GetGeners(Guid EditionID)
+        public async Task<List<Geners>> GetGeners(Guid EditionID)
         {
             var result = (await GetAllList())
                 .Where(g => g.Editions.Any(e => e.Guid == EditionID))
-                    .Select(g => g.Name)
                     .ToList();
 
             return result

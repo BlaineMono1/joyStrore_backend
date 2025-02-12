@@ -13,6 +13,7 @@ namespace Service.Application.Service.AddOnsQuery
         private readonly Repository<GroupAddOn> _groupAddOnRepository;
         private readonly GameRepository<Game> _gameRepository;
         private readonly Repository<AddOn> _addOnRepository;
+        private readonly Repository<LoyaltyCashback> _cahsbackRepository; // redis
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -124,9 +125,9 @@ namespace Service.Application.Service.AddOnsQuery
 
                 };
                 result.Price = await _calculatePrice.CalcPrice(price, addOn.Product.Type, region);
-                result.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
             }
-
+            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
             return result;
         }
     }

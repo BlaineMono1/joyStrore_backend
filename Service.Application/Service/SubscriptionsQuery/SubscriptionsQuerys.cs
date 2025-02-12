@@ -114,6 +114,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                 result.Price = await _calculatePrice.CalcPrice(price, prod.Type, region);
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
             }
+            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
 
             return result;
         }
