@@ -85,32 +85,30 @@ namespace Service.Application.Service.GamesQuery
             return result;
         }
 
-        public async Task<GameDto> ShowGame(Guid GameId, string? Edition)
+        public async Task<GameDto> ShowGame(Guid GameId, Edition? Edition)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
             GameDto result = new GameDto();
 
-            Edition ??= "Standart Edition";
+            Edition ??=  (await _editionRepository.GetEditions(GameId)).FirstOrDefault();
 
             var editions = await _editionRepository.GetEditions(GameId);
-
-            var currentEdition = editions.FirstOrDefault(e => e.EditionName == Edition) ?? throw new Exception("current Edition is null");
 
             var product = await _productRepository.GetEntityType(GameId);
             
             var game = await _gameRepository.GetById(GameId);
 
             result.Id = GameId;
-            result.Image = currentEdition.Image;
-            result.Geners = await _genersRepository.GetGeners(currentEdition.Guid);
+            result.Image = Edition.Image;
+            result.Geners = await _genersRepository.GetGeners(Edition.Guid);
             result.RealiseDate = game.Release.Value;
-            result.Platforms = currentEdition.Platform;
+            result.Platforms = Edition.Platform;
             result.Languages = game.Languages;
-            result.Editions = editions.Select(e => e.EditionName).ToList();
-            result.Subscription = currentEdition.Subscription;
+            result.Editions = editions;
+            result.Subscription = Edition.Subscription;
             result.Discount = product.DiscountDate >= DateTime.UtcNow ? product.DiscountDate : null;
-            result.Features = currentEdition.Features;
+            result.Features = Edition.Features;
             
             if(result.Discount != null)
             {
@@ -138,6 +136,8 @@ namespace Service.Application.Service.GamesQuery
                 result.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
             }
+
+            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
 
             return result;
         }

@@ -13,6 +13,6 @@ namespace Service.Application.Service.SubscriptionsQuery.Dto
         public decimal JPrice { get; set; }
         public string Discount { get; set; }
         public List<Subscription> Subscriptions { get; set; }
-
+        public decimal JPlus { get; set; }
     }
 }

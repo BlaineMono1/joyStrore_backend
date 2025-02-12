@@ -8,9 +8,12 @@ namespace Services.CalculationService
     public class CalculatePrice : ICalculationService
     {
         private static readonly HttpClient httpClient = new HttpClient();
+
         private readonly Repository<SettingPrice> _settingPriceRepository;
         private readonly Repository<PriceSettingSubscription> _priceSettingSubscription;
         private readonly Repository<LoyaltySetting> _loyaltySettingRepository;
+        private readonly Repository<LoyaltyCashback> _cahsbackRepository; // redis
+
         private static async Task<decimal> GetExchangeRateUA()
         {
             string url = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
@@ -97,6 +100,12 @@ namespace Services.CalculationService
             var loyality = (await _loyaltySettingRepository.GetAllList()).FirstOrDefault(l => l.PriceValue >= price.Value);
             if (loyality == null) throw new KeyNotFoundException();
             return price.Value - price.Value * loyality.DiscountPercent;
+        }
+
+
+        public async Task<decimal> CalcJplus(decimal price)
+        {
+            return price * (await _cahsbackRepository.GetAllList()).FirstOrDefault().Percent;
         }
     }
 }

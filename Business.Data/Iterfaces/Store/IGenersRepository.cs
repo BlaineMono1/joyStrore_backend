@@ -10,7 +10,7 @@ namespace Business.Data.Iterfaces.Store
         /// </summary>
         /// <returns></returns>
 
-        Task<List<string>> GetGeners(Guid EditionId);
+        Task<List<Geners>> GetGeners(Guid EditionId);
         
     }
 }

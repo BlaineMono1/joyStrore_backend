@@ -9,7 +9,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Настройка для определенного региона UA или TR
         /// </summary>
-        public string IsRegion { get; set; }
+        public string Region { get; set; }
         /// <summary>
         /// Почта от аккаунта PsStore
         /// </summary>
