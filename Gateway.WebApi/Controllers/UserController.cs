@@ -31,7 +31,7 @@ namespace Gateway.WebApi.Controllers
 
         [HttpGet]
 
-        public async Task<List<CartDto>> GetUserCart(string tgId)
+        public async Task<CartDto> GetUserCart(string tgId)
         {
             return await _usersQuery.UserCart(tgId);
         }

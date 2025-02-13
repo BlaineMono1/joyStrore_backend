@@ -2,12 +2,10 @@
 {
     public class CartDto
     {
-        public string image { get; set; }
-        public string Name { get; set; }
-        public string EditionName { get; set; }
-        public decimal Price { get; set; }
-        public decimal JPrice { get; set; }
-        public string Discount { get; set; }
-
+        public List<CartItemDto> items;
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string Code { get; set; }
+        public string PayEmail { get; set; }
     }
 }

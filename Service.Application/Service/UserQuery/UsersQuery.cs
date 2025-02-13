@@ -34,7 +34,7 @@ namespace Service.Application.Service.UserQuery
             var loyaloty = await _loyalityRepository.GetById(user.LoyaltyCurrencyId);
 
             result.Id = user.Guid;
-            result.Email = settings.Email;
+            result.Email = settings.EmailPsStore;
             result.Password = settings.PasswordPsStore;
             result.Code = settings.Code;
             result.JBal = loyaloty.BalanceJoy;
@@ -44,7 +44,7 @@ namespace Service.Application.Service.UserQuery
             return result;
         }
 
-        public async Task<List<CartDto>> UserCart(string tgId)
+        public async Task<CartDto> UserCart(string tgId)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
@@ -52,13 +52,13 @@ namespace Service.Application.Service.UserQuery
 
             var userCartItems = user.Cart.CartItems;
 
-            List<CartDto> cart = [];
+            List<CartItemDto> cart = [];
 
-            if (userCartItems is null) { return cart; }
+            if (userCartItems is null) { return new CartDto(); }
 
             foreach(var item in userCartItems)
             {
-                var t = new CartDto()
+                var t = new CartItemDto()
                 {
                     image = item.Product.Edition.Image,
                     Name = item.Product.Edition.Game.Name,
@@ -96,7 +96,18 @@ namespace Service.Application.Service.UserQuery
 
             }
 
-            return cart;
+            var result = new CartDto();
+
+            result.items = cart;
+
+            var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+
+            result.Email = settings.EmailPsStore;
+            result.PayEmail = settings.Email;
+            result.Password = settings.PasswordPsStore;
+            result.Code = settings.Code;
+
+            return result;
         }
     }
 }
