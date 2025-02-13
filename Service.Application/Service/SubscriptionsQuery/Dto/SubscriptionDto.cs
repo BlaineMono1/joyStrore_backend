@@ -14,5 +14,7 @@ namespace Service.Application.Service.SubscriptionsQuery.Dto
         public string Discount { get; set; }
         public List<Subscription> Subscriptions { get; set; }
         public decimal JPlus { get; set; }
+        public bool InCart { get; set; }
+        public bool InFavorite { get; set; }
     }
 }

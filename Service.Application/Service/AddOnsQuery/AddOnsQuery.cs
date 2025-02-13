@@ -1,4 +1,5 @@
-﻿using Business.Data.Models;
+﻿using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
 using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +14,7 @@ namespace Service.Application.Service.AddOnsQuery
         private readonly Repository<GroupAddOn> _groupAddOnRepository;
         private readonly GameRepository<Game> _gameRepository;
         private readonly Repository<AddOn> _addOnRepository;
-        private readonly Repository<LoyaltyCashback> _cahsbackRepository; // redis
+        private readonly UserRepository<User> _userRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -128,6 +129,11 @@ namespace Service.Application.Service.AddOnsQuery
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
             }
             result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
+            var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+            var user = await _userRepository.GetUserByTgId(userTg);
+
+            result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
+            result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
             return result;
         }
     }

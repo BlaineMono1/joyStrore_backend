@@ -13,5 +13,7 @@ namespace Service.Application.Service.AddOnsQuery.Dto
         public decimal Price { get; set; }
         public decimal JPrice { get; set; }
         public decimal JPlus { get; set; }
+        public bool InCart { get; set; }
+        public bool InFavorite { get; set; }
     }
 }
