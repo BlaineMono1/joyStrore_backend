@@ -4,6 +4,7 @@ using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
+using System.Collections.Generic;
 
 namespace Service.Application.Service.UserQuery
 {
@@ -58,12 +59,13 @@ namespace Service.Application.Service.UserQuery
 
             foreach(var item in userCartItems)
             {
+                if (item.IsDelete == true) continue;
                 var t = new CartItemDto()
                 {
                     image = item.Product.Edition.Image,
                     Name = item.Product.Edition.Game.Name,
                     EditionName = item.Product.Edition.EditionName,
-
+                    GameId = item.Product.Edition.GameId,
                 };
                 if (item.Product.DiscountDate >= DateTime.UtcNow)
                 {
@@ -92,6 +94,8 @@ namespace Service.Application.Service.UserQuery
                     t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
                 }
 
+                t.Platform = item.Product.Edition.Platform;
+
                 cart.Add(t);
 
             }
@@ -106,6 +110,62 @@ namespace Service.Application.Service.UserQuery
             result.PayEmail = settings.Email;
             result.Password = settings.PasswordPsStore;
             result.Code = settings.Code;
+
+            return result;
+        }
+
+        public async Task<List<FavoriteDto>> UserFavorite(string TgId)
+        {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            var user = await _userRepository.GetUserByTgId(TgId);
+
+            var favoriteItems = user.Favorite.FavoriteItems;
+
+            List<FavoriteDto> result = [];
+
+            foreach (var item in favoriteItems)
+            {
+                if (item.IsDelete == true) continue;
+
+                var t = new FavoriteDto();
+                t.GameId = item.Product.Edition.GameId;
+                t.Image = item.Product.Edition.Image;
+                t.Name = item.Product.Edition.Game.Name;
+                t.Edition = item.Product.Edition.EditionName;
+
+                if (item.Product.DiscountDate >= DateTime.UtcNow)
+                {
+                    t.Discount = item.Product.DiscountPercent;
+                    t.DiscountTime = item.Product.DiscountDate;
+                    decimal? price = region switch
+                    {
+                        "UA" => item.Product.DiscountUa,
+                        "TR" => item.Product.DiscountTr,
+                        _ => throw new Exception("No region")
+
+                    };
+                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                }
+                else
+                {
+                    t.Discount = "0";
+                    t.DiscountTime = null;
+                    decimal? price = region switch
+                    {
+                        "UA" => item.Product.PriceUa,
+                        "TR" => item.Product.PriceTr,
+                        _ => throw new Exception("No region")
+
+                    };
+                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                }
+
+                t.InCart = (user.Cart.CartItems.FirstOrDefault(i => i.ProductId == item.ProductId) != null) ? true : false;
+                result.Add(t);
+            }
 
             return result;
         }

@@ -35,5 +35,18 @@ namespace Gateway.WebApi.Controllers
         {
             return await _usersQuery.UserCart(tgId);
         }
+
+        /// <summary>
+        /// Вывод избранного пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpGet]
+
+        public async Task<CartDto> GetUserFavorite(string tgId)
+        {
+            return await _usersQuery.UserFavorite(tgId);
+        }
     }
 }
