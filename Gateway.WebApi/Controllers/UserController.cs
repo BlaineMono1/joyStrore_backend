@@ -31,9 +31,22 @@ namespace Gateway.WebApi.Controllers
 
         [HttpGet]
 
-        public async Task<List<CartDto>> GetUserCart(string tgId)
+        public async Task<CartDto> GetUserCart(string tgId)
         {
             return await _usersQuery.UserCart(tgId);
+        }
+
+        /// <summary>
+        /// Вывод избранного пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpGet]
+
+        public async Task<CartDto> GetUserFavorite(string tgId)
+        {
+            return await _usersQuery.UserFavorite(tgId);
         }
     }
 }

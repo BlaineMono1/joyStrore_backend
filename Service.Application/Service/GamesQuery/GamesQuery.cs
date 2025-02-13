@@ -14,6 +14,8 @@ namespace Service.Application.Service.GamesQuery
         private readonly ProductRepository<Product> _productRepository;
         private readonly EditionRepository<Edition> _editionRepository;
         private readonly GenersRepository<Geners> _genersRepository;
+        private readonly UserRepository<User> _userRepository;
+
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -85,13 +87,13 @@ namespace Service.Application.Service.GamesQuery
             return result;
         }
 
-        public async Task<GameDto> ShowGame(Guid GameId, Edition? Edition)
+        public async Task<GameDto> ShowGame(Guid GameId, string Edition)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
             GameDto result = new GameDto();
 
-            Edition ??=  (await _editionRepository.GetEditions(GameId)).FirstOrDefault();
+            var edition =  (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.EditionName == Edition);
 
             var editions = await _editionRepository.GetEditions(GameId);
 
@@ -100,15 +102,15 @@ namespace Service.Application.Service.GamesQuery
             var game = await _gameRepository.GetById(GameId);
 
             result.Id = GameId;
-            result.Image = Edition.Image;
-            result.Geners = await _genersRepository.GetGeners(Edition.Guid);
+            result.Image = edition.Image;
+            result.Geners = await _genersRepository.GetGeners(edition.Guid);
             result.RealiseDate = game.Release.Value;
-            result.Platforms = Edition.Platform;
+            result.Platforms = edition.Platform;
             result.Languages = game.Languages;
             result.Editions = editions;
-            result.Subscription = Edition.Subscription;
+            result.Subscription = edition.Subscription;
             result.Discount = product.DiscountDate >= DateTime.UtcNow ? product.DiscountDate : null;
-            result.Features = Edition.Features;
+            result.Features = edition.Features;
             
             if(result.Discount != null)
             {
@@ -138,6 +140,12 @@ namespace Service.Application.Service.GamesQuery
             }
 
             result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
+
+            var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+            var user = await _userRepository.GetUserByTgId(userTg);
+
+            result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
+            result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
 
             return result;
         }

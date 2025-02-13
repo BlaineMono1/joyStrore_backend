@@ -16,5 +16,15 @@ namespace Services.GetRegionFromCookie
 
             return "default"; // Значение по умолчанию, если кука не найдена
         }
+
+        public string GetUserTgID(IHttpContextAccessor _httpContextAccessor)
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if(httpContext?.Request.Cookies.TryGetValue("tgid", out string tgid) == true)
+            {
+                return tgid;
+            }
+            return "default"; // Значение по умолчанию, если кука не найдена
+        }
     }
 }
