@@ -22,5 +22,18 @@ namespace Gateway.WebApi.Controllers
         {
             return await _usersQuery.UserByTgId(tgId);
         }
+
+        /// <summary>
+        /// Вывод корзины пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpGet]
+
+        public async Task<List<CartDto>> GetUserCart(string tgId)
+        {
+            return await _usersQuery.UserCart(tgId);
+        }
     }
 }
