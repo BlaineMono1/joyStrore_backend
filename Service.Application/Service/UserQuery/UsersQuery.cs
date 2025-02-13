@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
 using System.Collections.Generic;
+using static System.Net.Mime.MediaTypeNames;
+using System.Xml.Linq;
 
 namespace Service.Application.Service.UserQuery
 {
@@ -165,6 +167,71 @@ namespace Service.Application.Service.UserQuery
 
                 t.InCart = (user.Cart.CartItems.FirstOrDefault(i => i.ProductId == item.ProductId) != null) ? true : false;
                 result.Add(t);
+            }
+
+            return result;
+        }
+
+        public async Task<List<OrderDto>> UserOrder(string tgId)
+        {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            var user = await _userRepository.GetUserByTgId(tgId);
+
+            var history = user.ProductTransactionHistory.ProductTransactionItems;
+
+            List<OrderDto> result = [];
+
+            foreach (var productItem in history)
+            {
+                if (productItem.IsDelete == true) continue;
+                var t = new OrderDto();
+                foreach (var order in productItem.Orders)
+                {
+                    if(order.IsDelete == true) continue;
+
+                    t.OrderNumber = order.OrderCode;
+                    t.OrderDate = order.DateCreate;
+                    var tl = new CartItemDto();
+                    foreach(var item in order.OrderProductItems)
+                    {
+                        if(item.IsDelete == true) continue;
+                        tl.image = item.Product.Edition.Image;
+                        tl.Name = item.Product.Edition.Game.Name;
+                        tl.EditionName = item.Product.Edition.EditionName;
+                        tl.GameId = item.Product.Edition.GameId;
+                        if (item.Product.DiscountDate >= DateTime.UtcNow)
+                        {
+                            tl.Discount = item.Product.DiscountPercent;
+                            decimal? price = region switch
+                            {
+                                "UA" => item.Product.DiscountUa,
+                                "TR" => item.Product.DiscountTr,
+                                _ => throw new Exception("No region")
+
+                            };
+                            tl.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                            tl.JPrice = await _calculatePrice.CalcJprice(tl.Price, region);
+                        }
+                        else
+                        {
+                            tl.Discount = item.Product.DiscountPercent;
+                            decimal? price = region switch
+                            {
+                                "UA" => item.Product.PriceUa,
+                                "TR" => item.Product.PriceTr,
+                                _ => throw new Exception("No region")
+
+                            };
+                            tl.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                            tl.JPrice = await _calculatePrice.CalcJprice(tl.Price, region);
+                        }
+
+                        tl.Platform = item.Product.Edition.Platform;
+                        t.items.Add(tl);
+                    }
+                    result.Add(t);
+                }
             }
 
             return result;

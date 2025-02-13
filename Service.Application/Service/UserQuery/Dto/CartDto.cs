@@ -2,7 +2,7 @@
 {
     public class CartDto
     {
-        public List<CartItemDto> items;
+        public List<CartItemDto> items { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
         public string Code { get; set; }
