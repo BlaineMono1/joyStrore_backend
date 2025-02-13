@@ -27,7 +27,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<GameDto> GetGame(Guid GameId, string? Edition)
+        public async Task<GameDto> GetGame(Guid GameId, string Edition)
         {
             return await _gamesQuery.ShowGame(GameId, Edition);
         }

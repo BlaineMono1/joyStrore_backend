@@ -2,6 +2,6 @@
 {
     public class FavoriteDto
     {
-
+        public string 
     }
 }
