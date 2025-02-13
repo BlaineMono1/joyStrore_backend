@@ -43,5 +43,60 @@ namespace Service.Application.Service.UserQuery
 
             return result;
         }
+
+        public async Task<List<CartDto>> UserCart(string tgId)
+        {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            var user = await _userRepository.GetUserByTgId(tgId);
+
+            var userCartItems = user.Cart.CartItems;
+
+            List<CartDto> cart = [];
+
+            if (userCartItems is null) { return cart; }
+
+            foreach(var item in userCartItems)
+            {
+                var t = new CartDto()
+                {
+                    image = item.Product.Edition.Image,
+                    Name = item.Product.Edition.Game.Name,
+                    EditionName = item.Product.Edition.EditionName,
+
+                };
+                if (item.Product.DiscountDate >= DateTime.UtcNow)
+                {
+                    t.Discount = item.Product.DiscountPercent;
+                    decimal? price = region switch
+                    {
+                        "UA" => item.Product.DiscountUa,
+                        "TR" => item.Product.DiscountTr,
+                        _ => throw new Exception("No region")
+
+                    };
+                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                }
+                else
+                {
+                    t.Discount = item.Product.DiscountPercent;
+                    decimal? price = region switch 
+                    {
+                        "UA" => item.Product.PriceUa,
+                        "TR" => item.Product.PriceTr,
+                        _ => throw new Exception("No region")
+
+                    };
+                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
+                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                }
+
+                cart.Add(t);
+
+            }
+
+            return cart;
+        }
     }
 }
