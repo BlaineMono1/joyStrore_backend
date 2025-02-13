@@ -16,7 +16,9 @@ namespace Service.Application.Service.GamesQuery.Dto
         public string Features { get; set; }
         public decimal Price { get; set; }
         public decimal JPrice { get; set; }
-        public decimal JPlus { get;set }
+        public decimal JPlus { get; set; }
         public string DiscountPercent { get; set; }
+        public bool InCart { get; set; }
+        public bool InFavorite { get; set; }
     }
 }

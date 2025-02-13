@@ -14,6 +14,8 @@ namespace Service.Application.Service.GamesQuery
         private readonly ProductRepository<Product> _productRepository;
         private readonly EditionRepository<Edition> _editionRepository;
         private readonly GenersRepository<Geners> _genersRepository;
+        private readonly UserRepository<User> _userRepository;
+
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -138,6 +140,12 @@ namespace Service.Application.Service.GamesQuery
             }
 
             result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
+
+            var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+            var user = await _userRepository.GetUserByTgId(userTg);
+
+            result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
+            result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
 
             return result;
         }
