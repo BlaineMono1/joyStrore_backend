@@ -57,8 +57,15 @@ namespace Services.CalculationService
             return price.Value * exchangeRate;
         }
 
-        public async Task<decimal> CalcPrice(decimal? price, string type, string region)
+        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type, string region)
         {
+            var price = region switch
+            {
+                "UA" => priceua,
+                "TR" => pricetr,
+                _ => throw new Exception("No region found")
+            };
+
             if (price == null) return 0;
 
             var rubPrice = await GetPrice(region, price);

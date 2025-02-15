@@ -20,5 +20,6 @@ namespace Service.Application.Service.GamesQuery.Dto
         public string DiscountPercent { get; set; }
         public bool InCart { get; set; }
         public bool InFavorite { get; set; }
+        public List<AddOn>? Addons { get; set; }
     }
 }
