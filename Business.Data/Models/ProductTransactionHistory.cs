@@ -20,7 +20,10 @@ namespace Business.Data.Models
         public User User { get; set; }
 
 
-        public List<ProductTransactionItem> ProductTransactionItems { get; set; }
+        /// <summary>
+        /// Ордера пользователя 
+        /// </summary>
+        public List<Order> Orders { get; set; }
         #endregion
     }
 }

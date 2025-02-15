@@ -7,6 +7,10 @@ namespace Business.Data.Models
     /// </summary>
     public class OrderProductItem:BaseEntity
     {
+        public decimal Pirce { get; set; }
+        public string Discount { get; set; }
+
+
         public Guid OrderId { get; set; }
         public Order Order { get; set; }
 
