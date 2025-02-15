@@ -3,6 +3,7 @@ using Business.Data.Models;
 using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.SubscriptionsQuery.Dto;
 
@@ -13,117 +14,118 @@ namespace Service.Application.Service.SubscriptionsQuery
         private readonly ProductRepository<Product> _productRepository;
         private readonly SubscriptionRepository<Subscription> _subscriptionRepository;
         private readonly UserRepository<User> _userRepository;
-
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
-        public SubscriptionsQuerys(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger<SubscriptionsQuerys> _logger;
+
+        public SubscriptionsQuerys(ICalculationService calculatePrice,
+            IHttpContextAccessor httpContextAccessor,
+            IRegionFromCookie regionFromCookie,
+            ILogger<SubscriptionsQuerys> logger)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
+            _regionFromCookie = regionFromCookie;
+            _logger = logger;
         }
-       
-        public async Task<List<SubscriptionsListDto>> GetSubscriptionsList() // Выдача списка подписок
+
+        /// <summary>
+        /// Выдача списка подписок
+        /// </summary>
+        public async Task<List<SubscriptionsListDto>> GetSubscriptionsList()
         {
-            string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var subscriptions = await _subscriptionRepository.GetAllList(); // все подписки 
-
-            var result = new List<SubscriptionsListDto>();
-
-            foreach (var sub in subscriptions)
+            try
             {
-                var t = new SubscriptionsListDto();
-                var product = await _productRepository.GetById(sub.ProductId) ?? throw new KeyNotFoundException($"Product with TypeId {sub.Guid} not found");
-                // Продукт соответствующий подписке
-                t.Name = sub.Name;
-                t.ImagePath = sub.Image;
-                if (product.DiscountDate >= DateTime.UtcNow) // Если скидка есть
-                {
-                    t.Dicount = product.DiscountPercent;
-                    decimal? price = region switch // Как регион хранится в куки??
-                    {
-                        "UA" => product.DiscountUa,
-                        "TR" => product.DiscountTr,
-                        _ => throw new Exception("No region")
+                string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var subscriptions = await _subscriptionRepository.GetAllList();
 
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
-                    t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
-                }
-                else
-                {
-                    t.Dicount = "0";
-                    decimal? price = region switch // Как регион хранится в куки??
-                    {
-                        "UA" => product.PriceUa,
-                        "TR" => product.PriceTr,
-                        _ => throw new Exception("No region")
+                _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
 
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
-                    t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
-                }
-                result.Add(t);
-                
+                var tasks = subscriptions.Select(async sub =>
+                {
+                    try
+                    {
+                        var product = await _productRepository.GetById(sub.ProductId)
+                            ?? throw new KeyNotFoundException($"Product with TypeId {sub.Guid} not found");
+
+                        var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region);
+                        var jPrice = await _calculatePrice.CalcJprice(price, region);
+
+                        return new SubscriptionsListDto
+                        {
+                            Name = sub.Name,
+                            ImagePath = sub.Image,
+                            Dicount = product.DiscountPercent,
+                            Price = price,
+                            Jprice = jPrice
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error processing subscription {SubscriptionId}", sub.Guid);
+                        return null;
+                    }
+                });
+
+                var result = (await Task.WhenAll(tasks)).Where(t => t != null).ToList();
+                _logger.LogInformation("Successfully processed {Count} subscriptions.", result.Count);
+
+                return result;
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching subscriptions list.");
+                return new List<SubscriptionsListDto>();
+            }
         }
 
+        /// <summary>
+        /// Получение подписки по ID
+        /// </summary>
         public async Task<SubscriptionDto> SubscriptionById(Guid Id)
         {
-            var result = new SubscriptionDto();
-
-            string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var currentSub = await _subscriptionRepository.GetById(Id);
-
-            var subs = await _subscriptionRepository.SubscriptionsByName(currentSub.Name);
-
-            var prod = await _productRepository.GetEntityType(Id);
-
-
-            result.Id = Id;
-            result.Image = currentSub.Image;
-            result.Type = prod.Type;
-            result.Platform = currentSub.Platform;
-            result.Subscriptions = subs;
-
-            if (prod.DiscountDate >= DateTime.UtcNow) // Если скидка есть
+            try
             {
-                result.Discount = prod.DiscountPercent;
-                decimal? price = region switch // Как регион хранится в куки??
-                {
-                    "UA" => prod.DiscountUa,
-                    "TR" => prod.DiscountTr,
-                    _ => throw new Exception("No region")
+                string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                _logger.LogInformation("Fetching subscription details for ID: {Id}", Id);
 
+                var currentSub = await _subscriptionRepository.GetById(Id)
+                    ?? throw new KeyNotFoundException($"Subscription with ID {Id} not found");
+
+                var subs = await _subscriptionRepository.SubscriptionsByName(currentSub.Name);
+                var prod = await _productRepository.GetEntityType(Id);
+
+                var price = await _calculatePrice.CalcPrice(prod.PriceUa, prod.PriceTr, prod.Type, region);
+                var jPrice = await _calculatePrice.CalcJprice(price, region);
+                var jPlus = await _calculatePrice.CalcJplus(jPrice);
+
+                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+                var user = await _userRepository.GetUserByTgId(userTg);
+
+                var result = new SubscriptionDto
+                {
+                    Id = Id,
+                    Image = currentSub.Image,
+                    Type = prod.Type,
+                    Platform = currentSub.Platform,
+                    Subscriptions = subs,
+                    Discount = prod.DiscountPercent,
+                    Price = price,
+                    JPrice = jPrice,
+                    JPlus = jPlus,
+                    InCart = user.Cart.CartItems.Any(c => c.ProductId == currentSub.Product.Guid),
+                    InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == currentSub.Product.Guid)
                 };
-                result.Price = await _calculatePrice.CalcPrice(price, prod.Type, region);
-                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+
+                _logger.LogInformation("Successfully fetched subscription details for ID: {Id}", Id);
+                return result;
             }
-            else
+            catch (Exception ex)
             {
-                result.Discount = "0";
-                decimal? price = region switch // Как регион хранится в куки??
-                {
-                    "UA" => prod.PriceUa,
-                    "TR" => prod.PriceTr,
-                    _ => throw new Exception("No region")
-
-                };
-                result.Price = await _calculatePrice.CalcPrice(price, prod.Type, region);
-                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+                _logger.LogError(ex, "Error fetching subscription details for ID: {Id}", Id);
+                throw;
             }
-            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
-            var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-            var user = await _userRepository.GetUserByTgId(userTg);
-
-            result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == currentSub.Product.Guid) != null) ? true : false;
-            result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == currentSub.Product.Guid) != null) ? true : false;
-
-            return result;
         }
     }
 }
