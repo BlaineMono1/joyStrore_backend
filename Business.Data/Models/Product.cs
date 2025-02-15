@@ -18,18 +18,9 @@ namespace Business.Data.Models
         /// </summary>
         public decimal? PriceUa { get; set; }
         /// <summary>
-        /// Цена по скидке в гривнах
-        /// </summary>
-        public decimal? DiscountUa { get; set; }
-        /// <summary>
         /// Цена в лирах
         /// </summary>
         public decimal? PriceTr {  get; set; }
-        /// <summary>
-        ///  Цена по скидке в лирах
-        /// </summary>
-        public decimal? DiscountTr { get; set; }
-        /// <summary>
         /// Процент скидки
         /// </summary>
         public string? DiscountPercent {  get; set; }
