@@ -2,11 +2,9 @@
 using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
-using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
 
 namespace Service.Application.Service.UserQuery
 {
@@ -19,222 +17,205 @@ namespace Service.Application.Service.UserQuery
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
-        public UsersQuery(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger<UsersQuery> _logger;
+
+        public UsersQuery(
+            ICalculationService calculatePrice,
+            IHttpContextAccessor httpContextAccessor,
+            IRegionFromCookie regionFromCookie,
+            ILogger<UsersQuery> logger)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
+            _regionFromCookie = regionFromCookie;
+            _logger = logger;
         }
 
         public async Task<UserDto> UserByTgId(string tgId)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-            var user = await _userRepository.GetUserByTgId(tgId);
-            
-            var result = new UserDto();
+            try
+            {
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                _logger.LogInformation("Fetching user by TG ID: {TgId}", tgId);
 
-            var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+                var user = await _userRepository.GetUserByTgId(tgId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
+                    return null;
+                }
 
-            var loyaloty = await _loyalityRepository.GetById(user.LoyaltyCurrencyId);
+                var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+                var loyaloty = await _loyalityRepository.GetById(user.LoyaltyCurrencyId);
 
-            result.Id = user.Guid;
-            result.Email = settings.EmailPsStore;
-            result.Password = settings.PasswordPsStore;
-            result.Code = settings.Code;
-            result.JBal = loyaloty.BalanceJoy;
-            result.JPlus = loyaloty.BalanceJoyPlus;
-            result.Platform = settings.Platform;
+                var result = new UserDto
+                {
+                    Id = user.Guid,
+                    Email = settings?.EmailPsStore,
+                    Password = settings?.PasswordPsStore,
+                    Code = settings?.Code,
+                    JBal = loyaloty?.BalanceJoy ?? 0,
+                    JPlus = loyaloty?.BalanceJoyPlus ?? 0,
+                    Platform = settings?.Platform
+                };
 
-            return result;
+                _logger.LogInformation("Successfully fetched user data for TG ID: {TgId}", tgId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user by TG ID: {TgId}", tgId);
+                throw;
+            }
         }
 
         public async Task<CartDto> UserCart(string tgId)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var user = await _userRepository.GetUserByTgId(tgId);
-
-            var userCartItems = user.Cart.CartItems;
-
-            List<CartItemDto> cart = [];
-
-            if (userCartItems is null) { return new CartDto(); }
-
-            foreach(var item in userCartItems)
+            try
             {
-                if (item.IsDelete == true) continue;
-                var t = new CartItemDto()
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                _logger.LogInformation("Fetching user cart for TG ID: {TgId}", tgId);
+
+                var user = await _userRepository.GetUserByTgId(tgId);
+                if (user == null)
                 {
-                    image = item.Product.Edition.Image,
-                    Name = item.Product.Edition.Game.Name,
-                    EditionName = item.Product.Edition.EditionName,
-                    GameId = item.Product.Edition.GameId,
+                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
+                    return new CartDto();
+                }
+
+                var userCartItems = user.Cart.CartItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<CartItem>();
+
+                var cart = await Task.WhenAll(userCartItems.Select(async item =>
+                {
+                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
+                    var jPrice = await _calculatePrice.CalcJprice(price, region);
+
+                    return new CartItemDto
+                    {
+                        image = item.Product.Edition.Image,
+                        Name = item.Product.Edition.Game.Name,
+                        EditionName = item.Product.Edition.EditionName,
+                        GameId = item.Product.Edition.GameId,
+                        Discount = item.Product.DiscountPercent,
+                        Price = price,
+                        JPrice = jPrice,
+                        Platform = item.Product.Edition.Platform
+                    };
+                }));
+
+                var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+
+                var result = new CartDto
+                {
+                    items = cart.ToList(),
+                    Email = settings?.EmailPsStore,
+                    PayEmail = settings?.Email,
+                    Password = settings?.PasswordPsStore,
+                    Code = settings?.Code
                 };
-                if (item.Product.DiscountDate >= DateTime.UtcNow)
-                {
-                    t.Discount = item.Product.DiscountPercent;
-                    decimal? price = region switch
-                    {
-                        "UA" => item.Product.DiscountUa,
-                        "TR" => item.Product.DiscountTr,
-                        _ => throw new Exception("No region")
 
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
-                }
-                else
-                {
-                    t.Discount = item.Product.DiscountPercent;
-                    decimal? price = region switch 
-                    {
-                        "UA" => item.Product.PriceUa,
-                        "TR" => item.Product.PriceTr,
-                        _ => throw new Exception("No region")
-
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
-                }
-
-                t.Platform = item.Product.Edition.Platform;
-
-                cart.Add(t);
-
+                _logger.LogInformation("Successfully fetched user cart for TG ID: {TgId}", tgId);
+                return result;
             }
-
-            var result = new CartDto();
-
-            result.items = cart;
-
-            var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
-
-            result.Email = settings.EmailPsStore;
-            result.PayEmail = settings.Email;
-            result.Password = settings.PasswordPsStore;
-            result.Code = settings.Code;
-
-            return result;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user cart for TG ID: {TgId}", tgId);
+                throw;
+            }
         }
 
         public async Task<List<FavoriteDto>> UserFavorite(string TgId)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var user = await _userRepository.GetUserByTgId(TgId);
-
-            var favoriteItems = user.Favorite.FavoriteItems;
-
-            List<FavoriteDto> result = [];
-
-            foreach (var item in favoriteItems)
+            try
             {
-                if (item.IsDelete == true) continue;
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                _logger.LogInformation("Fetching user favorite items for TG ID: {TgId}", TgId);
 
-                var t = new FavoriteDto();
-                t.GameId = item.Product.Edition.GameId;
-                t.Image = item.Product.Edition.Image;
-                t.Name = item.Product.Edition.Game.Name;
-                t.Edition = item.Product.Edition.EditionName;
-
-                if (item.Product.DiscountDate >= DateTime.UtcNow)
+                var user = await _userRepository.GetUserByTgId(TgId);
+                if (user == null)
                 {
-                    t.Discount = item.Product.DiscountPercent;
-                    t.DiscountTime = item.Product.DiscountDate;
-                    decimal? price = region switch
-                    {
-                        "UA" => item.Product.DiscountUa,
-                        "TR" => item.Product.DiscountTr,
-                        _ => throw new Exception("No region")
-
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
-                }
-                else
-                {
-                    t.Discount = "0";
-                    t.DiscountTime = null;
-                    decimal? price = region switch
-                    {
-                        "UA" => item.Product.PriceUa,
-                        "TR" => item.Product.PriceTr,
-                        _ => throw new Exception("No region")
-
-                    };
-                    t.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                    t.JPrice = await _calculatePrice.CalcJprice(t.Price, region);
+                    _logger.LogWarning("User not found for TG ID: {TgId}", TgId);
+                    return new List<FavoriteDto>();
                 }
 
-                t.InCart = (user.Cart.CartItems.FirstOrDefault(i => i.ProductId == item.ProductId) != null) ? true : false;
-                result.Add(t);
+                var favoriteItems = user.Favorite.FavoriteItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<FavoriteItem>();
+
+                var result = await Task.WhenAll(favoriteItems.Select(async item =>
+                {
+                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
+                    var jPrice = await _calculatePrice.CalcJprice(price, region);
+
+                    return new FavoriteDto
+                    {
+                        GameId = item.Product.Edition.GameId,
+                        Image = item.Product.Edition.Image,
+                        Name = item.Product.Edition.Game.Name,
+                        Edition = item.Product.Edition.EditionName,
+                        Discount = item.Product.DiscountPercent,
+                        Price = price,
+                        JPrice = jPrice,
+                        InCart = user.Cart.CartItems.Any(c => c.ProductId == item.ProductId)
+                    };
+                }));
+
+                _logger.LogInformation("Successfully fetched user favorite items for TG ID: {TgId}", TgId);
+                return result.ToList();
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user favorite items for TG ID: {TgId}", TgId);
+                throw;
+            }
         }
 
         public async Task<List<OrderDto>> UserOrder(string tgId)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var user = await _userRepository.GetUserByTgId(tgId);
-
-            var history = user.ProductTransactionHistory.ProductTransactionItems;
-
-            List<OrderDto> result = [];
-
-            foreach (var productItem in history)
+            try
             {
-                if (productItem.IsDelete == true) continue;
-                var t = new OrderDto();
-                foreach (var order in productItem.Orders)
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                _logger.LogInformation("Fetching user orders for TG ID: {TgId}", tgId);
+
+                var user = await _userRepository.GetUserByTgId(tgId);
+                if (user == null)
                 {
-                    if(order.IsDelete == true) continue;
-
-                    t.OrderNumber = order.OrderCode;
-                    t.OrderDate = order.DateCreate;
-                    var tl = new CartItemDto();
-                    foreach(var item in order.OrderProductItems)
-                    {
-                        if(item.IsDelete == true) continue;
-                        tl.image = item.Product.Edition.Image;
-                        tl.Name = item.Product.Edition.Game.Name;
-                        tl.EditionName = item.Product.Edition.EditionName;
-                        tl.GameId = item.Product.Edition.GameId;
-                        if (item.Product.DiscountDate >= DateTime.UtcNow)
-                        {
-                            tl.Discount = item.Product.DiscountPercent;
-                            decimal? price = region switch
-                            {
-                                "UA" => item.Product.DiscountUa,
-                                "TR" => item.Product.DiscountTr,
-                                _ => throw new Exception("No region")
-
-                            };
-                            tl.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                            tl.JPrice = await _calculatePrice.CalcJprice(tl.Price, region);
-                        }
-                        else
-                        {
-                            tl.Discount = item.Product.DiscountPercent;
-                            decimal? price = region switch
-                            {
-                                "UA" => item.Product.PriceUa,
-                                "TR" => item.Product.PriceTr,
-                                _ => throw new Exception("No region")
-
-                            };
-                            tl.Price = await _calculatePrice.CalcPrice(price, item.Product.Type, region);
-                            tl.JPrice = await _calculatePrice.CalcJprice(tl.Price, region);
-                        }
-
-                        tl.Platform = item.Product.Edition.Platform;
-                        t.items.Add(tl);
-                    }
-                    result.Add(t);
+                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
+                    return new List<OrderDto>();
                 }
-            }
 
-            return result;
+                var orders = user.ProductTransactionHistory.Orders?.Where(order => !order.IsDelete) ?? Enumerable.Empty<Order>();
+
+                var result = await Task.WhenAll(orders.Select(async orderItem =>
+                {
+                    var orderDto = new OrderDto
+                    {
+                        OrderNumber = orderItem.OrderCode,
+                        OrderDate = orderItem.DateCreate,
+                        items = (List<CartItemDto>)orderItem.OrderProductItems.Select(productOrderItem =>
+                        {
+                            return new CartItemDto
+                            {
+                                GameId = productOrderItem.Product.Edition.GameId,
+                                image = productOrderItem.Product.Edition.Image,
+                                Name = productOrderItem.Product.Edition.Game.Name,
+                                EditionName = productOrderItem.Product.Edition.EditionName,
+                                Price = productOrderItem.Pirce,
+                                Discount = productOrderItem.Discount,
+                                Platform = productOrderItem.Product.Edition.Platform
+                            };
+                        })
+                    };
+
+                    return orderDto;
+                }));
+
+                _logger.LogInformation("Successfully fetched user orders for TG ID: {TgId}", tgId);
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user orders for TG ID: {TgId}", tgId);
+                throw;
+            }
         }
     }
 }
