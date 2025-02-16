@@ -3,7 +3,7 @@ namespace Service.Application.Service.UserQuery.Dto
 {
     public class CartItemDto
     {
-        public Guid GameId { get; set; }
+        public Guid Id { get; set; }
         public string image { get; set; }
         public string Name { get; set; }
         public string EditionName { get; set; }

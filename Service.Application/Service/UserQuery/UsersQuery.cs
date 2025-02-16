@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
+using System.Reflection.Metadata;
 
 namespace Service.Application.Service.UserQuery
 {
@@ -13,6 +14,8 @@ namespace Service.Application.Service.UserQuery
         private readonly UserRepository<User> _userRepository;
         private readonly Repository<Setting> _setingsRepository;
         private readonly Repository<LoyaltyCurrency> _loyalityRepository;
+        private readonly ProductRepository<Product> _productRepository;
+        private readonly Repository<CartItem> _cartItemRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -42,7 +45,7 @@ namespace Service.Application.Service.UserQuery
                 if (user == null)
                 {
                     _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
-                    return null;
+                    return new UserDto();
                 }
 
                 var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
@@ -95,7 +98,7 @@ namespace Service.Application.Service.UserQuery
                         image = item.Product.Edition.Image,
                         Name = item.Product.Edition.Game.Name,
                         EditionName = item.Product.Edition.EditionName,
-                        GameId = item.Product.Edition.GameId,
+                        Id = item.Product.Edition.GameId,
                         Discount = item.Product.DiscountPercent,
                         Price = price,
                         JPrice = jPrice,
@@ -194,7 +197,7 @@ namespace Service.Application.Service.UserQuery
                         {
                             return new CartItemDto
                             {
-                                GameId = productOrderItem.Product.Edition.GameId,
+                                Id = productOrderItem.Product.Edition.GameId,
                                 image = productOrderItem.Product.Edition.Image,
                                 Name = productOrderItem.Product.Edition.Game.Name,
                                 EditionName = productOrderItem.Product.Edition.EditionName,
@@ -214,6 +217,43 @@ namespace Service.Application.Service.UserQuery
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching user orders for TG ID: {TgId}", tgId);
+                throw;
+            }
+        }
+
+        public async Task UpdateUserCart(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation($"Updating user {tgId} cart: {itemId}");
+
+                var product = await  _productRepository.GetEntityType(itemId);
+                if (product is null)
+                {
+                    _logger.LogError("No Product with GUID {id}", itemId);
+                    throw new Exception($"Product with GUID {itemId} not found");
+                }
+                
+                var cart = (await _userRepository.GetUserByTgId(tgId)).Cart;
+                if (cart is null)
+                {
+                    _logger.LogError("User Cart with tg id {id} not found", tgId);
+                    throw new Exception($"User Cart with tg id {tgId} not found");
+                }
+                var result = new CartItem()
+                {
+                    CartId = cart.Guid,
+                    Cart = cart,
+                    ProductId = product.Guid,
+                    Product = product
+                };
+                
+                await _cartItemRepository.Add(result);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user cart tg Id {tgid}, itemId {itemId}", tgId, itemId);
                 throw;
             }
         }
