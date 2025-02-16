@@ -6,9 +6,15 @@ namespace Gateway.WebApi.Controllers
 {
     [SetRoute("api/[controller]/[action]")]
     [ApiController]
-    public class SubscriptionController
+    public class SubscriptionController : ControllerBase
     {
         private readonly SubscriptionsQuerys _subscriptoinsQuerys;
+        private readonly ILogger<SubscriptionController> _logger;
+        public SubscriptionController(SubscriptionsQuerys subscriptoinsQuerys, ILogger<SubscriptionController> logger)
+        {
+            _logger = logger;
+            _subscriptoinsQuerys = subscriptoinsQuerys;
+        }
 
         /// <summary>
         /// Получение списка подписок на главной странице
@@ -18,7 +24,18 @@ namespace Gateway.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<List<SubscriptionsListDto>>> GetSubscriptionList()
         {
-            return await _subscriptoinsQuerys.GetSubscriptionsList();
+            try
+            {
+                _logger.LogInformation("Fetching subscription list");
+                var subsList = await _subscriptoinsQuerys.GetSubscriptionsList(); ;
+                return Ok(subsList);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching subscription list.");
+                return StatusCode(500, "An error occurred while fetching subscription list.");
+            }
+            
         }
 
         /// <summary>
@@ -29,7 +46,18 @@ namespace Gateway.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<SubscriptionDto>> GetSubscription(Guid SubscriptionId)
         {
-            return await _subscriptoinsQuerys.SubscriptionById(SubscriptionId);
+            try
+            {
+                _logger.LogInformation("Fetching subscription with ID {Id}", SubscriptionId);
+                var sub = await _subscriptoinsQuerys.SubscriptionById(SubscriptionId);
+                return Ok(sub);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching subscription.");
+                return StatusCode(500, "An error occurred while fetching subscription.");
+            }
+
         }
 
     }

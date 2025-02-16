@@ -2,6 +2,7 @@
 using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
 
@@ -16,72 +17,73 @@ namespace Service.Application.Service.GamesQuery
         private readonly GenersRepository<Geners> _genersRepository;
         private readonly UserRepository<User> _userRepository;
 
-
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRegionFromCookie _regionFromCookie;
-        public GamesQuery(ICalculationService calculatePrice, IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger<GamesQuery> _logger;
+
+        public GamesQuery(
+            ICalculationService calculatePrice,
+            IHttpContextAccessor httpContextAccessor,
+            IRegionFromCookie regionFromCookie,
+            ILogger<GamesQuery> logger)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
+            _regionFromCookie = regionFromCookie;
+            _logger = logger;
         }
+
         public async Task<List<GamesListDto>> GamesList()
         {
             var result = new List<GamesListDto>();
 
-            var sections = await _sectionRepository.GetAllList();
-
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            foreach (var section in sections)
+            try
             {
-                var t = new GamesListDto();
+                _logger.LogInformation("Fetching all sections.");
+                var sections = await _sectionRepository.GetAllList();
 
-                if (section.Editions is null || section.Editions.Count < 1) throw new Exception("Editions is null");
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
-                foreach (var edition in section.Editions)
+                foreach (var section in sections)
                 {
-                    var game = await _gameRepository.GetById(edition.GameId);
-
-                    if (game is null) throw new Exception("Game is null");
-
-                    t.FIlterName = section.Name;
-                    t.Name = game.Name;
-                    t.ImageFilepath = edition.Image;
-
-                    t.Id = edition.Guid; // Id Edition or ID game?
-
-                    var product = await _productRepository.GetEntityType(edition.Guid);
-
-                    if (product.DiscountDate >= DateTime.UtcNow)
+                    if (section.Editions is null || section.Editions.Count < 1)
                     {
-                        t.Discount = product.DiscountPercent;
-                        decimal? price = region switch
-                        {
-                            "UA" => product.DiscountUa,
-                            "TR" => product.DiscountTr,
-                            _ => throw new Exception("No region")
-
-                        };
-                        t.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
-                        t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                        _logger.LogWarning("Section {SectionName} has no editions.", section.Name);
+                        continue;
                     }
-                    else
+
+                    foreach (var edition in section.Editions)
                     {
-                        t.Discount = "0";
-                        decimal? price = region switch // Как регион хранится в куки??
-                        {
-                            "UA" => product.PriceUa,
-                            "TR" => product.PriceTr,
-                            _ => throw new Exception("No region")
+                        var game = await _gameRepository.GetById(edition.GameId);
 
+                        if (game is null)
+                        {
+                            _logger.LogError("Game with ID {GameId} not found.", edition.GameId);
+                            continue;
+                        }
+
+                        var product = await _productRepository.GetEntityType(edition.Guid);
+
+                        var dto = new GamesListDto
+                        {
+                            FIlterName = section.Name,
+                            Name = game.Name,
+                            ImageFilepath = edition.Image,
+                            Id = game.Guid,
+                            Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region),
+                            Discount = product.DiscountPercent
                         };
-                        t.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
-                        t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                        dto.Jprice = await _calculatePrice.CalcJprice(dto.Price, region);
+
+                        result.Add(dto);
                     }
-                    result.Add(t);
                 }
-
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the games list.");
+                throw;
             }
 
             return result;
@@ -89,65 +91,62 @@ namespace Service.Application.Service.GamesQuery
 
         public async Task<GameDto> ShowGame(Guid GameId, string Edition)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            GameDto result = new GameDto();
-
-            var edition =  (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.EditionName == Edition);
-
-            var editions = await _editionRepository.GetEditions(GameId);
-
-            var product = await _productRepository.GetEntityType(GameId);
-            
-            var game = await _gameRepository.GetById(GameId);
-
-            result.Id = GameId;
-            result.Image = edition.Image;
-            result.Geners = await _genersRepository.GetGeners(edition.Guid);
-            result.RealiseDate = game.Release.Value;
-            result.Platforms = edition.Platform;
-            result.Languages = game.Languages;
-            result.Editions = editions;
-            result.Subscription = edition.Subscription;
-            result.Discount = product.DiscountDate >= DateTime.UtcNow ? product.DiscountDate : null;
-            result.Features = edition.Features;
-            
-            if(result.Discount != null)
+            try
             {
-                result.DiscountPercent = product.DiscountPercent;
-                decimal? price = region switch
-                {
-                    "UA" => product.DiscountUa,
-                    "TR" => product.DiscountTr,
-                    _ => throw new Exception("No region")
+                _logger.LogInformation("Fetching game details for GameId: {GameId}, Edition: {Edition}", GameId, Edition);
 
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+                var edition = (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.EditionName == Edition);
+                if (edition == null)
+                {
+                    _logger.LogWarning("Edition {Edition} not found for GameId {GameId}.", Edition, GameId);
+                    throw new Exception("Edition not found.");
+                }
+
+                var editions = await _editionRepository.GetEditions(GameId);
+                var product = await _productRepository.GetEntityType(GameId);
+                var game = await _gameRepository.GetById(GameId);
+
+                if (game == null)
+                {
+                    _logger.LogError("Game with ID {GameId} not found.", GameId);
+                    throw new Exception("Game not found.");
+                }
+
+                var result = new GameDto
+                {
+                    Id = GameId,
+                    Image = edition.Image,
+                    Geners = await _genersRepository.GetGeners(edition.Guid),
+                    RealiseDate = game.Release ?? DateTime.MinValue,
+                    Platforms = edition.Platform,
+                    Languages = game.Languages,
+                    Editions = editions,
+                    Subscription = edition.Subscription,
+                    Discount = product.DiscountDate,
+                    DiscountPercent = product.DiscountPercent,
+                    Features = edition.Features,
+                    Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region),
+                    Addons = game.AddOns
                 };
-                result.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
+
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+                result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
+
+                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+                var user = await _userRepository.GetUserByTgId(userTg);
+
+                result.InCart = user.Cart.CartItems.Any(c => c.ProductId == product.Guid);
+                result.InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == product.Guid);
+
+                return result;
             }
-            else
+            catch (Exception ex)
             {
-                result.DiscountPercent = "0";
-                decimal? price = region switch
-                {
-                    "UA" => product.PriceUa,
-                    "TR" => product.PriceTr,
-                    _ => throw new Exception("No region")
-
-                };
-                result.Price = await _calculatePrice.CalcPrice(price, product.Type, region);
-                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
+                _logger.LogError(ex, "An error occurred while retrieving game details for GameId: {GameId}, Edition: {Edition}", GameId, Edition);
+                throw;
             }
-
-            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
-
-            var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-            var user = await _userRepository.GetUserByTgId(userTg);
-
-            result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
-            result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == product.Guid) != null) ? true : false;
-
-            return result;
         }
     }
 }

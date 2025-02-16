@@ -17,9 +17,9 @@ namespace Business.Data.Models
         public string CusaCodeTr { get; set; }
 
         /// <summary>
-        /// Типо предзаказ - 1, 0 - не предзаказ
+        /// Тип дополнение или донат
         /// </summary>
-        public bool TypeName { get; set; }
+        public string TypeName { get; set; }
 
         /// <summary>
         /// Наименование Аддона
