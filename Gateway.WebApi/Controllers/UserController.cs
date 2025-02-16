@@ -35,7 +35,7 @@ namespace Gateway.WebApi.Controllers
             }
             catch(Exception ex) 
             {
-                _logger.LogInformation(ex, "Error occurred while Fetching User with tg ID : {id}", tgId);
+                _logger.LogError(ex, "Error occurred while Fetching User with tg ID : {id}", tgId);
                 return StatusCode(500, "Error occurred while fetching user");
             }
 
@@ -59,7 +59,7 @@ namespace Gateway.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation(ex, "Error occurred while Fetching User cart with tg ID : {id}", tgId);
+                _logger.LogError(ex, "Error occurred while Fetching User cart with tg ID : {id}", tgId);
                 return StatusCode(500, "Error occurred while fetching user cart");
             }
         }
@@ -83,7 +83,7 @@ namespace Gateway.WebApi.Controllers
             }
             catch(Exception ex)
             {
-                _logger.LogInformation(ex, "Error occurred while Fetching favorite items with tg ID : {id}", tgId);
+                _logger.LogError(ex, "Error occurred while Fetching favorite items with tg ID : {id}", tgId);
                 return StatusCode(500, "Error occurred while fetching favorite items");
             }
             
@@ -107,8 +107,31 @@ namespace Gateway.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation(ex, "Error occurred while Fetching user order historyh tg ID : {id}", tgId);
+                _logger.LogError(ex, "Error occurred while Fetching user order historyh tg ID : {id}", tgId);
                 return StatusCode(500, "Error occurred while fetching user order history");
+            }
+        }
+
+        /// <summary>
+        /// Добавление предмета в корзину пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpPut]
+
+        public async Task<ActionResult> AddItemInCart(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Adding item with GUID {id} to user cart with tg id {tgid}", itemId, tgId);
+                await _usersQuery.UpdateUserCart(tgId, itemId);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding item in user cart with tg ID : {id}, item GUID {id}", tgId, itemId);
+                return StatusCode(500, "Error occurred while adding item in user cart");
             }
         }
     }
