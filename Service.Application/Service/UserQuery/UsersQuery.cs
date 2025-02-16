@@ -16,6 +16,7 @@ namespace Service.Application.Service.UserQuery
         private readonly Repository<LoyaltyCurrency> _loyalityRepository;
         private readonly ProductRepository<Product> _productRepository;
         private readonly Repository<CartItem> _cartItemRepository;
+        private readonly Repository<FavoriteItem> _favoriteRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -249,11 +250,110 @@ namespace Service.Application.Service.UserQuery
                 };
                 
                 await _cartItemRepository.Add(result);
+                
+                cart.CartItems ??= new List<CartItem>();
+                cart.CartItems.Add(result);
 
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating user cart tg Id {tgid}, itemId {itemId}", tgId, itemId);
+                throw;
+            }
+        }
+
+        public async Task UpdateUserFavorites(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation($"Updating user {tgId} favorites: {itemId}");
+
+                var product = await _productRepository.GetEntityType(itemId);
+                if (product is null)
+                {
+                    _logger.LogError("No Product with GUID {id}", itemId);
+                    throw new Exception($"Product with GUID {itemId} not found");
+                }
+
+                var fav = (await _userRepository.GetUserByTgId(tgId)).Favorite;
+                if (fav is null)
+                {
+                    _logger.LogError("User Favorite with tg id {id} not found", tgId);
+                    throw new Exception($"User Favorite with tg id {tgId} not found");
+                }
+                var result = new FavoriteItem()
+                {
+                    ProductId = product.Guid,
+                    Product = product
+                };
+
+                await _favoriteRepository.Add(result);
+
+                fav.FavoriteItems ??= new List<FavoriteItem>();
+                fav.FavoriteItems.Add(result);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, itemId);
+                throw;
+            }
+        }
+
+        public async Task DeleteFromCart(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation($"Deliting from user {tgId} cart: {itemId}");
+
+                var cart = (await _userRepository.GetUserByTgId(tgId)).Cart.CartItems;
+
+                if (cart is null)
+                {
+                    _logger.LogError("User Cart with tg id {id} not found", tgId);
+                    throw new Exception($"User Cart with tg id {tgId} not found");
+                }
+
+                var item = cart.FirstOrDefault(c => c.ProductId == itemId);
+                if(item is null)
+                {
+                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", itemId, tgId);
+                    throw new Exception($"User Cart with tg id {tgId} not found");
+                }
+                await _cartItemRepository.SoftDelete(item.Guid);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user Cart tg Id {tgid}, itemId {itemId}", tgId, itemId);
+                throw;
+            }
+        }
+
+        public async Task DeleteFromFavorites(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation($"Deliting from user {tgId} favorites: {itemId}");
+
+                var fav = (await _userRepository.GetUserByTgId(tgId)).Favorite.FavoriteItems;
+
+                if (fav is null)
+                {
+                    _logger.LogError("User Favorites with tg id {id} not found", tgId);
+                    throw new Exception($"User Favorites with tg id {tgId} not found");
+                }
+
+                var item = fav.FirstOrDefault(c => c.ProductId == itemId);
+                if (item is null)
+                {
+                    _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", itemId, tgId);
+                    throw new Exception($"User FavoriteItem with tg id {tgId} not found");
+                }
+                await _favoriteRepository.SoftDelete(item.Guid);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, itemId);
                 throw;
             }
         }

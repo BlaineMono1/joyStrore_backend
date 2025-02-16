@@ -134,5 +134,74 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, "Error occurred while adding item in user cart");
             }
         }
+
+        /// <summary>
+        /// Добавление предмета в избранное пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpPut]
+
+        public async Task<ActionResult> AddItemInFavorite(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Adding item with GUID {id} to user Favorite with tg id {tgid}", itemId, tgId);
+                await _usersQuery.UpdateUserFavorites(tgId, itemId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding item in user Favorites with tg ID : {id}, item GUID {id}", tgId, itemId);
+                return StatusCode(500, "Error occurred while adding item in user Favorites");
+            }
+        }
+
+        /// <summary>
+        /// Удаление предмета из избранного пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpDelete]
+
+        public async Task<ActionResult> DeleteItemInFavorite(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Deleting item with GUID {id} to user Favorite with tg id {tgid}", itemId, tgId);
+                await _usersQuery.DeleteFromFavorites(tgId, itemId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while Deliting item in user Favorites with tg ID : {id}, item GUID {id}", tgId, itemId);
+                return StatusCode(500, "Error occurred while Deliting item in user Favorites");
+            }
+        }
+
+        /// <summary>
+        /// Удаление предмета из корзины пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpDelete]
+
+        public async Task<ActionResult> DeleteFromCart(string tgId, Guid itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Deleting item with GUID {id} to user Cart with tg id {tgid}", itemId, tgId);
+                await _usersQuery.DeleteFromCart(tgId, itemId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while Deliting item in user Cart with tg ID : {id}, item GUID {id}", tgId, itemId);
+                return StatusCode(500, "Error occurred while Deliting item in user Cart");
+            }
+        }
     }
 }
