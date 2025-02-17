@@ -26,6 +26,10 @@ namespace Business.Data.Models
         /// </summary>
         public string? EditionName { get; set; }
         /// <summary>
+        /// Тип издания 
+        /// </summary>
+        public string EditionType { get; set; }
+        /// <summary>
         /// Url изображения
         /// </summary>
         public string? Image {  get; set; }
@@ -41,15 +45,16 @@ namespace Business.Data.Models
         /// Что входит в издание
         /// </summary>
         public string? Features { get; set; }
-        /// <summary>
-        /// Кол-во оценок 
-        /// </summary>
-        public string? Popular {  get; set; }
-        /// <summary>
-        /// Рейтинг игры 
-        /// </summary>
-        public float? Rating { get; set; }
 
+        /// <summary>
+        /// Релиз игры
+        /// </summary>
+        public DateTime? Release { get; set; }
+
+        /// <summary>
+        /// Регион в котором доступна игра
+        /// </summary>
+        public string Region { get; set; }
         #endregion
 
         #region связи

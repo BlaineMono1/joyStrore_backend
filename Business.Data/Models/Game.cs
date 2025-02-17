@@ -21,14 +21,12 @@ namespace Business.Data.Models
         /// Язык игры
         /// </summary>
         public string? Languages {  get; set; }
+
         /// <summary>
-        /// Релиз игры
+        /// Кол-во оценок 
         /// </summary>
-        public DateTime? Release {  get; set; }
-        /// <summary>
-        /// В каком регионе игра есть (UA | TR)
-        /// </summary>
-        public string? Region {  get; set; }
+        public string? Popular { get; set; }
+        
         #endregion
 
         #region связи

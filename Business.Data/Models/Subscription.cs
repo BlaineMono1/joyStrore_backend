@@ -33,7 +33,7 @@ namespace Business.Data.Models
         public string? Platform { get; set; }
 
         /// <summary>
-        /// Платформа игры PS4 | PS5
+        /// Длительность
         /// </summary>
         public string? Duration { get; set; }
 

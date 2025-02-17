@@ -6,6 +6,9 @@ using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
 using System.Reflection.Metadata;
+using static System.Net.Mime.MediaTypeNames;
+using System.Xml.Linq;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Service.Application.Service.UserQuery
 {
@@ -16,7 +19,9 @@ namespace Service.Application.Service.UserQuery
         private readonly Repository<LoyaltyCurrency> _loyalityRepository;
         private readonly ProductRepository<Product> _productRepository;
         private readonly Repository<CartItem> _cartItemRepository;
-        private readonly Repository<FavoriteItem> _favoriteRepository;
+        private readonly Repository<FavoriteItem> _favoriteItemRepository;
+        private readonly Repository<Favorite> _favoriteRepository;
+        private readonly Repository<Cart> _cartRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -93,18 +98,44 @@ namespace Service.Application.Service.UserQuery
                 {
                     var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
                     var jPrice = await _calculatePrice.CalcJprice(price, region);
+                    var result = new CartItemDto();
 
-                    return new CartItemDto
+                    switch (item.Product.Type)
                     {
-                        image = item.Product.Edition.Image,
-                        Name = item.Product.Edition.Game.Name,
-                        EditionName = item.Product.Edition.EditionName,
-                        Id = item.Product.Edition.GameId,
-                        Discount = item.Product.DiscountPercent,
-                        Price = price,
-                        JPrice = jPrice,
-                        Platform = item.Product.Edition.Platform
-                    };
+                        case "Game":
+                            result.image = item.Product.Edition.Image;
+                            result.Name = item.Product.Edition.EditionName;
+                            result.EditionName = item.Product.Edition.EditionType;
+                            result.Id = item.Product.Edition.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.Platform = item.Product.Edition.Platform;
+                            break;
+                        case "AddOn":
+                            result.image = item.Product.AddOn.Image;
+                            result.Name = item.Product.AddOn.Name;
+                            result.EditionName = "";
+                            result.Id = item.Product.AddOn.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.Platform = item.Product.AddOn.Platform;
+                            break;
+                        case "Subscription":
+                            result.image = item.Product.Subscription.Image;
+                            result.Name = item.Product.Subscription.Name;
+                            result.EditionName = "";
+                            result.Id = item.Product.Subscription.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.Platform = item.Product.Subscription.Platform;
+                            break;
+                    }
+
+
+                    return result;
                 }));
 
                 var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
@@ -148,18 +179,43 @@ namespace Service.Application.Service.UserQuery
                 {
                     var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
                     var jPrice = await _calculatePrice.CalcJprice(price, region);
-
-                    return new FavoriteDto
+                    var result = new FavoriteDto();
+                    switch (item.Product.Type)
                     {
-                        GameId = item.Product.Edition.GameId,
-                        Image = item.Product.Edition.Image,
-                        Name = item.Product.Edition.Game.Name,
-                        Edition = item.Product.Edition.EditionName,
-                        Discount = item.Product.DiscountPercent,
-                        Price = price,
-                        JPrice = jPrice,
-                        InCart = user.Cart.CartItems.Any(c => c.ProductId == item.ProductId)
-                    };
+                        case "Game":
+                            result.image = item.Product.Edition.Image;
+                            result.Name = item.Product.Edition.EditionName;
+                            result.EditionName = item.Product.Edition.EditionType;
+                            result.Id = item.Product.Edition.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.DiscountTime = item.Product.DiscountDate;
+                            break;
+                        case "AddOn":
+                            result.image = item.Product.AddOn.Image;
+                            result.Name = item.Product.AddOn.Name;
+                            result.EditionName = "";
+                            result.Id = item.Product.AddOn.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.DiscountTime = item.Product.DiscountDate;
+                            break;
+                        case "Subscription":
+                            result.image = item.Product.Subscription.Image;
+                            result.Name = item.Product.Subscription.Name;
+                            result.EditionName = "";
+                            result.Id = item.Product.Subscription.Guid;
+                            result.Discount = item.Product.DiscountPercent;
+                            result.Price = price;
+                            result.JPrice = jPrice;
+                            result.DiscountTime = item.Product.DiscountDate;
+                            break;
+                    }
+                    result.InCart = (user.Cart.CartItems is null) ? false : user.Cart.CartItems.Any(c => c.ProductId == item.ProductId);
+
+                    return result;
                 }));
 
                 _logger.LogInformation("Successfully fetched user favorite items for TG ID: {TgId}", TgId);
@@ -194,18 +250,37 @@ namespace Service.Application.Service.UserQuery
                     {
                         OrderNumber = orderItem.OrderCode,
                         OrderDate = orderItem.DateCreate,
-                        items = (List<CartItemDto>)orderItem.OrderProductItems.Select(productOrderItem =>
+                        items = (List<CartItemDto>)orderItem.OrderProductItems.Select(item =>
                         {
-                            return new CartItemDto
+                            var result = new CartItemDto();
+                            switch (item.Product.Type)
                             {
-                                Id = productOrderItem.Product.Edition.GameId,
-                                image = productOrderItem.Product.Edition.Image,
-                                Name = productOrderItem.Product.Edition.Game.Name,
-                                EditionName = productOrderItem.Product.Edition.EditionName,
-                                Price = productOrderItem.Pirce,
-                                Discount = productOrderItem.Discount,
-                                Platform = productOrderItem.Product.Edition.Platform
-                            };
+                                case "Game":
+                                    result.image = item.Product.Edition.Image;
+                                    result.Name = item.Product.Edition.EditionName;
+                                    result.EditionName = item.Product.Edition.EditionType;
+                                    result.Id = item.Product.Edition.Guid;
+                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Price = item.Pirce;
+                                    break;
+                                case "AddOn":
+                                    result.image = item.Product.AddOn.Image;
+                                    result.Name = item.Product.AddOn.Name;
+                                    result.EditionName = "";
+                                    result.Id = item.Product.AddOn.Guid;
+                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Price = item.Pirce;
+                                    break;
+                                case "Subscription":
+                                    result.image = item.Product.Subscription.Image;
+                                    result.Name = item.Product.Subscription.Name;
+                                    result.EditionName = "";
+                                    result.Id = item.Product.Subscription.Guid;
+                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Price = item.Pirce;
+                                    break;
+                            }
+                            return result;
                         })
                     };
 
@@ -253,7 +328,7 @@ namespace Service.Application.Service.UserQuery
                 
                 cart.CartItems ??= new List<CartItem>();
                 cart.CartItems.Add(result);
-
+                await _cartRepository.Update(cart);
             }
             catch (Exception ex)
             {
@@ -287,11 +362,11 @@ namespace Service.Application.Service.UserQuery
                     Product = product
                 };
 
-                await _favoriteRepository.Add(result);
+                await _favoriteItemRepository.Add(result);
 
                 fav.FavoriteItems ??= new List<FavoriteItem>();
                 fav.FavoriteItems.Add(result);
-
+                await _favoriteRepository.Update(fav);
             }
             catch (Exception ex)
             {
@@ -320,7 +395,7 @@ namespace Service.Application.Service.UserQuery
                     _logger.LogError("CartItem with id {id} not found in User {id} Cart", itemId, tgId);
                     throw new Exception($"User Cart with tg id {tgId} not found");
                 }
-                await _cartItemRepository.SoftDelete(item.Guid);
+                await _cartItemRepository.HardDelete(item.Guid);
             }
             catch(Exception ex)
             {
@@ -349,7 +424,7 @@ namespace Service.Application.Service.UserQuery
                     _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", itemId, tgId);
                     throw new Exception($"User FavoriteItem with tg id {tgId} not found");
                 }
-                await _favoriteRepository.SoftDelete(item.Guid);
+                await _favoriteRepository.HardDelete(item.Guid);
             }
             catch (Exception ex)
             {
