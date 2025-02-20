@@ -432,5 +432,18 @@ namespace Service.Application.Service.UserQuery
                 throw;
             }
         }
+
+        public async Task UpdateConsoleType(string tgId, string Console)
+        {
+            var user = await _userRepository.GetUserByTgId(tgId);
+
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+            var settings = user.Settings.FirstOrDefault(s => s.Region == region);
+
+            settings.Platform = Console;
+
+            await _setingsRepository.Update(settings);
+        }
     }
 }

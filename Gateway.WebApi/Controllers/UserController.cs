@@ -203,5 +203,28 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, "Error occurred while Deliting item in user Cart");
             }
         }
+
+        /// <summary>
+        /// Удаление предмета из корзины пользователя
+        /// </summary>
+        /// <returns></returns>
+        /// 
+
+        [HttpPut]
+
+        public async Task<ActionResult> UpdateUserConsole(string tgId, string Console)
+        {
+            try
+            {
+                _logger.LogInformation("Updating users console with tg id {tgid}", tgId);
+                await _usersQuery.UpdateConsoleType(tgId, Console);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while Updating users console with tg id {tgid}", tgId);
+                return StatusCode(500, "Error occurred while Updating users console");
+            }
+        }
     }
 }

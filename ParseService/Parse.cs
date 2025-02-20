@@ -119,12 +119,11 @@ namespace Services.ParseService
                             editionDto.Subscription = edition.Subscription;
                             editionDto.Region = edition.CodeRegion;
                             editionDto.Release = edition.Release;
-                            string[] geners = edition.Geners.Split('|');
                             editionDto.Game = gameDto;
                             editionDto.GameId = gameDto.Guid;
                             editionDto.ProductId = productDto.Guid;
                             editionDto.Geners = new List<Geners>();
-                            foreach (var gener in geners)
+                            foreach (var gener in edition.Geners.Split('|'))
                             {
                                 keyValuePairs[gener].Add(editionDto.Guid);
                             }
