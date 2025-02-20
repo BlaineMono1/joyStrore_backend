@@ -5,10 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
-using System.Reflection.Metadata;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
-using Microsoft.AspNetCore.Http.HttpResults;
+
 
 namespace Service.Application.Service.UserQuery
 {
@@ -65,7 +62,7 @@ namespace Service.Application.Service.UserQuery
                     Code = settings?.Code,
                     JBal = loyaloty?.BalanceJoy ?? 0,
                     JPlus = loyaloty?.BalanceJoyPlus ?? 0,
-                    Platform = settings?.Platform
+                    Platform = user.Platform
                 };
 
                 _logger.LogInformation("Successfully fetched user data for TG ID: {TgId}", tgId);
@@ -437,13 +434,8 @@ namespace Service.Application.Service.UserQuery
         {
             var user = await _userRepository.GetUserByTgId(tgId);
 
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
-            var settings = user.Settings.FirstOrDefault(s => s.Region == region);
-
-            settings.Platform = Console;
-
-            await _setingsRepository.Update(settings);
+            user.Platform = Console;
+            await _userRepository.Update(user);
         }
     }
 }
