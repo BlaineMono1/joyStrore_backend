@@ -13,7 +13,6 @@ namespace Business.Data.Models
         #endregion
 
         #region связи
-        public List<Edition>? Editions { get; set; }
         #endregion
     }
 }

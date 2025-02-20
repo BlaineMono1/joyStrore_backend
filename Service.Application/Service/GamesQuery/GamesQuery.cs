@@ -118,8 +118,8 @@ namespace Service.Application.Service.GamesQuery
                 {
                     Id = GameId,
                     Image = edition.Image,
-                    Geners = await _genersRepository.GetGeners(edition.Guid),
-                    RealiseDate = game.Release ?? DateTime.MinValue,
+                    Geners =edition.Geners,
+                    RealiseDate = edition.Release,
                     Platforms = edition.Platform,
                     Languages = game.Languages,
                     Editions = editions,

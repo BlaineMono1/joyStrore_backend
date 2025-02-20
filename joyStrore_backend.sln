@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service.Application", "Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Services\Services.csproj", "{540D0937-6F3D-47F7-925C-B22DBC85E830}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParseService", "ParseService\ParseService.csproj", "{135499C8-93EF-444B-B069-81D0BFFEA795}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{540D0937-6F3D-47F7-925C-B22DBC85E830}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{540D0937-6F3D-47F7-925C-B22DBC85E830}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{540D0937-6F3D-47F7-925C-B22DBC85E830}.Release|Any CPU.Build.0 = Release|Any CPU
+		{135499C8-93EF-444B-B069-81D0BFFEA795}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{135499C8-93EF-444B-B069-81D0BFFEA795}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{135499C8-93EF-444B-B069-81D0BFFEA795}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{135499C8-93EF-444B-B069-81D0BFFEA795}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,5 +69,6 @@ Global
 		{866DC65F-7963-42F2-A209-602F4618255B} = {B26C31F1-898E-4875-B6AD-76B5490C6D14}
 		{1D8ED126-765D-4A83-9A4A-11AB844049B8} = {16C20EFE-35FB-4018-BE17-69CB93FAEE5E}
 		{540D0937-6F3D-47F7-925C-B22DBC85E830} = {034B4C01-9B07-43F5-83FB-1568D8E185A9}
+		{135499C8-93EF-444B-B069-81D0BFFEA795} = {034B4C01-9B07-43F5-83FB-1568D8E185A9}
 	EndGlobalSection
 EndGlobal

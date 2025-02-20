@@ -10,6 +10,11 @@ namespace Business.Data.Models
         /// UserID tg
         /// </summary>
         public string TgUserId { get; set; }
+
+        /// <summary>
+        /// Платформа игры Ps4 или Ps5
+        /// </summary>
+        public string Platform { get; set; }
         #endregion
 
         #region связи

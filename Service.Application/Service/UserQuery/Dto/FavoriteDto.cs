@@ -3,10 +3,10 @@ namespace Service.Application.Service.UserQuery.Dto
 {
     public class FavoriteDto
     {
-        public Guid GameId { get; set; }
-        public string Image { get; set; }
+        public Guid Id { get; set; }
+        public string image { get; set; }
         public string Name { get; set; }
-        public string Edition { get; set; }
+        public string EditionName { get; set; }
         public decimal Price { get; set; }
         public decimal JPrice { get; set; }
         public DateTime? DiscountTime { get; set; }
