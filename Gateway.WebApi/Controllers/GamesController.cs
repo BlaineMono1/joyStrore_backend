@@ -42,7 +42,7 @@ namespace Gateway.WebApi.Controllers
         /// Вывод игры по id и edition
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<GameDto>> GetGame(Guid GameId, string Edition)
+        public async Task<ActionResult<GameDto>> GetGame(Guid GameId, Guid Edition)
         {
             try
             {
@@ -54,6 +54,26 @@ namespace Gateway.WebApi.Controllers
             {
                 _logger.LogError(ex, "Error occurred while fetching game details for GameId: {GameId}, Edition: {Edition}", GameId, Edition);
                 return StatusCode(500, "An error occurred while retrieving the game details.");
+            }
+        }
+
+
+        /// <summary>
+        /// Фильтрация игр по названию и жанрам
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<List<GamesListDto>>> FilterGames(string name, List<string> geners)
+        {
+            try
+            {
+                _logger.LogInformation("Filtering games");
+                var games = await _gamesQuery.FilterGames(name, geners);
+                return Ok(games);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while filtering games");
+                return StatusCode(500, "An error occurred while filtering games.");
             }
         }
     }
