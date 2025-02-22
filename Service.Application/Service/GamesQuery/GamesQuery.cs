@@ -5,13 +5,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Service.Application.Service.GamesQuery
 {
     public class GamesQuery
     {
         private readonly Repository<Section> _sectionRepository;
-        private readonly Repository<Game> _gameRepository;
+        private readonly GameRepository<Game> _gameRepository;
         private readonly ProductRepository<Product> _productRepository;
         private readonly EditionRepository<Edition> _editionRepository;
         private readonly GenersRepository<Geners> _genersRepository;
@@ -89,7 +90,7 @@ namespace Service.Application.Service.GamesQuery
             return result;
         }
 
-        public async Task<GameDto> ShowGame(Guid GameId, string Edition)
+        public async Task<GameDto> ShowGame(Guid GameId, Guid Edition)
         {
             try
             {
@@ -97,7 +98,7 @@ namespace Service.Application.Service.GamesQuery
 
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
-                var edition = (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.EditionName == Edition);
+                var edition = (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.Guid == Edition);
                 if (edition == null)
                 {
                     _logger.LogWarning("Edition {Edition} not found for GameId {GameId}.", Edition, GameId);
@@ -145,6 +146,39 @@ namespace Service.Application.Service.GamesQuery
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving game details for GameId: {GameId}, Edition: {Edition}", GameId, Edition);
+                throw;
+            }
+        }
+
+        public async Task<List<GamesListDto>> FilterGames(string name, List<string> geners)
+        {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+            try
+            {
+                _logger.LogInformation("Filtering games");
+                var games = await _gameRepository.FilterGames(name, geners);
+
+                var result = await Task.WhenAll(
+                    games.SelectMany(game => game.Editions)
+                         .Select(async edition => new GamesListDto
+                         {
+                             FIlterName = name,
+                             Id = edition.Game.Guid,
+                             ImageFilepath = edition.Image,
+                             Name = edition.EditionName,
+                             Discount = edition.Product.DiscountPercent,
+                             Price = await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
+                             Jprice = await _calculatePrice.CalcJprice(
+                                 await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
+                                 region)
+                         })
+                );
+
+                return result.ToList();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while filtering games");
                 throw;
             }
         }
