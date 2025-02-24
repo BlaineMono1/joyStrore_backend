@@ -9,8 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.1" />
   </ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Business.Data\Business.Data.csproj" />
+  </ItemGroup>
 </Project>

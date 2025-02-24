@@ -1,5 +1,5 @@
-﻿using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
+﻿using Business.Data.Iterfaces;
+using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.GetNewsList.Dto;
 
@@ -7,12 +7,13 @@ namespace Service.Application.Service.GetNewsList
 {
     public class NewsQuery
     {
-        private readonly Repository<News> _newsRepository;
+        private readonly IRepository<News> _newsRepository;
 
         private readonly ILogger<NewsQuery> _logger;
-        public NewsQuery(ILogger<NewsQuery> logger)
+        public NewsQuery(ILogger<NewsQuery> logger, IRepository<News> newsRepository)
         {
             _logger = logger;
+            _newsRepository = newsRepository;
         }
 
         public async Task<List<NewsDto>> GetNewsList()

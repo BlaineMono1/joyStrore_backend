@@ -8,22 +8,29 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using DataBaseToAccess;
 using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
+using Business.Data.Iterfaces;
 
 namespace Services.ParseService
 {
     public class Parse
     {
         private readonly ILogger<Parse> _logger;
-        private readonly BaseDbContext _context;
-        private readonly Repository<Game> _gameRepository;
-        private readonly Repository<Edition> _editionRepository;
-        private readonly Repository<Product> _productRepository;
-        private readonly Repository<Geners> _genersRepository;
-        public Parse(ILogger<Parse> logger, BaseDbContext context)
+
+        private readonly IRepository<Game> _gameRepository;
+        private readonly IRepository<Edition> _editionRepository;
+        private readonly IRepository<Product> _productRepository;
+        private readonly IRepository<Geners> _genersRepository;
+        public Parse(ILogger<Parse> logger, IRepository<Game> gameRepository,
+        IRepository<Edition> editionRepository,
+        IRepository<Product> productRepository,
+        IRepository<Geners> genersRepository)
         {
             _logger = logger;
-            _context = context;
+
+            _gameRepository = gameRepository;
+            _editionRepository = editionRepository;
+            _productRepository = productRepository;
+            _genersRepository = genersRepository;
         }
 
         private class GameInfo

@@ -3,6 +3,7 @@ using DataBaseToAccess.Repositiory;
 using Service.Application.Iterfaces;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Business.Data.Iterfaces;
 
 namespace Services.CalculationService
 {
@@ -10,17 +11,17 @@ namespace Services.CalculationService
     {
         private static readonly HttpClient httpClient = new HttpClient();
 
-        private readonly Repository<SettingPrice> _settingPriceRepository;
-        private readonly Repository<PriceSettingSubscription> _priceSettingSubscription;
-        private readonly Repository<LoyaltySetting> _loyaltySettingRepository;
-        private readonly Repository<LoyaltyCashback> _cahsbackRepository; // redis
+        private readonly IRepository<SettingPrice> _settingPriceRepository;
+        private readonly IRepository<PriceSettingSubscription> _priceSettingSubscription;
+        private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
+        private readonly IRepository<LoyaltyCashback> _cahsbackRepository; // redis
         private readonly ILogger<CalculatePrice> _logger;
 
         public CalculatePrice(
-            Repository<SettingPrice> settingPriceRepository,
-            Repository<PriceSettingSubscription> priceSettingSubscription,
-            Repository<LoyaltySetting> loyaltySettingRepository,
-            Repository<LoyaltyCashback> cahsbackRepository,
+            IRepository<SettingPrice> settingPriceRepository,
+            IRepository<PriceSettingSubscription> priceSettingSubscription,
+            IRepository<LoyaltySetting> loyaltySettingRepository,
+            IRepository<LoyaltyCashback> cahsbackRepository,
             ILogger<CalculatePrice> logger)
         {
             _settingPriceRepository = settingPriceRepository;

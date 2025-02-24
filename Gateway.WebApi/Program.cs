@@ -4,11 +4,14 @@ using Services.CalculationService;
 using Services.GetRegionFromCookie;
 using Microsoft.EntityFrameworkCore;
 using Service.Application.Iterfaces;
+using Business.Data.Iterfaces;
+using DataBaseToAccess.Repositiory;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
+builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 //Calc service
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 //region Cookie

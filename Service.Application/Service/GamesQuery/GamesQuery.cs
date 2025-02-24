@@ -1,22 +1,21 @@
-﻿using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
-using DataBaseToAccess.Repositiory.RepositoryEntity;
+﻿using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
+using Business.Data.Iterfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Service.Application.Service.GamesQuery
 {
     public class GamesQuery
     {
-        private readonly Repository<Section> _sectionRepository;
-        private readonly GameRepository<Game> _gameRepository;
-        private readonly ProductRepository<Product> _productRepository;
-        private readonly EditionRepository<Edition> _editionRepository;
-        private readonly GenersRepository<Geners> _genersRepository;
-        private readonly UserRepository<User> _userRepository;
+        private readonly IRepository<Section> _sectionRepository;
+        private readonly IGameRepository<Game> _gameRepository;
+        private readonly IProductRepository<Product> _productRepository;
+        private readonly IEditionRepository<Edition> _editionRepository;
+        private readonly IGenersRepository<Geners> _genersRepository;
+        private readonly IUserRepository<User> _userRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -27,12 +26,24 @@ namespace Service.Application.Service.GamesQuery
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
             IRegionFromCookie regionFromCookie,
-            ILogger<GamesQuery> logger)
+            ILogger<GamesQuery> logger,
+            IRepository<Section> sectionRepository,
+            IGameRepository<Game> gameRepository,
+            IProductRepository<Product> productRepository,
+            IEditionRepository<Edition> editionRepository,
+            IGenersRepository<Geners> genersRepository,
+            IUserRepository<User> userRepository)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
+
+            _sectionRepository = sectionRepository;
+            _gameRepository = gameRepository;
+            _productRepository = productRepository;
+            _editionRepository = editionRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<List<GamesListDto>> GamesList()

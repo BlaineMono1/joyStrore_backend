@@ -1,6 +1,6 @@
-﻿using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
-using DataBaseToAccess.Repositiory.RepositoryEntity;
+﻿using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
@@ -11,14 +11,14 @@ namespace Service.Application.Service.UserQuery
 {
     public class UsersQuery
     {
-        private readonly UserRepository<User> _userRepository;
-        private readonly Repository<Setting> _setingsRepository;
-        private readonly Repository<LoyaltyCurrency> _loyalityRepository;
-        private readonly ProductRepository<Product> _productRepository;
-        private readonly Repository<CartItem> _cartItemRepository;
-        private readonly Repository<FavoriteItem> _favoriteItemRepository;
-        private readonly Repository<Favorite> _favoriteRepository;
-        private readonly Repository<Cart> _cartRepository;
+        private readonly IUserRepository<User> _userRepository;
+        private readonly IRepository<Setting> _setingsRepository;
+        private readonly IRepository<LoyaltyCurrency> _loyalityRepository;
+        private readonly IProductRepository<Product> _productRepository;
+        private readonly IRepository<CartItem> _cartItemRepository;
+        private readonly IRepository<FavoriteItem> _favoriteItemRepository;
+        private readonly IRepository<Favorite> _favoriteRepository;
+        private readonly IRepository<Cart> _cartRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -29,12 +29,30 @@ namespace Service.Application.Service.UserQuery
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
             IRegionFromCookie regionFromCookie,
-            ILogger<UsersQuery> logger)
+            ILogger<UsersQuery> logger,
+            IUserRepository<User> userRepository,
+            IRepository<Setting> setingsRepository,
+            IRepository<LoyaltyCurrency> loyalityRepository,
+            IProductRepository<Product> productRepository,
+            IRepository<CartItem> cartItemRepository,
+            IRepository<FavoriteItem> favoriteItemRepository,
+            IRepository<Favorite> favoriteRepository,
+            IRepository<Cart> cartRepository)
+
+
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
+            _userRepository = userRepository;
+            _setingsRepository = setingsRepository;
+            _loyalityRepository = loyalityRepository;
+            _productRepository = productRepository;
+            _cartItemRepository = cartItemRepository;
+            _favoriteItemRepository = favoriteItemRepository;
+            _favoriteRepository = favoriteRepository;
+            _cartRepository = cartRepository;
         }
 
         public async Task<UserDto> UserByTgId(string tgId)

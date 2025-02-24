@@ -1,4 +1,4 @@
-﻿using DataBaseToAccess;
+﻿
 
 namespace Service.Application.Service.GetNewsList.Dto
 {

@@ -11,4 +11,8 @@
 		<ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
 		<ProjectReference Include="..\Service.Application\Service.Application.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Interfaces\" />
+	</ItemGroup>
 </Project>

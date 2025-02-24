@@ -1,22 +1,20 @@
-﻿using Business.Data.Iterfaces.Store;
+﻿using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
-using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.AddOnsQuery.Dto;
-using System.Linq;
-using static System.Net.Mime.MediaTypeNames;
+
 
 namespace Service.Application.Service.AddOnsQuery
 {
     public class AddOnsQuery
     {
-        private readonly Repository<GroupAddOn> _groupAddOnRepository;
-        private readonly GameRepository<Game> _gameRepository;
-        private readonly Repository<AddOn> _addOnRepository;
-        private readonly UserRepository<User> _userRepository;
+        private readonly IRepository<GroupAddOn> _groupAddOnRepository;
+        private readonly IGameRepository<Game> _gameRepository;
+        private readonly IRepository<AddOn> _addOnRepository;
+        private readonly IUserRepository<User> _userRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -26,12 +24,21 @@ namespace Service.Application.Service.AddOnsQuery
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
             IRegionFromCookie regionFromCookie,
-            ILogger<AddOnsQuery> logger)
+            ILogger<AddOnsQuery> logger,
+            IRepository<GroupAddOn> groupAddOnRepository,
+            IGameRepository<Game> gameRepository,
+            IRepository<AddOn> addOnRepository,
+            IUserRepository<User> userRepository)
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
+
+            _userRepository = userRepository;
+            _gameRepository = gameRepository;
+            _userRepository = userRepository;
+            _groupAddOnRepository = groupAddOnRepository;
         }
         public async Task<List<AddOnsListDto>> GroupAddOnsList()
         {
