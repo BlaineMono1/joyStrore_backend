@@ -10,5 +10,8 @@ namespace Business.Data.Iterfaces
         Task SoftDelete(Guid id);
         Task Add(T entity);
         Task HardDelete(Guid id);
+        Task<IQueryable<T>> GetListQuery();
+       
+        }
     }
 }

@@ -16,7 +16,7 @@ namespace DataBaseToAccess.Repositiory
         /// <returns></returns>
         public async Task<List<T>> GetAllList()
         {
-             return await _context.Set<T>().AsNoTracking().Where(e => !e.IsDelete).ToListAsync();
+            return await _context.Set<T>().AsNoTracking().Where(e => !e.IsDelete).ToListAsync();
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace DataBaseToAccess.Repositiory
                 entity.IsDelete = true;
                 await Update(entity);
             }
-            
+
         }
 
 
@@ -79,6 +79,9 @@ namespace DataBaseToAccess.Repositiory
             await _context.SaveChangesAsync();
         }
 
-
+        public async Task<IQueryable<T>> GetListQuery()
+        {
+            return _context.Set<T>().AsNoTracking().Where(_ => !_.IsDelete).AsQueryable();
+        }
     }
 }

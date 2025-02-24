@@ -67,7 +67,7 @@ namespace Gateway.WebApi.Controllers
             try
             {
                 _logger.LogInformation("Filtering games");
-                var games = await _gamesQuery.FilterGames(name, geners);
+                var games = await _gamesQuery.FilterGames(name, geners);    
                 return Ok(games);
             }
             catch (Exception ex)

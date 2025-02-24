@@ -1,5 +1,4 @@
-﻿
-using Business.Data.Iterfaces;
+﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 
@@ -21,12 +20,13 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
         }
         public async Task<List<Game>> FilterGames(string name, List<string> Geners)
         {
-            var gamesByName = (await GetAllList()).Where(g => g.Name.Contains(name));
+            var gamesByName = (await GetListQuery()).Where(g => g.Name.Contains(name));
 
             var gamesFilter = gamesByName.Where(g => g.Editions.Any(e => e.Geners.All(g => Geners.Contains(g.Name))));
 
             return gamesFilter.ToList();
         }
 
+        
     }
 }
