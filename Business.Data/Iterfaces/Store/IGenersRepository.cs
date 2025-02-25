@@ -11,6 +11,8 @@ namespace Business.Data.Iterfaces.Store
         /// <returns></returns>
 
         //Task<List<Geners>> GetGeners(Guid EditionId);
+
+        Task<Geners?> GenerByName(string name);
         
     }
 }

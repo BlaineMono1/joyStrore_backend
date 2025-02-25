@@ -1,6 +1,7 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
@@ -18,5 +19,10 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
         //        ?? throw new Exception("Geners is null");
 
         //}
+
+        public async Task<Geners?> GenerByName(string name)
+        {
+            return await (await GetListQuery()).AsNoTracking().FirstOrDefaultAsync(g => g.Name == name);
+        }
     }
 }

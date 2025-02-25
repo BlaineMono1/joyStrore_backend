@@ -25,7 +25,7 @@ namespace DataBaseToAccess.Repositiory
         /// <returns></returns>
         public async Task<T?> GetById(Guid id)
         {
-            return await _context.Set<T>().FirstOrDefaultAsync(x => x.Guid == id);
+            return await _context.Set<T>().AsNoTracking().FirstOrDefaultAsync(x => x.Guid == id);
         }
 
         /// <summary>
@@ -34,9 +34,23 @@ namespace DataBaseToAccess.Repositiory
         /// <returns></returns>
         public async Task Update(T entity)
         {
-            _context.Set<T>().Update(entity);
+            var existingEntity = await _context.Set<T>().FindAsync(entity.Guid);
+
+            if (existingEntity != null)
+            {
+                // Обновляем значения существующей сущности
+                _context.Entry(existingEntity).CurrentValues.SetValues(entity);
+            }
+            else
+            {
+                // Если сущность не найдена, можно использовать Attach
+                _context.Set<T>().Attach(entity);
+                _context.Entry(entity).State = EntityState.Modified;
+            }
             await _context.SaveChangesAsync();
         }
+
+
 
         /// <summary>
         /// Мягко удалить объект 

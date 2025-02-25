@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataBaseToAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class test1 : Migration
+    public partial class ьшпкфешщт123 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,11 +47,9 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     ConceptId = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Geners = table.Column<string>(type: "text", nullable: false),
-                    Languages = table.Column<string>(type: "text", nullable: false),
-                    Release = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Region = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Languages = table.Column<string>(type: "text", nullable: true),
+                    Popular = table.Column<string>(type: "text", nullable: true),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
@@ -66,8 +64,8 @@ namespace DataBaseToAccess.Migrations
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    FilePathImage = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    FilePathImage = table.Column<string>(type: "text", nullable: true),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
@@ -163,12 +161,10 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     TypeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: true),
                     PriceUa = table.Column<decimal>(type: "numeric", nullable: true),
-                    DiscountUa = table.Column<decimal>(type: "numeric", nullable: true),
                     PriceTr = table.Column<decimal>(type: "numeric", nullable: true),
-                    DiscountTr = table.Column<decimal>(type: "numeric", nullable: true),
-                    DiscountPercent = table.Column<string>(type: "text", nullable: false),
+                    DiscountPercent = table.Column<string>(type: "text", nullable: true),
                     DiscountDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -245,11 +241,13 @@ namespace DataBaseToAccess.Migrations
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    CusaCode = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false),
-                    Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
+                    CusaCodeUa = table.Column<string>(type: "text", nullable: false),
+                    CusaCodeTr = table.Column<string>(type: "text", nullable: false),
+                    TypeName = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<string>(type: "text", nullable: true),
+                    Image = table.Column<string>(type: "text", nullable: true),
+                    Platform = table.Column<string>(type: "text", nullable: true),
                     GameId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     GroupAddOnGuid = table.Column<Guid>(type: "uuid", nullable: true),
@@ -339,11 +337,13 @@ namespace DataBaseToAccess.Migrations
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    CusaCode = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false),
-                    Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
+                    CusaCodeUa = table.Column<string>(type: "text", nullable: false),
+                    CusaCodeTr = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<string>(type: "text", nullable: true),
+                    Image = table.Column<string>(type: "text", nullable: true),
+                    Platform = table.Column<string>(type: "text", nullable: true),
+                    Duration = table.Column<string>(type: "text", nullable: true),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -387,6 +387,7 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     TgUserId = table.Column<string>(type: "text", nullable: false),
+                    Platform = table.Column<string>(type: "text", nullable: false),
                     RoleId = table.Column<Guid>(type: "uuid", nullable: false),
                     CartId = table.Column<Guid>(type: "uuid", nullable: false),
                     FavoriteId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -436,15 +437,17 @@ namespace DataBaseToAccess.Migrations
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    CusaCode = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false),
-                    EditionName = table.Column<string>(type: "text", nullable: false),
-                    Image = table.Column<string>(type: "text", nullable: false),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
+                    CusaCodeUa = table.Column<string>(type: "text", nullable: false),
+                    CusaCodeTr = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: true),
+                    EditionName = table.Column<string>(type: "text", nullable: true),
+                    EditionType = table.Column<string>(type: "text", nullable: false),
+                    Image = table.Column<string>(type: "text", nullable: true),
+                    Platform = table.Column<string>(type: "text", nullable: true),
                     Subscription = table.Column<string>(type: "text", nullable: true),
-                    Features = table.Column<string>(type: "text", nullable: false),
-                    Popular = table.Column<string>(type: "text", nullable: false),
-                    Rating = table.Column<float>(type: "real", nullable: false),
+                    Features = table.Column<string>(type: "text", nullable: true),
+                    Release = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Region = table.Column<string>(type: "text", nullable: false),
                     GameId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     SectionGuid = table.Column<Guid>(type: "uuid", nullable: true),
@@ -480,7 +483,7 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     Percent = table.Column<decimal>(type: "numeric", nullable: false),
-                    Region = table.Column<int>(type: "integer", nullable: false),
+                    Region = table.Column<string>(type: "text", nullable: false),
                     SubscriptionId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -505,6 +508,7 @@ namespace DataBaseToAccess.Migrations
                     TgUserId = table.Column<string>(type: "text", nullable: false),
                     OrderCode = table.Column<string>(type: "text", nullable: false),
                     ProductTransactionItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductTransactionHistoryGuid = table.Column<Guid>(type: "uuid", nullable: true),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
@@ -512,6 +516,11 @@ namespace DataBaseToAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.Guid);
+                    table.ForeignKey(
+                        name: "FK_Orders_ProductTransactionHistories_ProductTransactionHistor~",
+                        column: x => x.ProductTransactionHistoryGuid,
+                        principalTable: "ProductTransactionHistories",
+                        principalColumn: "Guid");
                     table.ForeignKey(
                         name: "FK_Orders_ProductTransactionItems_ProductTransactionItemId",
                         column: x => x.ProductTransactionItemId,
@@ -569,12 +578,11 @@ namespace DataBaseToAccess.Migrations
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsRegion = table.Column<int>(type: "integer", nullable: false),
+                    Region = table.Column<string>(type: "text", nullable: false),
                     EmailPsStore = table.Column<string>(type: "text", nullable: true),
                     PasswordPsStore = table.Column<string>(type: "text", nullable: true),
                     Code = table.Column<string>(type: "text", nullable: true),
                     Email = table.Column<string>(type: "text", nullable: true),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -592,10 +600,33 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Geners",
+                columns: table => new
+                {
+                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDelete = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Geners", x => x.Guid);
+                    table.ForeignKey(
+                        name: "FK_Geners_Editions_EditionGuid",
+                        column: x => x.EditionGuid,
+                        principalTable: "Editions",
+                        principalColumn: "Guid");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OrdersProductItems",
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    Pirce = table.Column<decimal>(type: "numeric", nullable: false),
+                    Discount = table.Column<string>(type: "text", nullable: false),
                     OrderId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -703,6 +734,11 @@ namespace DataBaseToAccess.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Geners_EditionGuid",
+                table: "Geners",
+                column: "EditionGuid");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LoyaltyOrders_LoyaltyTransactionHistoryId",
                 table: "LoyaltyOrders",
                 column: "LoyaltyTransactionHistoryId");
@@ -711,6 +747,11 @@ namespace DataBaseToAccess.Migrations
                 name: "IX_LoyaltyTransactionHistories_UserId",
                 table: "LoyaltyTransactionHistories",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_ProductTransactionHistoryGuid",
+                table: "Orders",
+                column: "ProductTransactionHistoryGuid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_ProductTransactionItemId",
@@ -792,10 +833,10 @@ namespace DataBaseToAccess.Migrations
                 name: "CartItems");
 
             migrationBuilder.DropTable(
-                name: "Editions");
+                name: "FavoriteItems");
 
             migrationBuilder.DropTable(
-                name: "FavoriteItems");
+                name: "Geners");
 
             migrationBuilder.DropTable(
                 name: "LoyaltyCashbacks");
@@ -828,10 +869,7 @@ namespace DataBaseToAccess.Migrations
                 name: "GroupAddOns");
 
             migrationBuilder.DropTable(
-                name: "Games");
-
-            migrationBuilder.DropTable(
-                name: "Sections");
+                name: "Editions");
 
             migrationBuilder.DropTable(
                 name: "LoyaltyTransactionHistories");
@@ -841,6 +879,12 @@ namespace DataBaseToAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "Subscriptions");
+
+            migrationBuilder.DropTable(
+                name: "Games");
+
+            migrationBuilder.DropTable(
+                name: "Sections");
 
             migrationBuilder.DropTable(
                 name: "Users");

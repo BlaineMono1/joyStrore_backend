@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using DataBaseToAccess;
 using Business.Data.Models;
 using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
 
 namespace Services.ParseService
 {
@@ -19,11 +20,11 @@ namespace Services.ParseService
         private readonly IRepository<Game> _gameRepository;
         private readonly IRepository<Edition> _editionRepository;
         private readonly IRepository<Product> _productRepository;
-        private readonly IRepository<Geners> _genersRepository;
+        private readonly IGenersRepository<Geners> _genersRepository;
         public Parse(ILogger<Parse> logger, IRepository<Game> gameRepository,
         IRepository<Edition> editionRepository,
         IRepository<Product> productRepository,
-        IRepository<Geners> genersRepository)
+        IGenersRepository<Geners> genersRepository)
         {
             _logger = logger;
 
@@ -46,7 +47,7 @@ namespace Services.ParseService
         private class EditionInfo
         {
             public string CusaCodeUA { get; set; }
-            public string CusaCodeTR { get; set; }
+            public string? CusaCodeTR { get; set; }
             public string Type { get; set; }
             public string EditionType { get; set; }
             public string EditionName { get; set; }
@@ -70,18 +71,14 @@ namespace Services.ParseService
             public DateTime? DiscountDate { get; set; }
         }
 
-        public async void StartParse(string json)
+        public async Task StartParse()
         {
             try
             {
                 Dictionary<string, List<Guid>> keyValuePairs = new Dictionary<string, List<Guid>>();
-
-                List<GameInfo>? games = JsonSerializer.Deserialize<List<GameInfo>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true, // Учитываем регистр полей
-                    AllowTrailingCommas = true, // Позволяем запятые в конце
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                });
+                
+                string filePath = "C:\\Users\\Danila\\Downloads\\Telegram Desktop\\cusacode.json"; // Укажите правильный путь
+                List<GameInfo>? games = await ParseJsonFileAsync<List<GameInfo>>(filePath);
 
                 if (games != null)
                 {
@@ -90,7 +87,6 @@ namespace Services.ParseService
                     {
                         var gameDto = new Game();
 
-                        var productDto = new Product();
 
                         gameDto.Name = game.Name;
                         gameDto.ConceptId = game.ConceptId;
@@ -99,7 +95,7 @@ namespace Services.ParseService
                         bool rusVoice = game.LanguagesVoice.Contains("Русский");
                         if (rusTxt && rusVoice)
                         {
-                            gameDto.Languages = "Полность на русском";
+                            gameDto.Languages = "Полностью на русском";
                         }
                         else if (rusTxt)
                         {
@@ -113,45 +109,88 @@ namespace Services.ParseService
                         {
                             gameDto.Languages = "Не переведен на русский";
                         }
-                        foreach (var edition in game.Editions)
-                        {
-                            var editionDto = new Edition();
-                            editionDto.CusaCodeUa = edition.CusaCodeUA;
-                            editionDto.CusaCodeTr = edition.CusaCodeTR;
-                            editionDto.Type = edition.Type;
-                            editionDto.EditionType = edition.EditionType;
-                            editionDto.EditionName = edition.EditionName;
-                            editionDto.Image = edition.Image;
-                            editionDto.Platform = edition.Platform;
-                            editionDto.Subscription = edition.Subscription;
-                            editionDto.Region = edition.CodeRegion;
-                            editionDto.Release = edition.Release;
-                            editionDto.Game = gameDto;
-                            editionDto.GameId = gameDto.Guid;
-                            editionDto.ProductId = productDto.Guid;
-                            editionDto.Geners = new List<Geners>();
-                            foreach (var gener in edition.Geners.Split('|'))
-                            {
-                                keyValuePairs[gener].Add(editionDto.Guid);
-                            }
-                            productDto.TypeId = editionDto.Guid;
-                            productDto.Type = edition.Type;
-                            productDto.PriceUa = edition.Product.PriceUa;
-                            productDto.PriceTr = edition.Product.PriceTr;
-                            productDto.DiscountPercent = edition.Product.DiscountPercent;
-                            productDto.DiscountDate = edition.Product.DiscountDate;
-
-                            editionDto.Product = productDto;
-
-                            gameDto.Editions.Add(editionDto);
-
-                            await _editionRepository.Add(editionDto);
-                            await _productRepository.Add(productDto);
-                        }
                         await _gameRepository.Add(gameDto);
+                        if (game.Editions != null) // Проверка на null
+                        {
+                            foreach (var edition in game.Editions)
+                            {
+                                if((await _gameRepository.GetAllList()).Count() == 633 && (await _editionRepository.GetAllList()).Count() == 1390)
+                                {
+                                    bool t = true; 
+                                }
+                                if (edition == null) continue; // Пропуск, если edition равен null
+                                var productDto = new Product();
+                                productDto.Guid = Guid.NewGuid();
+                                var editionDto = new Edition
+                                {
+                                    CusaCodeUa = edition.CusaCodeUA,
+                                    CusaCodeTr = edition.CusaCodeTR is null ? "" : edition.CusaCodeTR,
+                                    Type = edition.Type,
+                                    EditionType = edition.EditionType,
+                                    EditionName = edition.EditionName,
+                                    Image = edition.Image,
+                                    Platform = edition.Platform,
+                                    Subscription = edition.Subscription,
+                                    Region = edition.CodeRegion,
+                                    Release = DateTime.SpecifyKind(edition.Release, DateTimeKind.Utc),
+                                    Game = gameDto,
+                                    GameId = gameDto.Guid,
+                                    ProductId = productDto.Guid,
+                                    Geners = new List<Geners>()
+                                };
+
+                                if (edition.Geners != null) // Проверка на null
+                                {
+                                    foreach (var gener in edition.Geners.Split('|'))
+                                    {
+                                        if (!keyValuePairs.ContainsKey(gener))
+                                        {
+                                            keyValuePairs[gener] = new List<Guid>();
+                                        }
+                                        keyValuePairs[gener].Add(editionDto.Guid);
+                                    }
+                                }
+                                else
+                                {
+                                    _logger.LogWarning($"Geners is null for edition: {edition.EditionName}");
+                                }
+
+                                if (edition.Product != null) // Проверка на null
+                                {
+                                    productDto.TypeId = editionDto.Guid;
+                                    productDto.Type = edition.Type;
+                                    productDto.PriceUa = edition.Product.PriceUa;
+                                    productDto.PriceTr = edition.Product.PriceTr;
+                                    productDto.DiscountPercent = edition.Product.DiscountPercent;
+                                    productDto.DiscountDate = edition.Product.DiscountDate is null ? null : DateTime.SpecifyKind((global::System.DateTime)edition.Product.DiscountDate, DateTimeKind.Utc);
+
+                                    editionDto.Product = productDto;
+                                }
+                                else
+                                {
+                                    _logger.LogWarning($"Product is null for edition: {edition.EditionName}");
+                                }
+
+                                if (gameDto.Editions == null)
+                                {
+                                    gameDto.Editions = new List<Edition>();
+                                }
+
+                                gameDto.Editions.Add(editionDto);
+
+                                await _editionRepository.Add(editionDto);
+
+
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Editions is null for game: {game.Name}");
+                        }
+
                     }
 
-                    foreach(var key in keyValuePairs.Keys)
+                    foreach (var key in keyValuePairs.Keys)
                     {
                         var g = new Geners
                         {
@@ -160,23 +199,22 @@ namespace Services.ParseService
                         await _genersRepository.Add(g);
                     }
 
-                    var geners = await _genersRepository.GetAllList();
                     var editions = await _editionRepository.GetAllList();
 
-                    foreach(var pair in keyValuePairs)
+                    foreach(var edition in editions)
                     {
-                        var gener = geners.FirstOrDefault(g => g.Name == pair.Key);
-                        foreach(var id in pair.Value)
+                        if(edition.Geners is null) edition.Geners = new List<Geners>();
+                        foreach(var pair in keyValuePairs)
                         {
-                            var edition = editions.FirstOrDefault(e => e.Guid == id);
-                            edition.Geners.Add(gener);
-                            await _editionRepository.Update(edition);
+                            var gener = await _genersRepository.GenerByName(pair.Key);
+                            if (pair.Value.Contains(edition.Guid) && !edition.Geners.Any(g => g.Guid == gener.Guid)) edition.Geners.Add(gener);
                         }
+                        await _editionRepository.Update(edition);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Загруженно 0 игр");
+                    _logger.LogWarning("Загружено 0 игр");
                 }
             }
             catch (Exception ex)
@@ -186,6 +224,31 @@ namespace Services.ParseService
             }
         }
 
+        public static async Task<T?> ParseJsonFileAsync<T>(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine("Файл не найден.");
+                return default;
+            }
+
+            try
+            {
+                string json = await File.ReadAllTextAsync(filePath);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,  // Учитываем регистр полей
+                    Converters = { new JsonStringEnumConverter() }, // Конвертация enum, если нужно
+                    AllowTrailingCommas = true, // Разрешаем запятые в JSON
+                };
+                return JsonSerializer.Deserialize<T>(json, options);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при разборе JSON: {ex.Message}");
+                return default;
+            }
+        }
 
     }
 }
