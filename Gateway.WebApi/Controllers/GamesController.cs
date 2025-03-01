@@ -61,8 +61,8 @@ namespace Gateway.WebApi.Controllers
         /// <summary>
         /// Фильтрация игр по названию и жанрам
         /// </summary>
-        [HttpGet]
-        public async Task<ActionResult<List<GamesListDto>>> FilterGames(string name, List<string> geners)
+        [HttpPost]
+        public async Task<ActionResult<List<GamesListDto>>> FilterGames(string? name = null, List<string>? geners = null)
         {
             try
             {

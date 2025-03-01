@@ -6,7 +6,7 @@ namespace Service.Application.Service.GamesQuery.Dto
     {
         public Guid Id { get; set; }
         public string Image { get; set; }
-        public List<Geners> Geners { get; set; }
+        public List<string> Geners { get; set; }
         public DateTime? RealiseDate { get; set; }
         public string Platforms { get; set; }
         public string Languages { get; set; }

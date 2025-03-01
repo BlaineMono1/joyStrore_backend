@@ -39,7 +39,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
 
         public async Task<T> GetEntityType(Guid id)
         {
-            object? result = (await GetAllList()).FirstOrDefault(e => e.TypeId == id);
+            object? result = (await GetListQuery()).FirstOrDefault(e => e.TypeId == id);
             return result == null
                 ? throw new KeyNotFoundException($"Produnct with type id: {id} not found")
                 : result as T ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");

@@ -12,6 +12,10 @@ namespace Business.Data.Models
         public Guid ProductId { get; set; }
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
+
+        public Guid FavoriteId { get; set; }
+        [ForeignKey("FavoriteId")]
+        public Favorite Favorite { get; set; }
         #endregion
     }
 }

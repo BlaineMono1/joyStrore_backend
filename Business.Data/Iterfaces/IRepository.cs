@@ -9,7 +9,8 @@
         Task Add(T entity);
         Task HardDelete(Guid id);
         Task<IQueryable<T>> GetListQuery();
-       
-        
+        Task SaveDb();
+
+
     }
 }

@@ -11,6 +11,9 @@ using Services.ParseService;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
+using Service.Application.Service.UserQuery;
+using Service.Application.Service.GetNewsList;
+using Service.Application.Service.SubscriptionsQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +35,9 @@ builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
 builder.Services.AddScoped<GamesQuery>();
 builder.Services.AddScoped<Parse>();
-
-
+builder.Services.AddScoped<UsersQuery>();
+builder.Services.AddScoped<NewsQuery>();
+builder.Services.AddScoped<SubscriptionsQuerys>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

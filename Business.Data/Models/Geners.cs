@@ -11,7 +11,7 @@ namespace Business.Data.Models
         /// </summary>
         public string? Name { get; set; }
         #endregion
-
+        public List<GenersToEdition> Editions { get; set; }
         #region связи
         #endregion
     }

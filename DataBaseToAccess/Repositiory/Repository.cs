@@ -97,5 +97,10 @@ namespace DataBaseToAccess.Repositiory
         {
             return _context.Set<T>().AsNoTracking().Where(_ => !_.IsDelete).AsQueryable();
         }
+
+        public async Task SaveDb()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -69,15 +69,15 @@ namespace Service.Application.Service.UserQuery
                     return new UserDto();
                 }
 
-                var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+                var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
                 var loyaloty = await _loyalityRepository.GetById(user.LoyaltyCurrencyId);
 
                 var result = new UserDto
                 {
                     Id = user.Guid,
-                    Email = settings?.EmailPsStore,
-                    Password = settings?.PasswordPsStore,
-                    Code = settings?.Code,
+                    Email = settings?.EmailPsStore ?? "",
+                    Password = settings?.PasswordPsStore ?? "",
+                    Code = settings?.Code ?? "",
                     JBal = loyaloty?.BalanceJoy ?? 0,
                     JPlus = loyaloty?.BalanceJoyPlus ?? 0,
                     Platform = user.Platform
@@ -153,15 +153,15 @@ namespace Service.Application.Service.UserQuery
                     return result;
                 }));
 
-                var settings = await _setingsRepository.GetById(user.Settings.FirstOrDefault(s => s.Region == region).Guid);
+                var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
 
                 var result = new CartDto
                 {
                     items = cart.ToList(),
-                    Email = settings?.EmailPsStore,
-                    PayEmail = settings?.Email,
-                    Password = settings?.PasswordPsStore,
-                    Code = settings?.Code
+                    Email = settings?.EmailPsStore ?? "",
+                    PayEmail = settings?.Email ?? "",
+                    Password = settings?.PasswordPsStore ?? "",
+                    Code = settings?.Code ?? ""
                 };
 
                 _logger.LogInformation("Successfully fetched user cart for TG ID: {TgId}", tgId);
@@ -324,7 +324,7 @@ namespace Service.Application.Service.UserQuery
                     _logger.LogError("No Product with GUID {id}", itemId);
                     throw new Exception($"Product with GUID {itemId} not found");
                 }
-                
+
                 var cart = (await _userRepository.GetUserByTgId(tgId)).Cart;
                 if (cart is null)
                 {
@@ -334,16 +334,13 @@ namespace Service.Application.Service.UserQuery
                 var result = new CartItem()
                 {
                     CartId = cart.Guid,
-                    Cart = cart,
                     ProductId = product.Guid,
-                    Product = product
+                    
                 };
-                
-                await _cartItemRepository.Add(result);
-                
-                cart.CartItems ??= new List<CartItem>();
+
+                cart.CartItems ??= new List<CartItem>(); 
                 cart.CartItems.Add(result);
-                await _cartRepository.Update(cart);
+                await _cartItemRepository.Add(result);
             }
             catch (Exception ex)
             {
@@ -374,14 +371,14 @@ namespace Service.Application.Service.UserQuery
                 var result = new FavoriteItem()
                 {
                     ProductId = product.Guid,
-                    Product = product
+                    FavoriteId = fav.Guid
                 };
 
-                await _favoriteItemRepository.Add(result);
+                
 
                 fav.FavoriteItems ??= new List<FavoriteItem>();
                 fav.FavoriteItems.Add(result);
-                await _favoriteRepository.Update(fav);
+                await _favoriteItemRepository.Add(result);
             }
             catch (Exception ex)
             {
@@ -432,14 +429,14 @@ namespace Service.Application.Service.UserQuery
                     _logger.LogError("User Favorites with tg id {id} not found", tgId);
                     throw new Exception($"User Favorites with tg id {tgId} not found");
                 }
-
+                
                 var item = fav.FirstOrDefault(c => c.ProductId == itemId);
                 if (item is null)
                 {
                     _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", itemId, tgId);
                     throw new Exception($"User FavoriteItem with tg id {tgId} not found");
                 }
-                await _favoriteRepository.HardDelete(item.Guid);
+                await _favoriteItemRepository.HardDelete(item.Guid);
             }
             catch (Exception ex)
             {

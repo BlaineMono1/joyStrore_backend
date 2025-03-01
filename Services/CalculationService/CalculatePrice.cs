@@ -131,7 +131,7 @@ namespace Services.CalculationService
                 {
                     case "Game":
                     case "AddOn":
-                        priceWithMarkup = rubPrice * markupGame.Price + rubPrice;
+                        priceWithMarkup = rubPrice * markupGame.Percent + rubPrice;
                         break;
 
                     case "Subscription":
@@ -167,6 +167,7 @@ namespace Services.CalculationService
                 _logger.LogInformation("Calculating JPrice for price {Price} and region {Region}.", price, region);
 
                 var loyality = (await _loyaltySettingRepository.GetAllList()).FirstOrDefault(l => l.PriceValue >= price.Value);
+               
                 if (loyality == null)
                 {
                     _logger.LogError("No loyalty data found for price {Price}.", price);
