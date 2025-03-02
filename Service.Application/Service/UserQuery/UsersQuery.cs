@@ -2,6 +2,7 @@
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.UserQuery.Dto;
@@ -100,7 +101,7 @@ namespace Service.Application.Service.UserQuery
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 _logger.LogInformation("Fetching user cart for TG ID: {TgId}", tgId);
 
-                var user = await _userRepository.GetUserByTgId(tgId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user == null)
                 {
                     _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
@@ -174,17 +175,17 @@ namespace Service.Application.Service.UserQuery
             }
         }
 
-        public async Task<List<FavoriteDto>> UserFavorite(string TgId)
+        public async Task<List<FavoriteDto>> UserFavorite(string tgId)
         {
             try
             {
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                _logger.LogInformation("Fetching user favorite items for TG ID: {TgId}", TgId);
+                _logger.LogInformation("Fetching user favorite items for TG ID: {TgId}", tgId);
 
-                var user = await _userRepository.GetUserByTgId(TgId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found for TG ID: {TgId}", TgId);
+                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
                     return new List<FavoriteDto>();
                 }
 
@@ -233,12 +234,12 @@ namespace Service.Application.Service.UserQuery
                     return result;
                 }));
 
-                _logger.LogInformation("Successfully fetched user favorite items for TG ID: {TgId}", TgId);
+                _logger.LogInformation("Successfully fetched user favorite items for TG ID: {TgId}", tgId);
                 return result.ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching user favorite items for TG ID: {TgId}", TgId);
+                _logger.LogError(ex, "Error fetching user favorite items for TG ID: {TgId}", tgId);
                 throw;
             }
         }
@@ -250,7 +251,7 @@ namespace Service.Application.Service.UserQuery
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 _logger.LogInformation("Fetching user orders for TG ID: {TgId}", tgId);
 
-                var user = await _userRepository.GetUserByTgId(tgId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.ProductTransactionHistory).ThenInclude(c => c.Orders).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user == null)
                 {
                     _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
@@ -325,7 +326,7 @@ namespace Service.Application.Service.UserQuery
                     throw new Exception($"Product with GUID {itemId} not found");
                 }
 
-                var cart = (await _userRepository.GetUserByTgId(tgId)).Cart;
+                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart;
                 if (cart is null)
                 {
                     _logger.LogError("User Cart with tg id {id} not found", tgId);
@@ -362,7 +363,7 @@ namespace Service.Application.Service.UserQuery
                     throw new Exception($"Product with GUID {itemId} not found");
                 }
 
-                var fav = (await _userRepository.GetUserByTgId(tgId)).Favorite;
+                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite;
                 if (fav is null)
                 {
                     _logger.LogError("User Favorite with tg id {id} not found", tgId);
@@ -387,13 +388,13 @@ namespace Service.Application.Service.UserQuery
             }
         }
 
-        public async Task DeleteFromCart(string tgId, Guid itemId)
+        public async Task DeleteFromCart(string tgId, Guid ProductId)
         {
             try
             {
-                _logger.LogInformation($"Deliting from user {tgId} cart: {itemId}");
+                _logger.LogInformation($"Deliting from user {tgId} cart: {ProductId}");
 
-                var cart = (await _userRepository.GetUserByTgId(tgId)).Cart.CartItems;
+                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart.CartItems;
 
                 if (cart is null)
                 {
@@ -401,28 +402,28 @@ namespace Service.Application.Service.UserQuery
                     throw new Exception($"User Cart with tg id {tgId} not found");
                 }
 
-                var item = cart.FirstOrDefault(c => c.ProductId == itemId);
+                var item = cart.FirstOrDefault(c => c.ProductId == ProductId);
                 if(item is null)
                 {
-                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", itemId, tgId);
+                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", ProductId, tgId);
                     throw new Exception($"User Cart with tg id {tgId} not found");
                 }
                 await _cartItemRepository.HardDelete(item.Guid);
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Error updating user Cart tg Id {tgid}, itemId {itemId}", tgId, itemId);
+                _logger.LogError(ex, "Error updating user Cart tg Id {tgid}, itemId {itemId}", tgId, ProductId);
                 throw;
             }
         }
 
-        public async Task DeleteFromFavorites(string tgId, Guid itemId)
+        public async Task DeleteFromFavorites(string tgId, Guid ProductId)
         {
             try
             {
-                _logger.LogInformation($"Deliting from user {tgId} favorites: {itemId}");
+                _logger.LogInformation($"Deliting from user {tgId} favorites: {ProductId}");
 
-                var fav = (await _userRepository.GetUserByTgId(tgId)).Favorite.FavoriteItems;
+                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite.FavoriteItems;
 
                 if (fav is null)
                 {
@@ -430,17 +431,17 @@ namespace Service.Application.Service.UserQuery
                     throw new Exception($"User Favorites with tg id {tgId} not found");
                 }
                 
-                var item = fav.FirstOrDefault(c => c.ProductId == itemId);
+                var item = fav.FirstOrDefault(c => c.ProductId == ProductId);
                 if (item is null)
                 {
-                    _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", itemId, tgId);
+                    _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", ProductId, tgId);
                     throw new Exception($"User FavoriteItem with tg id {tgId} not found");
                 }
                 await _favoriteItemRepository.HardDelete(item.Guid);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, itemId);
+                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, ProductId);
                 throw;
             }
         }
