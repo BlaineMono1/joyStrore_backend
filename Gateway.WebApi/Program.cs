@@ -6,16 +6,39 @@ using Microsoft.EntityFrameworkCore;
 using Service.Application.Iterfaces;
 using Business.Data.Iterfaces;
 using DataBaseToAccess.Repositiory;
+using Service.Application.Service.GamesQuery;
+using Services.ParseService;
+using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
+using DataBaseToAccess.Repositiory.RepositoryEntity;
+using Service.Application.Service.UserQuery;
+using Service.Application.Service.GetNewsList;
+using Service.Application.Service.SubscriptionsQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
+
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddTransient(typeof(IGameRepository<>), typeof(GameRepository<>));
+builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductRepository<>));
+builder.Services.AddTransient(typeof(IEditionRepository<>), typeof(EditionRepository<>));
+builder.Services.AddTransient(typeof(ISubscriptionRepository<>), typeof(SubscriptionRepository<>));
+builder.Services.AddTransient(typeof(IUserRepository<>), typeof(UserRepository<>));
+builder.Services.AddTransient(typeof(IGenersRepository<>), typeof(GenersRepository<>));
 //Calc service
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 //region Cookie
 builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
+builder.Services.AddScoped<GamesQuery>();
+builder.Services.AddScoped<Parse>();
+builder.Services.AddScoped<UsersQuery>();
+builder.Services.AddScoped<NewsQuery>();
+builder.Services.AddScoped<SubscriptionsQuerys>();
+
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);

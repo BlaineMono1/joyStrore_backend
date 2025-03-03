@@ -74,7 +74,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Жанры игры
         /// </summary>
-        public List<Geners>? Geners { get; set; }
+        public List<GenersToEdition> EditionGeners { get; set; }
         #endregion
 
     }

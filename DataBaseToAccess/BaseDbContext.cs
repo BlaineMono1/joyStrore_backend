@@ -36,6 +36,7 @@ namespace DataBaseToAccess
         public DbSet<SettingPrice> SettingsPrice { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Geners> Gener { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

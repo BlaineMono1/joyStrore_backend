@@ -1,6 +1,7 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
@@ -10,7 +11,9 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
 
         public async Task<User> GetUserByTgId(string tgId)
         {
-            return (await GetAllList()).FirstOrDefault(u => u.TgUserId == tgId) ?? throw new Exception($"No User with {tgId} tg id");
+            return (await GetListQuery())
+                .FirstOrDefault(u => u.TgUserId == tgId) ?? throw new Exception($"No User with {tgId} tg id");
+
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Gateway.WebApi.Controllers
         private readonly AddOnsQuery _addOnsQuery;
         private readonly ILogger<AddOnsController> _logger;
 
-        AddOnsController(AddOnsQuery addOnsQuery, ILogger<AddOnsController> logger)
+        public AddOnsController(AddOnsQuery addOnsQuery, ILogger<AddOnsController> logger)
         {
             _addOnsQuery = addOnsQuery;
             _logger = logger;

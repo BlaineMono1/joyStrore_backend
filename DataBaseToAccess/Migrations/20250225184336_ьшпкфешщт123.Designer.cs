@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataBaseToAccess.Migrations
 {
     [DbContext(typeof(BaseDbContext))]
-    [Migration("20250130210734_test1")]
-    partial class test1
+    [Migration("20250225184336_ьшпкфешщт123")]
+    partial class ьшпкфешщт123
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,7 +31,11 @@ namespace DataBaseToAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CusaCode")
+                    b.Property<string>("CusaCodeTr")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CusaCodeUa")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -48,23 +52,24 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
+                    b.Property<string>("Platform")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Type")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TypeName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -172,7 +177,11 @@ namespace DataBaseToAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CusaCode")
+                    b.Property<string>("CusaCodeTr")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CusaCodeUa")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -183,35 +192,36 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EditionName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EditionType")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Features")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid>("GameId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Popular")
-                        .IsRequired()
+                    b.Property<string>("Platform")
                         .HasColumnType("text");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
-                    b.Property<float>("Rating")
-                        .HasColumnType("real");
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("Release")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("SectionGuid")
                         .HasColumnType("uuid");
@@ -220,7 +230,6 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Guid");
@@ -304,30 +313,49 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Geners")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Languages")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Region")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("Release")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Popular")
+                        .HasColumnType("text");
 
                     b.HasKey("Guid");
 
                     b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("Business.Data.Models.Geners", b =>
+                {
+                    b.Property<Guid>("Guid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateUpdate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EditionGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.HasKey("Guid");
+
+                    b.HasIndex("EditionGuid");
+
+                    b.ToTable("Geners");
                 });
 
             modelBuilder.Entity("Business.Data.Models.GroupAddOn", b =>
@@ -343,14 +371,12 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FilePathImage")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Guid");
@@ -577,6 +603,9 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ProductTransactionHistoryGuid")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ProductTransactionItemId")
                         .HasColumnType("uuid");
 
@@ -585,6 +614,8 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Guid");
+
+                    b.HasIndex("ProductTransactionHistoryGuid");
 
                     b.HasIndex("ProductTransactionItemId");
 
@@ -603,11 +634,18 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Discount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal>("Pirce")
+                        .HasColumnType("numeric");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
@@ -639,8 +677,9 @@ namespace DataBaseToAccess.Migrations
                     b.Property<decimal>("Percent")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("Region")
-                        .HasColumnType("integer");
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("SubscriptionId")
                         .HasColumnType("uuid");
@@ -669,14 +708,7 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DiscountPercent")
-                        .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<decimal?>("DiscountTr")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal?>("DiscountUa")
-                        .HasColumnType("numeric");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
@@ -688,7 +720,6 @@ namespace DataBaseToAccess.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid>("TypeId")
@@ -820,14 +851,12 @@ namespace DataBaseToAccess.Migrations
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("IsRegion")
-                        .HasColumnType("integer");
-
                     b.Property<string>("PasswordPsStore")
                         .HasColumnType("text");
 
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -871,7 +900,11 @@ namespace DataBaseToAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CusaCode")
+                    b.Property<string>("CusaCodeTr")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CusaCodeUa")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -881,25 +914,25 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Duration")
+                        .HasColumnType("text");
+
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
+                    b.Property<string>("Platform")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Guid");
@@ -933,6 +966,10 @@ namespace DataBaseToAccess.Migrations
 
                     b.Property<Guid>("LoyaltyCurrencyId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("ProductTransactionHistoryId")
                         .HasColumnType("uuid");
@@ -1054,6 +1091,13 @@ namespace DataBaseToAccess.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Business.Data.Models.Geners", b =>
+                {
+                    b.HasOne("Business.Data.Models.Edition", null)
+                        .WithMany("Geners")
+                        .HasForeignKey("EditionGuid");
+                });
+
             modelBuilder.Entity("Business.Data.Models.LoyaltyOrder", b =>
                 {
                     b.HasOne("Business.Data.Models.LoyaltyTransactionHistory", "LoyaltyTransactionHistory")
@@ -1078,6 +1122,10 @@ namespace DataBaseToAccess.Migrations
 
             modelBuilder.Entity("Business.Data.Models.Order", b =>
                 {
+                    b.HasOne("Business.Data.Models.ProductTransactionHistory", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("ProductTransactionHistoryGuid");
+
                     b.HasOne("Business.Data.Models.ProductTransactionItem", "ProductTransactionItem")
                         .WithMany("Orders")
                         .HasForeignKey("ProductTransactionItemId")
@@ -1120,7 +1168,7 @@ namespace DataBaseToAccess.Migrations
             modelBuilder.Entity("Business.Data.Models.ProductTransactionItem", b =>
                 {
                     b.HasOne("Business.Data.Models.ProductTransactionHistory", "ProductTransactionHistory")
-                        .WithMany("ProductTransactionItems")
+                        .WithMany()
                         .HasForeignKey("ProductTransactionHistoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1201,6 +1249,11 @@ namespace DataBaseToAccess.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Business.Data.Models.Edition", b =>
+                {
+                    b.Navigation("Geners");
+                });
+
             modelBuilder.Entity("Business.Data.Models.Favorite", b =>
                 {
                     b.Navigation("FavoriteItems");
@@ -1239,19 +1292,16 @@ namespace DataBaseToAccess.Migrations
 
             modelBuilder.Entity("Business.Data.Models.Product", b =>
                 {
-                    b.Navigation("AddOn")
-                        .IsRequired();
+                    b.Navigation("AddOn");
 
-                    b.Navigation("Edition")
-                        .IsRequired();
+                    b.Navigation("Edition");
 
-                    b.Navigation("Subscription")
-                        .IsRequired();
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("Business.Data.Models.ProductTransactionHistory", b =>
                 {
-                    b.Navigation("ProductTransactionItems");
+                    b.Navigation("Orders");
 
                     b.Navigation("User")
                         .IsRequired();
@@ -1274,8 +1324,7 @@ namespace DataBaseToAccess.Migrations
 
             modelBuilder.Entity("Business.Data.Models.Subscription", b =>
                 {
-                    b.Navigation("PriceSettingSubscription")
-                        .IsRequired();
+                    b.Navigation("PriceSettingSubscription");
                 });
 
             modelBuilder.Entity("Business.Data.Models.User", b =>

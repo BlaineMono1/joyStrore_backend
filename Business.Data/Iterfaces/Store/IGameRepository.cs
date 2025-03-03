@@ -6,6 +6,5 @@ namespace Business.Data.Iterfaces.Store
     {
         Task<List<AddOn>> AddOnsByGame(Guid AddOnId);
 
-        Task<List<Game>> FilterGames(string name, List<string> Geners);
     }
 }

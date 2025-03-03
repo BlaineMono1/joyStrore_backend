@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Service.Application.Service.GamesQuery
 {
@@ -53,7 +55,7 @@ namespace Service.Application.Service.GamesQuery
             try
             {
                 _logger.LogInformation("Fetching all sections.");
-                var sections = await _sectionRepository.GetAllList();
+                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ToList();
 
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
@@ -117,7 +119,7 @@ namespace Service.Application.Service.GamesQuery
                 }
 
                 var editions = await _editionRepository.GetEditions(GameId);
-                var product = await _productRepository.GetEntityType(GameId);
+                var product = await _productRepository.GetEntityType(Edition);
                 var game = await _gameRepository.GetById(GameId);
 
                 if (game == null)
@@ -130,15 +132,15 @@ namespace Service.Application.Service.GamesQuery
                 {
                     Id = GameId,
                     Image = edition.Image,
-                    Geners =edition.Geners,
+                    Geners =edition.EditionGeners.Select(g => g.Geners.Name).ToList(),
                     RealiseDate = edition.Release,
                     Platforms = edition.Platform,
                     Languages = game.Languages,
                     Editions = editions,
-                    Subscription = edition.Subscription,
+                    Subscription = edition.Subscription == null ? "" : edition.Subscription,
                     Discount = product.DiscountDate,
                     DiscountPercent = product.DiscountPercent,
-                    Features = edition.Features,
+                    Features = edition.Features == null ? "" : edition.Features,
                     Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region),
                     Addons = game.AddOns
                 };
@@ -161,31 +163,33 @@ namespace Service.Application.Service.GamesQuery
             }
         }
 
-        public async Task<List<GamesListDto>> FilterGames(string name, List<string> geners)
+        public async Task<List<GamesListDto>> FilterGames(string? name, List<string>? geners)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
             try
             {
                 _logger.LogInformation("Filtering games");
-                var games = await _gameRepository.FilterGames(name, geners);
+                var editions = await _editionRepository.FilterEditions(name, geners);
 
-                var result = await Task.WhenAll(
-                    games.SelectMany(game => game.Editions)
-                         .Select(async edition => new GamesListDto
-                         {
-                             FIlterName = name,
-                             Id = edition.Game.Guid,
-                             ImageFilepath = edition.Image,
-                             Name = edition.EditionName,
-                             Discount = edition.Product.DiscountPercent,
-                             Price = await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
-                             Jprice = await _calculatePrice.CalcJprice(
-                                 await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
-                                 region)
-                         })
-                );
+                var result = new List<GamesListDto>();
 
-                return result.ToList();
+                foreach (var edition in editions)
+                {
+                    var t = new GamesListDto
+                    {
+                        FIlterName = name,
+                        Id = edition.Guid,
+                        ImageFilepath = edition.Image,
+                        Name = edition.EditionName,
+                        Discount = edition.Product.DiscountPercent,
+                        Price = await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
+                        
+                    };
+                    t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                    result.Add(t);
+                }
+
+                return result;
             }
             catch(Exception ex)
             {

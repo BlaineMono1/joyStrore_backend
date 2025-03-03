@@ -1,6 +1,4 @@
-﻿using Business.Data.BaseEntities;
-
-namespace Business.Data.Iterfaces
+﻿namespace Business.Data.Iterfaces
 {
     public interface IRepository<T> where T : IBaseEntity
     {
@@ -11,7 +9,8 @@ namespace Business.Data.Iterfaces
         Task Add(T entity);
         Task HardDelete(Guid id);
         Task<IQueryable<T>> GetListQuery();
-       
-        }
+        Task SaveDb();
+
+
     }
 }

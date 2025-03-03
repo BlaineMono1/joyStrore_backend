@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Business.Data\Business.Data.csproj" />
 		<ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />

@@ -18,14 +18,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
 
             return addOns;
         }
-        public async Task<List<Game>> FilterGames(string name, List<string> Geners)
-        {
-            var gamesByName = (await GetListQuery()).Where(g => g.Name.Contains(name));
 
-            var gamesFilter = gamesByName.Where(g => g.Editions.Any(e => e.Geners.All(g => Geners.Contains(g.Name))));
-
-            return gamesFilter.ToList();
-        }
 
         
     }

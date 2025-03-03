@@ -205,7 +205,7 @@ namespace Gateway.WebApi.Controllers
         }
 
         /// <summary>
-        /// Удаление предмета из корзины пользователя
+        /// Обновление консоли пользователя
         /// </summary>
         /// <returns></returns>
         /// 

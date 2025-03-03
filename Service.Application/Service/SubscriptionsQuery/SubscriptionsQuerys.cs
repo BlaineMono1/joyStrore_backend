@@ -1,6 +1,7 @@
 ﻿using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.SubscriptionsQuery.Dto;
@@ -44,7 +45,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             try
             {
                 string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                var subscriptions = await _subscriptionRepository.GetAllList();
+                var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
                 _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
 
@@ -60,6 +61,7 @@ namespace Service.Application.Service.SubscriptionsQuery
 
                         return new SubscriptionsListDto
                         {
+                            id = sub.Guid,
                             Name = sub.Name,
                             ImagePath = sub.Image,
                             Dicount = product.DiscountPercent,
@@ -96,7 +98,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                 string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 _logger.LogInformation("Fetching subscription details for ID: {Id}", Id);
 
-                var currentSub = await _subscriptionRepository.GetById(Id)
+                var currentSub = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).FirstOrDefault(s => s.Guid == Id)
                     ?? throw new KeyNotFoundException($"Subscription with ID {Id} not found");
 
                 var subs = await _subscriptionRepository.SubscriptionsByName(currentSub.Name);
