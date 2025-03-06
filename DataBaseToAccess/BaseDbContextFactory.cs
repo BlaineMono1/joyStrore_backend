@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
+using StackExchange.Redis;
 using System.IO;
 
 namespace DataBaseToAccess
@@ -10,7 +10,6 @@ namespace DataBaseToAccess
     {
         public BaseDbContext CreateDbContext(string[] args)
         {
-            
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
@@ -18,11 +17,14 @@ namespace DataBaseToAccess
 
             var optionsBuilder = new DbContextOptionsBuilder<BaseDbContext>();
 
-            
             var connectionString = configuration.GetConnectionString("DataBaseConnection");
             optionsBuilder.UseNpgsql(connectionString);
 
-            return new BaseDbContext(optionsBuilder.Options);
+            // Создаем подключение к RedisGetValue
+            var redisConnectionString = configuration.GetConnectionString("RedisConnection");
+            var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+
+            return new BaseDbContext(optionsBuilder.Options, redis);
         }
     }
 }

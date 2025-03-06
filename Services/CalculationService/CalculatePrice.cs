@@ -1,80 +1,34 @@
 ﻿using Business.Data.Models;
-using DataBaseToAccess.Repositiory;
 using Service.Application.Iterfaces;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
+using System.Globalization;
+using Newtonsoft.Json.Linq;
+
 
 namespace Services.CalculationService
 {
     public class CalculatePrice : ICalculationService
     {
-        private static readonly HttpClient httpClient = new HttpClient();
-
         private readonly IRepository<SettingPrice> _settingPriceRepository;
         private readonly IRepository<PriceSettingSubscription> _priceSettingSubscription;
         private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
-        private readonly IRepository<LoyaltyCashback> _cahsbackRepository; // redis
+        private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
 
         public CalculatePrice(
             IRepository<SettingPrice> settingPriceRepository,
             IRepository<PriceSettingSubscription> priceSettingSubscription,
             IRepository<LoyaltySetting> loyaltySettingRepository,
-            IRepository<LoyaltyCashback> cahsbackRepository,
+            IRedisRepository redis,
             ILogger<CalculatePrice> logger)
         {
             _settingPriceRepository = settingPriceRepository;
             _priceSettingSubscription = priceSettingSubscription;
             _loyaltySettingRepository = loyaltySettingRepository;
-            _cahsbackRepository = cahsbackRepository;
+            _redis = redis;
             _logger = logger;
-        }
-
-        private async Task<decimal> GetExchangeRateUA()
-        {
-            _logger.LogInformation("Fetching exchange rate for UAH to RUB.");
-            string url = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            string jsonResponse = await response.Content.ReadAsStringAsync();
-            var data = JsonSerializer.Deserialize<Dictionary<string, double>>(jsonResponse);
-
-            if (data != null && data.ContainsKey("RUB"))
-            {
-                decimal exchangeRate = (decimal)Math.Round(data["RUB"], MidpointRounding.AwayFromZero);
-                _logger.LogInformation("Fetched exchange rate for UAH: {ExchangeRate}", exchangeRate);
-                return exchangeRate;
-            }
-            else
-            {
-                _logger.LogError("Invalid response from API for UAH to RUB.");
-                throw new Exception("Invalid response from API");
-            }
-        }
-
-        private async Task<decimal> GetExchangeRateTR()
-        {
-            _logger.LogInformation("Fetching exchange rate for TRY to RUB.");
-            string url = "https://min-api.cryptocompare.com/data/price?fsym=TRY&tsyms=RUB";
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            string jsonResponse = await response.Content.ReadAsStringAsync();
-            var data = JsonSerializer.Deserialize<Dictionary<string, double>>(jsonResponse);
-
-            if (data != null && data.ContainsKey("RUB"))
-            {
-                decimal exchangeRate = (decimal)Math.Round(data["RUB"], MidpointRounding.AwayFromZero);
-                _logger.LogInformation("Fetched exchange rate for TRY: {ExchangeRate}", exchangeRate);
-                return exchangeRate;
-            }
-            else
-            {
-                _logger.LogError("Invalid response from API for TRY to RUB.");
-                throw new Exception("Invalid response from API");
-            }
         }
 
         private async Task<decimal> GetPrice(string region, decimal? price)
@@ -85,12 +39,29 @@ namespace Services.CalculationService
                 return 0;
             }
 
-            decimal exchangeRate = region switch
+            decimal exchangeRate = 0;
+
+            if (region == "UA")
             {
-                "TR" => await GetExchangeRateTR(),
-                "UA" => await GetExchangeRateUA(),
-                _ => throw new Exception("No region found")
-            };
+                string? cachedData = await _redis.GetAsync("UA");
+                if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
+                {
+                    exchangeRate = (decimal)parsedDecimal;
+                }
+
+            }
+            else if(region == "TR")
+            {
+                string? cachedData = await _redis.GetAsync("TR");
+                if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
+                {
+                    exchangeRate = (decimal)parsedDecimal;
+                }
+            }
+            else
+            {
+                _logger.LogError($"No region {region}");
+            }
 
             return price.Value * exchangeRate;
         }
@@ -118,8 +89,8 @@ namespace Services.CalculationService
 
                 decimal priceWithMarkup = 0;
                 // Fetch markup data from the repository
-                var markupGame = (await _settingPriceRepository.GetAllList()).FirstOrDefault(p => p.Price >= rubPrice);
-                var markupSub = (await _priceSettingSubscription.GetAllList()).FirstOrDefault(s => s.Region == region);
+                var markupGame = (await _settingPriceRepository.GetListQuery()).FirstOrDefault(p => p.Price >= rubPrice);
+                var markupSub = (await _priceSettingSubscription.GetListQuery()).FirstOrDefault(s => s.Region == region);
 
                 if (markupGame == null || markupSub == null)
                 {
@@ -130,6 +101,8 @@ namespace Services.CalculationService
                 switch (type)
                 {
                     case "Game":
+                        priceWithMarkup = rubPrice * markupGame.Percent + rubPrice;
+                        break;
                     case "AddOn":
                         priceWithMarkup = rubPrice * markupGame.Percent + rubPrice;
                         break;
@@ -145,7 +118,7 @@ namespace Services.CalculationService
                 }
 
                 _logger.LogInformation("Calculated price with markup: {PriceWithMarkup}", priceWithMarkup);
-                return priceWithMarkup;
+                return Math.Round(priceWithMarkup, MidpointRounding.AwayFromZero);
             }
             catch (Exception ex)
             {
@@ -166,7 +139,7 @@ namespace Services.CalculationService
 
                 _logger.LogInformation("Calculating JPrice for price {Price} and region {Region}.", price, region);
 
-                var loyality = (await _loyaltySettingRepository.GetAllList()).FirstOrDefault(l => l.PriceValue >= price.Value);
+                var loyality = (await _loyaltySettingRepository.GetListQuery()).FirstOrDefault(l => l.PriceValue >= price.Value);
                
                 if (loyality == null)
                 {
@@ -191,14 +164,14 @@ namespace Services.CalculationService
             {
                 _logger.LogInformation("Calculating JPlus for price {Price}.", price);
 
-                var cashback = (await _cahsbackRepository.GetAllList()).FirstOrDefault();
-                if (cashback == null)
+                var cachedData = await _redis.GetAsync("cashback");
+                var cashback = 0M;
+                if (decimal.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedDecimal))
                 {
-                    _logger.LogError("Cashback data not found.");
-                    throw new KeyNotFoundException("Cashback setting not found");
+                    cashback = parsedDecimal;
                 }
 
-                decimal jPlus = price * cashback.Percent;
+                decimal jPlus = price * cashback;
                 _logger.LogInformation("Calculated JPlus: {JPlus}", jPlus);
                 return jPlus;
             }
