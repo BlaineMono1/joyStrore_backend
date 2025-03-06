@@ -109,7 +109,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                 var jPlus = await _calculatePrice.CalcJplus(jPrice);
 
                 var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-                var user = await _userRepository.GetUserByTgId(userTg);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).Include(u => u.Settings).FirstOrDefault(u => u.TgUserId == userTg);
 
                 var result = new SubscriptionDto
                 {

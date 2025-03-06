@@ -2,6 +2,7 @@
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.AddOnsQuery.Dto;
@@ -72,7 +73,7 @@ namespace Service.Application.Service.AddOnsQuery
             {
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 
-                var groupAddOns = (await _groupAddOnRepository.GetAllList()).FirstOrDefault(g => g.Guid == Id);
+                var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == Id);
                 if (groupAddOns is null) _logger.LogWarning("group add on with guid: {guid} is null", Id);
                 else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", Id);
                 var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
@@ -118,7 +119,7 @@ namespace Service.Application.Service.AddOnsQuery
                 result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
 
                 var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-                var user = await _userRepository.GetUserByTgId(userTg);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).Include(u => u.Settings).FirstOrDefault(u => u.TgUserId == userTg);
 
                 result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
                 result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
