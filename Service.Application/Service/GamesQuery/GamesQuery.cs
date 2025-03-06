@@ -109,7 +109,7 @@ namespace Service.Application.Service.GamesQuery
             {
                 _logger.LogInformation("Fetching game details for GameId: {GameId}, Edition: {Edition}", GameId, Edition);
 
-                var region = "UA";//_regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
 
                 var edition = (await _editionRepository.GetEditions(GameId)).FirstOrDefault(e => e.Guid == Edition);
                 if (edition == null)
@@ -148,7 +148,7 @@ namespace Service.Application.Service.GamesQuery
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
                 result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
 
-                var userTg = "1";//_regionFromCookie.GetUserTgID(_httpContextAccessor);
+                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
                 var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).FirstOrDefault(u => u.TgUserId == userTg);
 
                 result.InCart = user.Cart.CartItems.Any(c => c.ProductId == product.Guid);
