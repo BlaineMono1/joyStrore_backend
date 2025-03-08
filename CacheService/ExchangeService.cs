@@ -1,12 +1,11 @@
 ﻿using System.Text.Json;
 using Business.Data.Iterfaces.Store;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
+using Service.Application.Iterfaces;
 
 namespace CacheService
 {
-    public class ExchangeRate : BackgroundService
+    public class ExchangeRate : ICacheService
     {
         private readonly IRedisRepository _redis;
         private readonly ILogger<ExchangeRate> _logger;
@@ -19,25 +18,9 @@ namespace CacheService
             _redis = redis;
         }
 
+              
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await UpdateExchangeRates();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Ошибка при обновлении курсов валют.");
-                }
-
-                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
-            }
-        }
-
-        private async Task UpdateExchangeRates()
+        public async Task UpdateExchangeRates()
         {
             
             string cacheKeyUa = "UA";
@@ -50,8 +33,8 @@ namespace CacheService
             decimal Ua = await FetchExchangeRate(urlUa);
             decimal Tr = await FetchExchangeRate(urlTr);
 
-            await _redis.SetAsync(cacheKeyUa, Ua.ToString());
-            await _redis.SetAsync(cacheKeyTr, Tr.ToString());
+            await _redis.SetAsync(cacheKeyUa, Ua.ToString(), TimeSpan.FromMinutes(10));
+            await _redis.SetAsync(cacheKeyTr, Tr.ToString(), TimeSpan.FromMinutes(10));
 
             _logger.LogInformation($"Обновлены курсы валют: UAH-RUB = {Ua}, TRY-RUB = {Tr}");
         }

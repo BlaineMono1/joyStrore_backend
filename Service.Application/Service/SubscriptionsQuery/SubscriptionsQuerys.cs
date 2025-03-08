@@ -95,7 +95,7 @@ namespace Service.Application.Service.SubscriptionsQuery
         {
             try
             {
-                string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                string region = "UA";// _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 _logger.LogInformation("Fetching subscription details for ID: {Id}", Id);
 
                 var currentSub = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).FirstOrDefault(s => s.Guid == Id)
@@ -108,7 +108,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                 var jPrice = await _calculatePrice.CalcJprice(price, region);
                 var jPlus = await _calculatePrice.CalcJplus(jPrice);
 
-                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+                var userTg = "1"; //_regionFromCookie.GetUserTgID(_httpContextAccessor);
                 var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).Include(u => u.Settings).FirstOrDefault(u => u.TgUserId == userTg);
 
                 var result = new SubscriptionDto

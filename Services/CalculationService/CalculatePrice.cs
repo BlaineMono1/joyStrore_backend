@@ -11,6 +11,7 @@ namespace Services.CalculationService
 {
     public class CalculatePrice : ICalculationService
     {
+        private readonly ICacheService _cacheService;
         private readonly IRepository<SettingPrice> _settingPriceRepository;
         private readonly IRepository<PriceSettingSubscription> _priceSettingSubscription;
         private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
@@ -22,13 +23,15 @@ namespace Services.CalculationService
             IRepository<PriceSettingSubscription> priceSettingSubscription,
             IRepository<LoyaltySetting> loyaltySettingRepository,
             IRedisRepository redis,
-            ILogger<CalculatePrice> logger)
+            ILogger<CalculatePrice> logger,
+            ICacheService cacheService)
         {
             _settingPriceRepository = settingPriceRepository;
             _priceSettingSubscription = priceSettingSubscription;
             _loyaltySettingRepository = loyaltySettingRepository;
             _redis = redis;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         private async Task<decimal> GetPrice(string region, decimal? price)
@@ -40,10 +43,15 @@ namespace Services.CalculationService
             }
 
             decimal exchangeRate = 0;
-
+           
             if (region == "UA")
             {
                 string? cachedData = await _redis.GetAsync("UA");
+                if(cachedData is null)
+                {
+                    await UpdateCahce();
+                    cachedData = await _redis.GetAsync("UA");
+                }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
@@ -53,6 +61,11 @@ namespace Services.CalculationService
             else if(region == "TR")
             {
                 string? cachedData = await _redis.GetAsync("TR");
+                if (cachedData is null)
+                {
+                    await UpdateCahce();
+                    cachedData = await _redis.GetAsync("TR");
+                }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
@@ -180,6 +193,11 @@ namespace Services.CalculationService
                 _logger.LogError(ex, "Error calculating JPlus for price {Price}.", price);
                 throw;
             }
+        }
+
+        private async Task UpdateCahce()
+        {
+            await _cacheService.UpdateExchangeRates();
         }
     }
 }

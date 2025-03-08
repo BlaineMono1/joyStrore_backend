@@ -1,6 +1,6 @@
 ﻿namespace Service.Application.Service.GamesQuery.Dto
 {
-    public class AddOnDto
+    public class GameAddOnDto
     {
         public Guid Id { get; set; }
         public string AddOnName { get; set; }

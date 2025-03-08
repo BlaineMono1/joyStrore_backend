@@ -6,8 +6,7 @@ using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
+
 
 
 namespace Service.Application.Service.GamesQuery
@@ -136,10 +135,10 @@ namespace Service.Application.Service.GamesQuery
                     throw new Exception("Game not found.");
                 }
 
-                var addOns = new List<AddOnDto>();
+                var addOns = new List<GameAddOnDto>();
 
                 var task = (game.AddOns.Select(async item =>
-                new AddOnDto
+                new GameAddOnDto
                 {
                     Id = item.Guid,
                     AddOnName = item.Name,

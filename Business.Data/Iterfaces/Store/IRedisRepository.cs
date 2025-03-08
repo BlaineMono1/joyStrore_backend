@@ -8,7 +8,8 @@ namespace Business.Data.Iterfaces.Store
 {
     public interface IRedisRepository
     {
-        Task SetAsync(string key, string value);
+        Task SetAsync(string key, string value, TimeSpan? exp);
         Task<string?> GetAsync(string key);
+        Task DeleteAsync(string key);
     }
 }

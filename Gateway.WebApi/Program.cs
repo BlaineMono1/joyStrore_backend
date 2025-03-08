@@ -9,7 +9,6 @@ using DataBaseToAccess.Repositiory;
 using Service.Application.Service.GamesQuery;
 using Services.ParseService;
 using Business.Data.Iterfaces.Store;
-using Business.Data.Models;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Service.Application.Service.UserQuery;
 using Service.Application.Service.GetNewsList;
@@ -43,7 +42,7 @@ builder.Services.AddTransient(typeof(IGenersRepository<>), typeof(GenersReposito
 
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
-builder.Services.AddHostedService<ExchangeRate>();
+builder.Services.AddScoped<ICacheService, ExchangeRate>();
 
 
 builder.Services.AddScoped<GamesQuery>();
