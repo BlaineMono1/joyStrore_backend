@@ -8,6 +8,7 @@ using Service.Application.Service.GamesQuery.Dto;
 using Microsoft.EntityFrameworkCore;
 
 
+
 namespace Service.Application.Service.GamesQuery
 {
     public class GamesQuery
@@ -118,15 +119,39 @@ namespace Service.Application.Service.GamesQuery
                     throw new Exception("Edition not found.");
                 }
 
-                var editions = await _editionRepository.GetEditions(GameId);
+                var editions = new List<EditionDto>(); 
+                editions.AddRange((await _editionRepository.GetEditions(GameId)).Select(item => 
+                new EditionDto()
+                {
+                    Id = item.Guid,
+                    Name = item.EditionName
+                }));
                 var product = await _productRepository.GetEntityType(Edition);
-                var game = await _gameRepository.GetById(GameId);
+                var game = (await _gameRepository.GetListQuery()).Include(g => g.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GameId);
 
                 if (game == null)
                 {
                     _logger.LogError("Game with ID {GameId} not found.", GameId);
                     throw new Exception("Game not found.");
                 }
+
+                var addOns = new List<GameAddOnDto>();
+
+                var task = (game.AddOns.Select(async item =>
+                new GameAddOnDto
+                {
+                    Id = item.Guid,
+                    AddOnName = item.Name,
+                    GameName = game.Name,
+                    Image = item.Image,
+                    Platform = item.Platform,
+                    DiscountPercent = item.Product.DiscountPercent,
+                    Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region),
+                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region), region)
+                }
+                ));
+
+                addOns.AddRange(await Task.WhenAll(task)); 
 
                 var result = new GameDto
                 {
@@ -137,23 +162,23 @@ namespace Service.Application.Service.GamesQuery
                     Platforms = edition.Platform,
                     Languages = game.Languages,
                     Editions = editions,
-                    Subscription = edition.Subscription == null ? "" : edition.Subscription,
+                    Subscription = edition.Subscription ?? "",
                     Discount = product.DiscountDate,
                     DiscountPercent = product.DiscountPercent,
-                    Features = edition.Features == null ? "" : edition.Features,
+                    Features = edition.Features ?? "",
                     Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region),
-                    Addons = game.AddOns
+                    Addons = addOns
                 };
 
                 result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
                 result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
 
                 var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-                var user = await _userRepository.GetUserByTgId(userTg);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).FirstOrDefault(u => u.TgUserId == userTg);
 
                 result.InCart = user.Cart.CartItems.Any(c => c.ProductId == product.Guid);
                 result.InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == product.Guid);
-
+                result.IsPlatform = result.Platforms.Contains(user.Platform); 
                 return result;
             }
             catch (Exception ex)

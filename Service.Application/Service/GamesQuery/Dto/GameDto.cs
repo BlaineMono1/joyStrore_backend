@@ -10,7 +10,7 @@ namespace Service.Application.Service.GamesQuery.Dto
         public DateTime? RealiseDate { get; set; }
         public string Platforms { get; set; }
         public string Languages { get; set; }
-        public List<Edition> Editions { get; set; }
+        public List<EditionDto> Editions { get; set; }
         public string Subscription { get; set; }
         public DateTime? Discount { get; set; }
         public string Features { get; set; }
@@ -20,6 +20,7 @@ namespace Service.Application.Service.GamesQuery.Dto
         public string DiscountPercent { get; set; }
         public bool InCart { get; set; }
         public bool InFavorite { get; set; }
-        public List<AddOn>? Addons { get; set; }
+        public List<GameAddOnDto>? Addons { get; set; }
+        public bool IsPlatform { get; set; } 
     }
 }
