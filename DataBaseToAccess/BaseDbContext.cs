@@ -8,11 +8,7 @@ namespace DataBaseToAccess
 {
     public class BaseDbContext:DbContext
     {
-        private readonly IConnectionMultiplexer _redis;
-        public BaseDbContext(DbContextOptions<BaseDbContext> options, IConnectionMultiplexer redis) : base(options) 
-        {
-            _redis = redis;
-        }
+        public BaseDbContext(DbContextOptions<BaseDbContext> options,) : base(options) { }
 
         public DbSet<AddOn> AddOns { get; set; }
         public DbSet<Admin> Admins { get; set; }
@@ -42,37 +38,7 @@ namespace DataBaseToAccess
         public DbSet<SettingPrice> SettingsPrice { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Geners> Gener { get; set; }
-
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            var entries = ChangeTracker.Entries();
-
-            foreach (var entry in entries)
-            {
-                
-                if (entry.Entity is LoyaltyCashback cashback)
-                {
-                    var redisDb = _redis.GetDatabase();
-                    string cacheKey = "cashback";
-                    string jsonData = JsonSerializer.Serialize(cashback.Percent);
-
-                    // Кэшируем при добавлении или изменении
-                    if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
-                    {
-                        await redisDb.StringSetAsync(cacheKey, jsonData);
-                    }
-
-                    // Удаляем из кэша при удалении
-                    if (entry.State == EntityState.Deleted)
-                    {
-                        await redisDb.KeyDeleteAsync(cacheKey);
-                    }
-                }                
-            }
-
-            return await base.SaveChangesAsync(cancellationToken);
-        }
+        public DbSet<Geners> Gener { get; set; }          
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

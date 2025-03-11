@@ -38,7 +38,7 @@ namespace CacheService
 
             _logger.LogInformation($"Обновлены курсы валют: UAH-RUB = {Ua}, TRY-RUB = {Tr}");
         }
-
+        
         private async Task<decimal> FetchExchangeRate(string url)
         {
 
