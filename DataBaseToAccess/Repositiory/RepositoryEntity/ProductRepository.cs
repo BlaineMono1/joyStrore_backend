@@ -1,6 +1,8 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
@@ -21,7 +23,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
 
             switch (product.Type)
             {
-                case "Edition":
+                case "Game":
                     result = await _editionRepository.GetById(product.TypeId);
                     break;
                 case "AddOn":
@@ -44,6 +46,40 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
                 ? throw new KeyNotFoundException($"Produnct with type id: {id} not found")
                 : result as T ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");
             ;
+        }
+
+        public async Task<IQueryable<Product>> FilterProducts(string? name, List<string>? FilterGeners)
+        {
+            var products = (await GetListQuery()).Where(p => p.Type == "Game");
+
+            var filteredByName = products;
+            if (!string.IsNullOrEmpty(name))
+            {
+                filteredByName = products.Where(p => p.Edition.EditionName.ToLower().Contains(name.ToLower()));
+                    
+            }
+
+            var filteredByGener = filteredByName;
+
+            if (FilterGeners != null && FilterGeners.Any())
+            {
+                filteredByGener = filteredByName.Where(p => p.Edition.EditionGeners.Any(g => FilterGeners.Contains(g.Geners.Name)));                   
+                    
+            }
+
+            var games =  filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns);
+
+            var set = new HashSet<string>();
+            foreach (var game in games)
+            {
+                set.Add(game.Edition.Game.Name);
+            }
+
+            var result = (await GetListQuery()).Where(p => (p.Edition != null && set.Contains(p.Edition.Game.Name)) || (p.AddOn != null && set.Contains(p.AddOn.Game.Name)))
+                .Include(p => p.Edition)
+                .Include(p => p.AddOn);
+
+            return result;
         }
     }
 }

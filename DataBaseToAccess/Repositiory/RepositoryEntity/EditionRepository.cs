@@ -27,8 +27,10 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             }
 
             var gamesFilter = gamesByName;
-            if(FilterGeners != null && FilterGeners.Any())
-            gamesFilter = gamesByName.Where(e => e.EditionGeners.Any(g => FilterGeners.Contains(g.Geners.Name)));
+            if (FilterGeners != null && FilterGeners.Any())
+            {
+                gamesFilter = gamesByName.Where(e => e.EditionGeners.Any(g => FilterGeners.Contains(g.Geners.Name)));
+            }
 
             return gamesFilter.ToList();
         }

@@ -8,7 +8,7 @@ namespace DataBaseToAccess
 {
     public class BaseDbContext:DbContext
     {
-        public BaseDbContext(DbContextOptions<BaseDbContext> options,) : base(options) { }
+        public BaseDbContext(DbContextOptions<BaseDbContext> options) : base(options) { }
 
         public DbSet<AddOn> AddOns { get; set; }
         public DbSet<Admin> Admins { get; set; }
