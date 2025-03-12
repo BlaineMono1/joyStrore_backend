@@ -1,6 +1,5 @@
 ﻿using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
-using Service.Application.Service.GamesQuery;
 using Service.Application.Service.UserQuery;
 using Service.Application.Service.UserQuery.Dto;
 
@@ -12,11 +11,12 @@ namespace Gateway.WebApi.Controllers
     {
         private readonly UsersQuery _usersQuery;
         private readonly ILogger<UsersQuery> _logger;
-
-        public UserController(UsersQuery usersQuery, ILogger<UsersQuery> logger)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public UserController(UsersQuery usersQuery, ILogger<UsersQuery> logger, IHttpContextAccessor httpContextAccessor)
         {
             _usersQuery = usersQuery;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -224,6 +224,23 @@ namespace Gateway.WebApi.Controllers
             {
                 _logger.LogError(ex, "Error occurred while Updating users console with tg id {tgid}", tgId);
                 return StatusCode(500, "Error occurred while Updating users console");
+            }
+        }
+
+
+        [HttpPost]
+
+        public async Task<ActionResult> UpdateUserRegion(string region)
+        {
+            try
+            {
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region as String);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex);
             }
         }
     }
