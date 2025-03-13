@@ -20,11 +20,7 @@ namespace DataBaseToAccess
             var connectionString = configuration.GetConnectionString("DataBaseConnection");
             optionsBuilder.UseNpgsql(connectionString);
 
-            // Создаем подключение к RedisGetValue
-            var redisConnectionString = configuration.GetConnectionString("RedisConnection");
-            var redis = ConnectionMultiplexer.Connect(redisConnectionString);
-
-            return new BaseDbContext(optionsBuilder.Options, redis);
+            return new BaseDbContext(optionsBuilder.Options);
         }
     }
 }

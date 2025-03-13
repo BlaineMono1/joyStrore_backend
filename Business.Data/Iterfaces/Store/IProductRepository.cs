@@ -15,5 +15,7 @@ namespace Business.Data.Iterfaces.Store
         /// </summary>
         /// <returns></returns>
         Task<T> GetEntityType(Guid id);
+
+        Task<IQueryable<Product>> FilterProducts(string? name, List<string>? FilterGeners);
     }
 }

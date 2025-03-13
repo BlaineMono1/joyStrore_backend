@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.GamesQuery.Dto;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Components.Forms;
+using System.Xml.Linq;
 
 
 
@@ -119,13 +121,8 @@ namespace Service.Application.Service.GamesQuery
                     throw new Exception("Edition not found.");
                 }
 
-                var editions = new List<EditionDto>(); 
-                editions.AddRange((await _editionRepository.GetEditions(GameId)).Select(item => 
-                new EditionDto()
-                {
-                    Id = item.Guid,
-                    Name = item.EditionName
-                }));
+                var editions = await EditionsList(GameId);                
+
                 var product = await _productRepository.GetEntityType(Edition);
                 var game = (await _gameRepository.GetListQuery()).Include(g => g.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GameId);
 
@@ -188,29 +185,57 @@ namespace Service.Application.Service.GamesQuery
             }
         }
 
-        public async Task<List<GamesListDto>> FilterGames(string? name, List<string>? geners)
+        public async Task<List<EditionDto>> EditionsList(Guid GameId)
+        {
+            var editions = new List<EditionDto>();
+
+            editions.AddRange((await _editionRepository.GetEditions(GameId)).Select(item =>
+            new EditionDto()
+            {
+                Id = item.Guid,
+                Name = item.EditionName
+            }));
+
+            return editions;
+        }
+
+        public async Task<List<GamesListDto>> FilteredGamesList(IEnumerable<Product> source)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
             try
             {
                 _logger.LogInformation("Filtering games");
-                var editions = await _editionRepository.FilterEditions(name, geners);
 
                 var result = new List<GamesListDto>();
 
-                foreach (var edition in editions)
+                foreach (var item in source)
                 {
-                    var t = new GamesListDto
+                    var t = new GamesListDto();
+                    if (item.Type == "Game")
                     {
-                        FIlterName = name,
-                        Id = edition.Guid,
-                        ImageFilepath = edition.Image,
-                        Name = edition.EditionName,
-                        Discount = edition.Product.DiscountPercent,
-                        Price = await _calculatePrice.CalcPrice(edition.Product.PriceUa, edition.Product.PriceTr, edition.Product.Type, region),
-                        
-                    };
-                    t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                        t = new GamesListDto
+                        {
+                            Id = item.Edition.Guid,
+                            ImageFilepath = item.Edition.Image,
+                            Name = item.Edition.EditionName,
+                            Discount = item.DiscountPercent,
+                            Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type, region),
+                        };
+                        t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                    }
+                    else
+                    {
+                        t = new GamesListDto
+                        {
+                            Id = item.AddOn.Guid,
+                            ImageFilepath = item.AddOn.Image,
+                            Name = item.AddOn.Name,
+                            Discount = item.DiscountPercent,
+                            Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type, region),
+                        };
+                        t.Jprice = await _calculatePrice.CalcJprice(t.Price, region);
+                    }
+
                     result.Add(t);
                 }
 

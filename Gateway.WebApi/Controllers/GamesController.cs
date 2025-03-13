@@ -1,6 +1,9 @@
-﻿using Gateway.WebApi.Attributes;
+﻿using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
+using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Service.Application.Extension.Pagination;
 using Service.Application.Service.GamesQuery;
 using Service.Application.Service.GamesQuery.Dto;
 
@@ -10,13 +13,15 @@ namespace Gateway.WebApi.Controllers
     [ApiController]
     public class GamesController : ControllerBase
     {
+        private readonly IProductRepository<Product> _productRepository;
         private readonly GamesQuery _gamesQuery;
         private readonly ILogger<GamesController> _logger;
 
-        public GamesController(GamesQuery gamesQuery, ILogger<GamesController> logger)
+        public GamesController(GamesQuery gamesQuery, ILogger<GamesController> logger, IProductRepository<Product> productRepository)
         {
             _gamesQuery = gamesQuery;
             _logger = logger;
+            _productRepository = productRepository;
         }
 
         /// <summary>
@@ -62,13 +67,15 @@ namespace Gateway.WebApi.Controllers
         /// Фильтрация игр по названию и жанрам
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<List<GamesListDto>>> FilterGames(string? name = null, List<string>? geners = null)
+        public async Task<ActionResult<List<GamesListDto>>> FilterGames(string? name = null, List<string>? geners = null, int Page = 0)
         {
             try
             {
                 _logger.LogInformation("Filtering games");
-                var games = await _gamesQuery.FilterGames(name, geners);    
-                return Ok(games);
+                var games = await _productRepository.FilterProducts(name, geners);
+
+                var result = await _gamesQuery.FilteredGamesList(new PaginatedList<Product>(games, Page).Entities);
+                return Ok(result);
             }
             catch (Exception ex)
             {
