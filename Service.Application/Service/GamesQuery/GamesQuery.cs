@@ -199,7 +199,7 @@ namespace Service.Application.Service.GamesQuery
             return editions;
         }
 
-        public async Task<List<GamesListDto>> FilterGames(IEnumerable<Product> source)
+        public async Task<List<GamesListDto>> FilteredGamesList(IEnumerable<Product> source)
         {
             var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
             try

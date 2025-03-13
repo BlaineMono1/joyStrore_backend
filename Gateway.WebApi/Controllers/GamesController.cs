@@ -74,7 +74,7 @@ namespace Gateway.WebApi.Controllers
                 _logger.LogInformation("Filtering games");
                 var games = await _productRepository.FilterProducts(name, geners);
 
-                var result = await _gamesQuery.FilterGames(new PaginatedList<Product>(games, Page).Entities);
+                var result = await _gamesQuery.FilteredGamesList(new PaginatedList<Product>(games, Page).Entities);
                 return Ok(result);
             }
             catch (Exception ex)
