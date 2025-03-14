@@ -112,8 +112,8 @@ namespace Service.Application.Service.UserQuery
 
                 var cart = await Task.WhenAll(userCartItems.Select(async item =>
                 {
-                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
-                    var jPrice = await _calculatePrice.CalcJprice(price, region);
+                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
+                    var jPrice = await _calculatePrice.CalcJprice(price);
                     var result = new CartItemDto();
 
                     switch (item.Product.Type)
@@ -179,7 +179,7 @@ namespace Service.Application.Service.UserQuery
         {
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                
                 _logger.LogInformation("Fetching user favorite items for TG ID: {TgId}", tgId);
 
                 var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
@@ -193,8 +193,8 @@ namespace Service.Application.Service.UserQuery
 
                 var result = await Task.WhenAll(favoriteItems.Select(async item =>
                 {
-                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
-                    var jPrice = await _calculatePrice.CalcJprice(price, region);
+                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
+                    var jPrice = await _calculatePrice.CalcJprice(price);
                     var result = new FavoriteDto();
                     switch (item.Product.Type)
                     {

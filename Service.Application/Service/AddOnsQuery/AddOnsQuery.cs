@@ -13,9 +13,8 @@ namespace Service.Application.Service.AddOnsQuery
     public class AddOnsQuery
     {
         private readonly IRepository<GroupAddOn> _groupAddOnRepository;
-        private readonly IGameRepository<Game> _gameRepository;
-        private readonly IRepository<AddOn> _addOnRepository;
-        private readonly IUserRepository<User> _userRepository;
+        private readonly IProductRepository<Product> _productRepository;
+
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -27,19 +26,16 @@ namespace Service.Application.Service.AddOnsQuery
             IRegionFromCookie regionFromCookie,
             ILogger<AddOnsQuery> logger,
             IRepository<GroupAddOn> groupAddOnRepository,
-            IGameRepository<Game> gameRepository,
-            IRepository<AddOn> addOnRepository,
-            IUserRepository<User> userRepository)
+            IProductRepository<Product> productRepository
+            )
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
 
-            _userRepository = userRepository;
-            _gameRepository = gameRepository;
-            _userRepository = userRepository;
             _groupAddOnRepository = groupAddOnRepository;
+            _productRepository = productRepository;
         }
         public async Task<List<AddOnsListDto>> GroupAddOnsList()
         {
@@ -66,23 +62,23 @@ namespace Service.Application.Service.AddOnsQuery
             return result;
         }
 
-        public async Task<List<GroupAddOnsDto>> AddOnsList(Guid Id) // GroupAddOn ID
+        public async Task<List<GroupAddOnsDto>> AddOnsList(Guid GroupAddOnId)
         {
             var result = new List<GroupAddOnsDto>();
             try
             {
                 var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                
-                var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == Id);
-                if (groupAddOns is null) _logger.LogWarning("group add on with guid: {guid} is null", Id);
-                else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", Id);
+
+                var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
+                if (groupAddOns is null) _logger.LogWarning("group add on with guid: {guid} is null", GroupAddOnId);
+                else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", GroupAddOnId);
                 var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
                 {
                     Id = item.Guid,
                     Image = item.Image,
                     Name = item.Name,
-                    Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region),
-                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region), region),
+                    Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),
+                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type)),
                     Discount = item.Product.DiscountPercent
                 });
 
@@ -96,40 +92,38 @@ namespace Service.Application.Service.AddOnsQuery
             return result;
         }
 
-        public async Task<AddOnDto> AddOnById(Guid Id)// Add on Id
+
+        public async Task<List<GameAddOnListDto>> GetGameAddOnList(Guid ProductId)
         {
-            var result = new AddOnDto();
+            var result = new List<GameAddOnListDto>();
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var product = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns)
+                    .FirstOrDefault(p => p.Guid == ProductId);
 
-                var addOns = await _gameRepository.AddOnsByGame(Id);
-                if (addOns is null) _logger.LogWarning("No game with add on {guid}", Id);
+                result.AddRange(await Task.WhenAll(
+                    product.Edition.Game.AddOns.Select(async item =>
+                    new GameAddOnListDto
+                    {
+                        ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid,
+                        AddOnName = item.Name,
+                        GameName = product.Edition.Game.Name,
+                        Image = item.Image,
+                        Platform = item.Platform,
+                        Price = await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type),
+                        JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type)),
+                        DiscountPercent = (await _productRepository.GetEntityType(item.Guid)).DiscountPercent
+                    }
+                    )));
 
-                var addOn = await _addOnRepository.GetById(Id);
-                if (addOns is null) _logger.LogWarning("add on {guid} not found", Id);
-
-                result.Id = Id;
-                result.Image = addOn.Image;
-                result.Type = addOn.TypeName;
-                result.Platform = addOn.Platform;
-                result.AddOns = addOns;
-                result.Price = await _calculatePrice.CalcPrice(addOn.Product.PriceUa, addOn.Product.PriceTr, addOn.Product.Type, region);
-                result.JPrice = await _calculatePrice.CalcJprice(result.Price, region);
-                result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
-
-                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).Include(u => u.Settings).FirstOrDefault(u => u.TgUserId == userTg);
-
-                result.InCart = (user.Cart.CartItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
-                result.InFavorite = (user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == addOn.Product.Guid) != null) ? true : false;
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while retrieving add on.");
+                _logger.LogError(ex.Message);
                 throw;
             }
-            return result;
+
         }
     }
 }

@@ -1,0 +1,64 @@
+﻿using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
+using Gateway.WebApi.Attributes;
+using Microsoft.AspNetCore.Mvc;
+using Service.Application.Extension.Pagination;
+using Service.Application.Service.ProductQuery;
+using Service.Application.Service.ProductQuery.Dto;
+
+namespace Gateway.WebApi.Controllers
+{
+    [SetRoute("api/[controller]/[action]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IProductRepository<Product> _productRepository;
+        private readonly ProductQuery _productQuery;
+        private readonly ILogger<ProductController> _logger;
+
+        public ProductController(ProductQuery productQuery, ILogger<ProductController> logger, IProductRepository<Product> productRepository)
+        {
+            _productQuery = productQuery;
+            _logger = logger;
+            _productRepository = productRepository;
+        }
+
+        /// <summary>
+        /// Вывод продукта по его Id
+        /// </summary>
+        [HttpGet]
+
+        public async Task<ActionResult<ProductDto>> GetProduct(Guid ProductId)
+        {
+            try
+            {
+                var product = await _productQuery.GetProduct(ProductId);
+                return Ok(product);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Фильтрация продуктов 
+        /// </summary>
+        [HttpPost]
+        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, List<string>? geners = null, int Page = 0)
+        {
+            try
+            {
+                _logger.LogInformation("Filtering games");
+                var games = await _productRepository.FilterProducts(name, geners);
+
+                var result = await _productQuery.GetProductList(new PaginatedList<Product>(games, Page).Entities);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+    }
+}

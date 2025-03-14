@@ -59,24 +59,5 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
-        /// <summary>
-        /// Вывод Доната
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<ActionResult<AddOnDto>> GetAddOn(Guid id)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching Add on with id {id}", id);
-                var addOn = await _addOnsQuery.AddOnById(id);
-                return Ok(addOn);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching add on.");
-                return StatusCode(500, "An error occurred while retrieving the add on.");
-            }
-        }
     }
 }

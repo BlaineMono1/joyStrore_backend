@@ -56,8 +56,8 @@ namespace Service.Application.Service.SubscriptionsQuery
                         var product = await _productRepository.GetById(sub.ProductId)
                             ?? throw new KeyNotFoundException($"Product with TypeId {sub.Guid} not found");
 
-                        var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, region);
-                        var jPrice = await _calculatePrice.CalcJprice(price, region);
+                        var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
+                        var jPrice = await _calculatePrice.CalcJprice(price);
 
                         return new SubscriptionsListDto
                         {
@@ -84,56 +84,9 @@ namespace Service.Application.Service.SubscriptionsQuery
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching subscriptions list.");
-                return new List<SubscriptionsListDto>();
-            }
-        }
-
-        /// <summary>
-        /// Получение подписки по ID
-        /// </summary>
-        public async Task<SubscriptionDto> SubscriptionById(Guid Id)
-        {
-            try
-            {
-                string region = "UA";// _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                _logger.LogInformation("Fetching subscription details for ID: {Id}", Id);
-
-                var currentSub = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).FirstOrDefault(s => s.Guid == Id)
-                    ?? throw new KeyNotFoundException($"Subscription with ID {Id} not found");
-
-                var subs = await _subscriptionRepository.SubscriptionsByName(currentSub.Name);
-                var prod = await _productRepository.GetEntityType(Id);
-
-                var price = await _calculatePrice.CalcPrice(prod.PriceUa, prod.PriceTr, prod.Type, region);
-                var jPrice = await _calculatePrice.CalcJprice(price, region);
-                var jPlus = await _calculatePrice.CalcJplus(jPrice);
-
-                var userTg = "1"; //_regionFromCookie.GetUserTgID(_httpContextAccessor);
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).Include(u => u.Settings).FirstOrDefault(u => u.TgUserId == userTg);
-
-                var result = new SubscriptionDto
-                {
-                    Id = Id,
-                    Image = currentSub.Image,
-                    Type = prod.Type,
-                    Platform = currentSub.Platform,
-                    Subscriptions = subs,
-                    Discount = prod.DiscountPercent,
-                    Price = price,
-                    JPrice = jPrice,
-                    JPlus = jPlus,
-                    InCart = user.Cart.CartItems.Any(c => c.ProductId == currentSub.Product.Guid),
-                    InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == currentSub.Product.Guid)
-                };
-
-                _logger.LogInformation("Successfully fetched subscription details for ID: {Id}", Id);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching subscription details for ID: {Id}", Id);
                 throw;
             }
         }
+               
     }
 }

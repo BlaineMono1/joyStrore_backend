@@ -5,6 +5,8 @@ using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
+using Services.GetRegionFromCookie;
+using Microsoft.AspNetCore.Http;
 
 
 namespace Services.CalculationService
@@ -17,6 +19,8 @@ namespace Services.CalculationService
         private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
         private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRegionFromCookie _regionFromCookie;
 
         public CalculatePrice(
             IRepository<SettingPrice> settingPriceRepository,
@@ -24,6 +28,8 @@ namespace Services.CalculationService
             IRepository<LoyaltySetting> loyaltySettingRepository,
             IRedisRepository redis,
             ILogger<CalculatePrice> logger,
+            IHttpContextAccessor httpContextAccessor,
+            IRegionFromCookie regionFromCookie,
             ICacheService cacheService)
         {
             _settingPriceRepository = settingPriceRepository;
@@ -31,10 +37,12 @@ namespace Services.CalculationService
             _loyaltySettingRepository = loyaltySettingRepository;
             _redis = redis;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+            _regionFromCookie = regionFromCookie;
             _cacheService = cacheService;
         }
 
-        private async Task<decimal> GetPrice(string region, decimal? price)
+        private async Task<decimal> GetPrice(string region,decimal? price)
         {
             if (price == null)
             {
@@ -44,7 +52,7 @@ namespace Services.CalculationService
 
             decimal exchangeRate = 0;
            
-            if (region == "UA")
+            if (region == "UAH")
             {
                 string? cachedData = await _redis.GetAsync("UA");
                 if(cachedData is null)
@@ -58,7 +66,7 @@ namespace Services.CalculationService
                 }
 
             }
-            else if(region == "TR")
+            else if(region == "TRL")
             {
                 string? cachedData = await _redis.GetAsync("TR");
                 if (cachedData is null)
@@ -79,16 +87,17 @@ namespace Services.CalculationService
             return price.Value * exchangeRate;
         }
 
-        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type, string region)
+        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type)
         {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
             try
-            {
+            {                
                 _logger.LogInformation("Calculating price for region {Region}, type {Type}.", region, type);
 
                 var price = region switch
                 {
-                    "UA" => priceua,
-                    "TR" => pricetr,
+                    "UAH" => priceua,
+                    "TRL" => pricetr,
                     _ => throw new Exception("No region found")
                 };
 
@@ -140,10 +149,12 @@ namespace Services.CalculationService
             }
         }
 
-        public async Task<decimal> CalcJprice(decimal? price, string region)
+        public async Task<decimal> CalcJprice(decimal? price)
         {
+            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
             try
             {
+
                 if (price == null)
                 {
                     _logger.LogWarning("Price is null for region {Region}. Returning 0.", region);

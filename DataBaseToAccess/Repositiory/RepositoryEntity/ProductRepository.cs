@@ -67,15 +67,15 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
                     
             }
 
-            var games =  filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns);
+            var games =  filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game);
 
-            var set = new HashSet<string>();
+            var set = new HashSet<Guid>();
             foreach (var game in games)
             {
-                set.Add(game.Edition.Game.Name);
+                set.Add(game.Edition.Game.Guid);
             }
 
-            var result = (await GetListQuery()).Where(p => (p.Edition != null && set.Contains(p.Edition.Game.Name)) || (p.AddOn != null && set.Contains(p.AddOn.Game.Name)))
+            var result = (await GetListQuery()).Where(p => (p.Type == "Game" && set.Contains(p.Edition.Game.Guid)) || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid)))
                 .Include(p => p.Edition)
                 .Include(p => p.AddOn);
 
