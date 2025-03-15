@@ -1,4 +1,4 @@
-﻿namespace Service.Application.Service.UserQuery.Dto
+﻿namespace Service.Application.Service.CartQuery.Dto
 {
     public class CartDto
     {

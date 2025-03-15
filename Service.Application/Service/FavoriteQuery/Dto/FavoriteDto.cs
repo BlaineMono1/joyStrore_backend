@@ -1,7 +1,6 @@
-﻿
-namespace Service.Application.Service.UserQuery.Dto
+﻿namespace Service.Application.Service.FavoriteQuery.Dto
 {
-    public class CartItemDto
+    public class FavoriteDto
     {
         public Guid Id { get; set; }
         public string image { get; set; }
@@ -9,7 +8,8 @@ namespace Service.Application.Service.UserQuery.Dto
         public string EditionName { get; set; }
         public decimal Price { get; set; }
         public decimal JPrice { get; set; }
+        public DateTime? DiscountTime { get; set; }
         public string Discount { get; set; }
-        public string Platform { get; set; }
+        public bool InCart { get; set; }
     }
 }
