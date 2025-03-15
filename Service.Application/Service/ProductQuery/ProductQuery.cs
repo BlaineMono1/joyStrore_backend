@@ -105,7 +105,7 @@ namespace Service.Application.Service.ProductQuery
             }
         }
 
-        public async Task<List<DropDownListDto>> GetDropDownList(Guid ProductId)
+        public async Task<List<DropDownListDto>> DropDownList(Guid ProductId)
         {
             var result = new List<DropDownListDto>();
             try

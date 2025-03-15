@@ -37,7 +37,5 @@ namespace Gateway.WebApi.Controllers
             }
             
         }
-         
-
     }
 }

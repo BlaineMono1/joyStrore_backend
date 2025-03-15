@@ -45,14 +45,31 @@ namespace Gateway.WebApi.Controllers
         /// Фильтрация продуктов 
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, List<string>? geners = null, int Page = 0)
+        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, string? filterName = null,  string? platform = null, bool byDesc = false, bool byDiscount = false, List<string>? geners = null, int Page = 0)
         {
             try
             {
                 _logger.LogInformation("Filtering games");
-                var games = await _productRepository.FilterProducts(name, geners);
+                var games = await _productRepository.FilterProducts(name, filterName, platform, byDesc, byDiscount, geners);
 
                 var result = await _productQuery.GetProductList(new PaginatedList<Product>(games, Page).Entities);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Выпадающий список
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<List<DropDownListDto>>> GetDropDownList(Guid productId)
+        {
+            try
+            {
+                var result = await _productQuery.DropDownList(productId);
                 return Ok(result);
             }
             catch (Exception ex)

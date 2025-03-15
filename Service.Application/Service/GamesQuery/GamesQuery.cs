@@ -56,10 +56,9 @@ namespace Service.Application.Service.GamesQuery
             try
             {
                 _logger.LogInformation("Fetching all sections.");
-                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ToList();
+                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ThenInclude(e => e.Game).ToList();
 
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
+                
                 foreach (var section in sections)
                 {
                     if (section.Editions is null || section.Editions.Count < 1)
@@ -70,22 +69,15 @@ namespace Service.Application.Service.GamesQuery
 
                     foreach (var edition in section.Editions)
                     {
-                        var game = await _gameRepository.GetById(edition.GameId);
-
-                        if (game is null)
-                        {
-                            _logger.LogError("Game with ID {GameId} not found.", edition.GameId);
-                            continue;
-                        }
-
+                       
                         var product = await _productRepository.GetEntityType(edition.Guid);
 
                         var dto = new GamesListDto
                         {
                             FIlterName = section.Name,
-                            Name = game.Name,
+                            Name = edition.Game.Name,
                             ImageFilepath = edition.Image,
-                            Id = game.Guid,
+                            ProductId = (await _productRepository.GetEntityType(edition.Guid)).Guid,
                             Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
                             Discount = product.DiscountPercent
                         };

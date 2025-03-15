@@ -3,7 +3,7 @@ namespace Service.Application.Service.AddOnsQuery.Dto
 {
     public class GroupAddOnsDto
     {
-        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
         public string Image { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }

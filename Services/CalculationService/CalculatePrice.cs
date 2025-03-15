@@ -4,8 +4,6 @@ using Microsoft.Extensions.Logging;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using System.Globalization;
-using Newtonsoft.Json.Linq;
-using Services.GetRegionFromCookie;
 using Microsoft.AspNetCore.Http;
 
 
@@ -54,11 +52,11 @@ namespace Services.CalculationService
            
             if (region == "UAH")
             {
-                string? cachedData = await _redis.GetAsync("UA");
+                string? cachedData = await _redis.GetAsync("UAH");
                 if(cachedData is null)
                 {
                     await UpdateCahce();
-                    cachedData = await _redis.GetAsync("UA");
+                    cachedData = await _redis.GetAsync("UAH");
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
@@ -68,11 +66,11 @@ namespace Services.CalculationService
             }
             else if(region == "TRL")
             {
-                string? cachedData = await _redis.GetAsync("TR");
+                string? cachedData = await _redis.GetAsync("TRL");
                 if (cachedData is null)
                 {
                     await UpdateCahce();
-                    cachedData = await _redis.GetAsync("TR");
+                    cachedData = await _redis.GetAsync("TRL");
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {

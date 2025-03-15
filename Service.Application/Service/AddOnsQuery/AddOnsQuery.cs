@@ -45,13 +45,13 @@ namespace Service.Application.Service.AddOnsQuery
                 _logger.LogInformation("Fetching all addons.");
                 var AddOns = await _groupAddOnRepository.GetAllList();
 
-                result.AddRange(AddOns.Select(a => new AddOnsListDto
+                result.AddRange((IEnumerable<AddOnsListDto>)Task.WhenAll(AddOns.Select(async a => new AddOnsListDto
                 {
-                    Id = a.Guid,
+                    ProductId = (await _productRepository.GetEntityType(a.Guid)).Guid,
                     ImagePath = a.FilePathImage
                 }
 
-                ));
+                )));
             }
             catch (Exception ex)
             {
@@ -67,14 +67,12 @@ namespace Service.Application.Service.AddOnsQuery
             var result = new List<GroupAddOnsDto>();
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-
                 var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
                 if (groupAddOns is null) _logger.LogWarning("group add on with guid: {guid} is null", GroupAddOnId);
                 else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", GroupAddOnId);
                 var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
                 {
-                    Id = item.Guid,
+                    ProductId = item.Product.Guid,
                     Image = item.Image,
                     Name = item.Name,
                     Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),

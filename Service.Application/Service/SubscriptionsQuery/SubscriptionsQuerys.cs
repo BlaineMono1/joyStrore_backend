@@ -44,7 +44,6 @@ namespace Service.Application.Service.SubscriptionsQuery
         {
             try
             {
-                string region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
                 var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
                 _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
@@ -61,12 +60,14 @@ namespace Service.Application.Service.SubscriptionsQuery
 
                         return new SubscriptionsListDto
                         {
-                            id = sub.Guid,
+                            ProductId = (await _productRepository.GetEntityType(sub.Guid)).Guid,
                             Name = sub.Name,
                             ImagePath = sub.Image,
                             Dicount = product.DiscountPercent,
                             Price = price,
-                            Jprice = jPrice
+                            Jprice = jPrice,
+                            SectionName = sub.SectionName
+                            
                         };
                     }
                     catch (Exception ex)
