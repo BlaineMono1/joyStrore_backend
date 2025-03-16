@@ -1,4 +1,6 @@
-﻿namespace Service.Application.Service.UserQuery.Dto
+﻿using Service.Application.Service.CartQuery.Dto;
+
+namespace Service.Application.Service.UserQuery.Dto
 {
     public class OrderDto
     {

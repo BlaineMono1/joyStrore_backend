@@ -23,9 +23,9 @@ namespace CacheService
         public async Task UpdateExchangeRates()
         {
             
-            string cacheKeyUa = "UA";
-            string cacheKeyTr = "TR";
-         
+            string cacheKeyUa = "UAH";
+            string cacheKeyTr = "TRL";
+
 
             string urlUa = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
             string urlTr = "https://min-api.cryptocompare.com/data/price?fsym=TRY&tsyms=RUB";

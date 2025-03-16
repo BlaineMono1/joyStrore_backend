@@ -37,28 +37,5 @@ namespace Gateway.WebApi.Controllers
             }
             
         }
-
-        /// <summary>
-        /// Получение подписки
-        /// </summary>
-        /// <returns></returns>
-
-        [HttpGet]
-        public async Task<ActionResult<SubscriptionDto>> GetSubscription(Guid SubscriptionId)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching subscription with ID {Id}", SubscriptionId);
-                var sub = await _subscriptoinsQuerys.SubscriptionById(SubscriptionId);
-                return Ok(sub);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching subscription.");
-                return StatusCode(500, "An error occurred while fetching subscription.");
-            }
-
-        }
-
     }
 }

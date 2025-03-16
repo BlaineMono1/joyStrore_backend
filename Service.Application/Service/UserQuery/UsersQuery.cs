@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
+using Service.Application.Service.CartQuery.Dto;
 using Service.Application.Service.UserQuery.Dto;
 
 
@@ -92,158 +93,8 @@ namespace Service.Application.Service.UserQuery
                 _logger.LogError(ex, "Error fetching user by TG ID: {TgId}", tgId);
                 throw;
             }
-        }
-
-        public async Task<CartDto> UserCart(string tgId)
-        {
-            try
-            {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                _logger.LogInformation("Fetching user cart for TG ID: {TgId}", tgId);
-
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
-                    return new CartDto();
-                }
-
-                var userCartItems = user.Cart.CartItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<CartItem>();
-
-                var cart = await Task.WhenAll(userCartItems.Select(async item =>
-                {
-                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
-                    var jPrice = await _calculatePrice.CalcJprice(price, region);
-                    var result = new CartItemDto();
-
-                    switch (item.Product.Type)
-                    {
-                        case "Game":
-                            result.image = item.Product.Edition.Image;
-                            result.Name = item.Product.Edition.EditionName;
-                            result.EditionName = item.Product.Edition.EditionType;
-                            result.Id = item.Product.Edition.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = item.Product.Edition.Platform;
-                            break;
-                        case "AddOn":
-                            result.image = item.Product.AddOn.Image;
-                            result.Name = item.Product.AddOn.Name;
-                            result.EditionName = "";
-                            result.Id = item.Product.AddOn.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = item.Product.AddOn.Platform;
-                            break;
-                        case "Subscription":
-                            result.image = item.Product.Subscription.Image;
-                            result.Name = item.Product.Subscription.Name;
-                            result.EditionName = "";
-                            result.Id = item.Product.Subscription.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = item.Product.Subscription.Platform;
-                            break;
-                    }
-
-
-                    return result;
-                }));
-
-                var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
-
-                var result = new CartDto
-                {
-                    items = cart.ToList(),
-                    Email = settings?.EmailPsStore ?? "",
-                    PayEmail = settings?.Email ?? "",
-                    Password = settings?.PasswordPsStore ?? "",
-                    Code = settings?.Code ?? ""
-                };
-
-                _logger.LogInformation("Successfully fetched user cart for TG ID: {TgId}", tgId);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching user cart for TG ID: {TgId}", tgId);
-                throw;
-            }
-        }
-
-        public async Task<List<FavoriteDto>> UserFavorite(string tgId)
-        {
-            try
-            {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                _logger.LogInformation("Fetching user favorite items for TG ID: {TgId}", tgId);
-
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
-                    return new List<FavoriteDto>();
-                }
-
-                var favoriteItems = user.Favorite.FavoriteItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<FavoriteItem>();
-
-                var result = await Task.WhenAll(favoriteItems.Select(async item =>
-                {
-                    var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, region);
-                    var jPrice = await _calculatePrice.CalcJprice(price, region);
-                    var result = new FavoriteDto();
-                    switch (item.Product.Type)
-                    {
-                        case "Game":
-                            result.image = item.Product.Edition.Image;
-                            result.Name = item.Product.Edition.EditionName;
-                            result.EditionName = item.Product.Edition.EditionType;
-                            result.Id = item.Product.Edition.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
-                            break;
-                        case "AddOn":
-                            result.image = item.Product.AddOn.Image;
-                            result.Name = item.Product.AddOn.Name;
-                            result.EditionName = "";
-                            result.Id = item.Product.AddOn.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
-                            break;
-                        case "Subscription":
-                            result.image = item.Product.Subscription.Image;
-                            result.Name = item.Product.Subscription.Name;
-                            result.EditionName = "";
-                            result.Id = item.Product.Subscription.Guid;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
-                            break;
-                    }
-                    result.InCart = (user.Cart.CartItems is null) ? false : user.Cart.CartItems.Any(c => c.ProductId == item.ProductId);
-
-                    return result;
-                }));
-
-                _logger.LogInformation("Successfully fetched user favorite items for TG ID: {TgId}", tgId);
-                return result.ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching user favorite items for TG ID: {TgId}", tgId);
-                throw;
-            }
-        }
-
+        }       
+        
         public async Task<List<OrderDto>> UserOrder(string tgId)
         {
             try
@@ -313,145 +164,43 @@ namespace Service.Application.Service.UserQuery
             }
         }
 
-        public async Task UpdateUserCart(string tgId, Guid itemId)
-        {
-            try
-            {
-                _logger.LogInformation($"Updating user {tgId} cart: {itemId}");
-
-                var product = await  _productRepository.GetEntityType(itemId);
-                if (product is null)
-                {
-                    _logger.LogError("No Product with GUID {id}", itemId);
-                    throw new Exception($"Product with GUID {itemId} not found");
-                }
-
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart;
-                if (cart is null)
-                {
-                    _logger.LogError("User Cart with tg id {id} not found", tgId);
-                    throw new Exception($"User Cart with tg id {tgId} not found");
-                }
-                var result = new CartItem()
-                {
-                    CartId = cart.Guid,
-                    ProductId = product.Guid,
-                    
-                };
-
-                cart.CartItems ??= new List<CartItem>(); 
-                cart.CartItems.Add(result);
-                await _cartItemRepository.Add(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user cart tg Id {tgid}, itemId {itemId}", tgId, itemId);
-                throw;
-            }
-        }
-
-        public async Task UpdateUserFavorites(string tgId, Guid itemId)
-        {
-            try
-            {
-                _logger.LogInformation($"Updating user {tgId} favorites: {itemId}");
-
-                var product = await _productRepository.GetEntityType(itemId);
-                if (product is null)
-                {
-                    _logger.LogError("No Product with GUID {id}", itemId);
-                    throw new Exception($"Product with GUID {itemId} not found");
-                }
-
-                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite;
-                if (fav is null)
-                {
-                    _logger.LogError("User Favorite with tg id {id} not found", tgId);
-                    throw new Exception($"User Favorite with tg id {tgId} not found");
-                }
-                var result = new FavoriteItem()
-                {
-                    ProductId = product.Guid,
-                    FavoriteId = fav.Guid
-                };
-
-                
-
-                fav.FavoriteItems ??= new List<FavoriteItem>();
-                fav.FavoriteItems.Add(result);
-                await _favoriteItemRepository.Add(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, itemId);
-                throw;
-            }
-        }
-
-        public async Task DeleteFromCart(string tgId, Guid ProductId)
-        {
-            try
-            {
-                _logger.LogInformation($"Deliting from user {tgId} cart: {ProductId}");
-
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart.CartItems;
-
-                if (cart is null)
-                {
-                    _logger.LogError("User Cart with tg id {id} not found", tgId);
-                    throw new Exception($"User Cart with tg id {tgId} not found");
-                }
-
-                var item = cart.FirstOrDefault(c => c.ProductId == ProductId);
-                if(item is null)
-                {
-                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", ProductId, tgId);
-                    throw new Exception($"User Cart with tg id {tgId} not found");
-                }
-                await _cartItemRepository.HardDelete(item.Guid);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user Cart tg Id {tgid}, itemId {itemId}", tgId, ProductId);
-                throw;
-            }
-        }
-
-        public async Task DeleteFromFavorites(string tgId, Guid ProductId)
-        {
-            try
-            {
-                _logger.LogInformation($"Deliting from user {tgId} favorites: {ProductId}");
-
-                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite.FavoriteItems;
-
-                if (fav is null)
-                {
-                    _logger.LogError("User Favorites with tg id {id} not found", tgId);
-                    throw new Exception($"User Favorites with tg id {tgId} not found");
-                }
-                
-                var item = fav.FirstOrDefault(c => c.ProductId == ProductId);
-                if (item is null)
-                {
-                    _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", ProductId, tgId);
-                    throw new Exception($"User FavoriteItem with tg id {tgId} not found");
-                }
-                await _favoriteItemRepository.HardDelete(item.Guid);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user favorite tg Id {tgid}, itemId {itemId}", tgId, ProductId);
-                throw;
-            }
-        }
-
         public async Task UpdateConsoleType(string tgId, string Console)
         {
-            var user = await _userRepository.GetUserByTgId(tgId);
+            try
+            {
+                var user = await _userRepository.GetUserByTgId(tgId);
 
-            user.Platform = Console;
-            await _userRepository.Update(user);
+                user.Platform = Console;
+                await _userRepository.Update(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+        }
+
+        public async Task UpdateUserSettings(Guid UserId, string email, string password, string code)
+        {
+            try
+            {
+                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+
+                var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.Guid == UserId).Settings.FirstOrDefault(s => s.Region == region);
+
+                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user GUID {UserId}");
+
+                userSettings.Code = code;
+                userSettings.Email = email;
+                userSettings.PasswordPsStore = password;
+
+                await _setingsRepository.Update(userSettings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
         }
     }
 }

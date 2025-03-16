@@ -16,6 +16,6 @@ namespace Business.Data.Iterfaces.Store
         /// <returns></returns>
         Task<T> GetEntityType(Guid id);
 
-        Task<IQueryable<Product>> FilterProducts(string? name, List<string>? FilterGeners);
+        Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? geners);
     }
 }

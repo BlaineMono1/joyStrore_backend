@@ -15,6 +15,9 @@ using Service.Application.Service.GetNewsList;
 using Service.Application.Service.SubscriptionsQuery;
 using StackExchange.Redis;
 using CacheService;
+using Service.Application.Service.ProductQuery;
+using Service.Application.Service.CartQuery;
+using Service.Application.Service.FavoriteQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,7 +47,9 @@ builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();
 
-
+builder.Services.AddScoped<FavoriteQuery>();
+builder.Services.AddScoped<CartQuery>();
+builder.Services.AddScoped<ProductQuery>();
 builder.Services.AddScoped<GamesQuery>();
 builder.Services.AddScoped<Parse>();
 builder.Services.AddScoped<UsersQuery>();

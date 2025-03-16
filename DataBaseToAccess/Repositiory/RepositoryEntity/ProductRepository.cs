@@ -48,7 +48,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             ;
         }
 
-        public async Task<IQueryable<Product>> FilterProducts(string? name, List<string>? FilterGeners)
+        public async Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? FilterGeners)
         {
             var products = (await GetListQuery()).Where(p => p.Type == "Game");
 
@@ -67,17 +67,35 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
                     
             }
 
-            var games =  filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns);
+            var games =  filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game);
 
-            var set = new HashSet<string>();
-            foreach (var game in games)
+            var set = games.Select(p => p.Edition.Game.Guid).ToHashSet();
+
+            var result = (await GetListQuery()).Where(p => (p.Type == "Game" && set.Contains(p.Edition.Game.Guid)) || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid)));
+
+            if(!string.IsNullOrEmpty(filterName))
             {
-                set.Add(game.Edition.Game.Name);
+                switch (filterName)
+                {
+                    case "Date":
+                        result = byDesc ? result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Release : DateTime.MaxValue) : result.OrderBy(p => p.Type == "Game" ? p.Edition.Release : DateTime.MinValue);
+                        break;
+                    case "Price":
+                        result = byDesc ? result.OrderByDescending(p => p.PriceUa) : result.OrderBy(p => p.PriceTr);
+                        break;
+                    default:
+                        result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
+                        break;
+                }
+
             }
 
-            var result = (await GetListQuery()).Where(p => (p.Edition != null && set.Contains(p.Edition.Game.Name)) || (p.AddOn != null && set.Contains(p.AddOn.Game.Name)))
-                .Include(p => p.Edition)
-                .Include(p => p.AddOn);
+            if (!string.IsNullOrEmpty(platform)) result = result.Where(p => p.Type == "Game" ? p.Edition.Platform.Contains(platform) : p.AddOn.Platform.Contains(platform));
+
+            if (byDiscount)
+            {
+                result = result.OrderByDescending(p => p.DiscountPercent ?? "0");
+            }
 
             return result;
         }

@@ -1,14 +1,13 @@
 ﻿
-namespace Service.Application.Service.AddOnsQuery.Dto
+namespace Service.Application.Service.ProductQuery.Dto
 {
-    public class GroupAddOnsDto
+    public class ProductListDto
     {
         public Guid ProductId { get; set; }
-        public string Image { get; set; }
+        public string ImageFilepath { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }
-        public decimal JPrice { get; set; }
+        public decimal Jprice { get; set; }
         public string Discount { get; set; }
-
     }
 }
