@@ -116,5 +116,20 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, ex);
             }
         }
+
+        [HttpPost]
+        public ActionResult UpdateuserTgId(string tgId)
+        {
+            try
+            {
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("tgId", tgId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex);
+            }
+        }
     }
 }
