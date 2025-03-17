@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataBaseToAccess.Migrations
 {
     [DbContext(typeof(BaseDbContext))]
-    [Migration("20250225184336_ьшпкфешщт123")]
-    partial class ьшпкфешщт123
+    [Migration("20250317154154_FirstCommitMigrate")]
+    partial class FirstCommitMigrate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -279,7 +279,7 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("FavoriteGuid")
+                    b.Property<Guid>("FavoriteId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsDelete")
@@ -290,7 +290,7 @@ namespace DataBaseToAccess.Migrations
 
                     b.HasKey("Guid");
 
-                    b.HasIndex("FavoriteGuid");
+                    b.HasIndex("FavoriteId");
 
                     b.HasIndex("ProductId");
 
@@ -342,9 +342,6 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("EditionGuid")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
@@ -353,9 +350,43 @@ namespace DataBaseToAccess.Migrations
 
                     b.HasKey("Guid");
 
+                    b.ToTable("Gener");
+                });
+
+            modelBuilder.Entity("Business.Data.Models.GenersToEdition", b =>
+                {
+                    b.Property<Guid>("Guid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateUpdate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EditionGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EdtitonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GenerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GenersGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Guid");
+
                     b.HasIndex("EditionGuid");
 
-                    b.ToTable("Geners");
+                    b.HasIndex("GenersGuid");
+
+                    b.ToTable("GenersToEdition");
                 });
 
             modelBuilder.Entity("Business.Data.Models.GroupAddOn", b =>
@@ -932,6 +963,9 @@ namespace DataBaseToAccess.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SectionName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Type")
                         .HasColumnType("text");
 
@@ -1078,9 +1112,11 @@ namespace DataBaseToAccess.Migrations
 
             modelBuilder.Entity("Business.Data.Models.FavoriteItem", b =>
                 {
-                    b.HasOne("Business.Data.Models.Favorite", null)
+                    b.HasOne("Business.Data.Models.Favorite", "Favorite")
                         .WithMany("FavoriteItems")
-                        .HasForeignKey("FavoriteGuid");
+                        .HasForeignKey("FavoriteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Business.Data.Models.Product", "Product")
                         .WithMany()
@@ -1088,14 +1124,28 @@ namespace DataBaseToAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Favorite");
+
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("Business.Data.Models.Geners", b =>
+            modelBuilder.Entity("Business.Data.Models.GenersToEdition", b =>
                 {
-                    b.HasOne("Business.Data.Models.Edition", null)
-                        .WithMany("Geners")
-                        .HasForeignKey("EditionGuid");
+                    b.HasOne("Business.Data.Models.Edition", "Edition")
+                        .WithMany("EditionGeners")
+                        .HasForeignKey("EditionGuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Business.Data.Models.Geners", "Geners")
+                        .WithMany("Editions")
+                        .HasForeignKey("GenersGuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Edition");
+
+                    b.Navigation("Geners");
                 });
 
             modelBuilder.Entity("Business.Data.Models.LoyaltyOrder", b =>
@@ -1251,7 +1301,7 @@ namespace DataBaseToAccess.Migrations
 
             modelBuilder.Entity("Business.Data.Models.Edition", b =>
                 {
-                    b.Navigation("Geners");
+                    b.Navigation("EditionGeners");
                 });
 
             modelBuilder.Entity("Business.Data.Models.Favorite", b =>
@@ -1266,6 +1316,11 @@ namespace DataBaseToAccess.Migrations
                 {
                     b.Navigation("AddOns");
 
+                    b.Navigation("Editions");
+                });
+
+            modelBuilder.Entity("Business.Data.Models.Geners", b =>
+                {
                     b.Navigation("Editions");
                 });
 
