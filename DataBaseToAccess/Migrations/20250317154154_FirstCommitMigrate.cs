@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataBaseToAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class ьшпкфешщт123 : Migration
+    public partial class FirstCommitMigrate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -57,6 +57,21 @@ namespace DataBaseToAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Games", x => x.Guid);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Gener",
+                columns: table => new
+                {
+                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDelete = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Gener", x => x.Guid);
                 });
 
             migrationBuilder.CreateTable(
@@ -311,7 +326,7 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FavoriteGuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    FavoriteId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
@@ -320,10 +335,11 @@ namespace DataBaseToAccess.Migrations
                 {
                     table.PrimaryKey("PK_FavoriteItems", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_FavoriteItems_Favorites_FavoriteGuid",
-                        column: x => x.FavoriteGuid,
+                        name: "FK_FavoriteItems_Favorites_FavoriteId",
+                        column: x => x.FavoriteId,
                         principalTable: "Favorites",
-                        principalColumn: "Guid");
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_FavoriteItems_Products_ProductId",
                         column: x => x.ProductId,
@@ -344,6 +360,7 @@ namespace DataBaseToAccess.Migrations
                     Image = table.Column<string>(type: "text", nullable: true),
                     Platform = table.Column<string>(type: "text", nullable: true),
                     Duration = table.Column<string>(type: "text", nullable: true),
+                    SectionName = table.Column<string>(type: "text", nullable: true),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -600,24 +617,33 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Geners",
+                name: "GenersToEdition",
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    EdtitonId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    GenerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GenersGuid = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Geners", x => x.Guid);
+                    table.PrimaryKey("PK_GenersToEdition", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_Geners_Editions_EditionGuid",
+                        name: "FK_GenersToEdition_Editions_EditionGuid",
                         column: x => x.EditionGuid,
                         principalTable: "Editions",
-                        principalColumn: "Guid");
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GenersToEdition_Gener_GenersGuid",
+                        column: x => x.GenersGuid,
+                        principalTable: "Gener",
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -724,9 +750,9 @@ namespace DataBaseToAccess.Migrations
                 column: "SectionGuid");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FavoriteItems_FavoriteGuid",
+                name: "IX_FavoriteItems_FavoriteId",
                 table: "FavoriteItems",
-                column: "FavoriteGuid");
+                column: "FavoriteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FavoriteItems_ProductId",
@@ -734,9 +760,14 @@ namespace DataBaseToAccess.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Geners_EditionGuid",
-                table: "Geners",
+                name: "IX_GenersToEdition_EditionGuid",
+                table: "GenersToEdition",
                 column: "EditionGuid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GenersToEdition_GenersGuid",
+                table: "GenersToEdition",
+                column: "GenersGuid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LoyaltyOrders_LoyaltyTransactionHistoryId",
@@ -836,7 +867,7 @@ namespace DataBaseToAccess.Migrations
                 name: "FavoriteItems");
 
             migrationBuilder.DropTable(
-                name: "Geners");
+                name: "GenersToEdition");
 
             migrationBuilder.DropTable(
                 name: "LoyaltyCashbacks");
@@ -870,6 +901,9 @@ namespace DataBaseToAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "Editions");
+
+            migrationBuilder.DropTable(
+                name: "Gener");
 
             migrationBuilder.DropTable(
                 name: "LoyaltyTransactionHistories");
