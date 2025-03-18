@@ -3,17 +3,23 @@ using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Text.Json;
 
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
     public class ProductRepository<T> : Repository<Product>, IProductRepository<T> where T : class,IBaseEntity
     {
-        public ProductRepository(BaseDbContext contex) : base(contex) { }
+        public ProductRepository(BaseDbContext contex, IRedisRepository redis) : base(contex)
+        {
+            _redis = redis;
+        }
 
         private readonly Repository<Edition> _editionRepository;
         private readonly Repository<AddOn> _addOnRepository;
         private readonly Repository<Subscription> _subscriptionRepository;
+
+        private readonly IRedisRepository _redis;
         public async Task<T> GetTypeEntity(Product product)
         {
             if (product == null)
@@ -98,6 +104,16 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             }
 
             return result;
+        }
+
+        public async new Task Update(Product entity)
+        {
+            await base.Update(entity);
+
+            string cacheKey = $"product-{entity.Guid}";
+            string jsonData = JsonSerializer.Serialize(entity);
+
+            await _redis.SetAsync(cacheKey, jsonData, null);
         }
     }
 }

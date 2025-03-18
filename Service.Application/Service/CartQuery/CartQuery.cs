@@ -17,37 +17,35 @@ namespace Service.Application.Service.CartQuery
         private readonly IRepository<CartItem> _cartItemRepository;
 
         private readonly ICalculationService _calculatePrice;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<CartQuery> _logger;
 
         public CartQuery(
            ICalculationService calculatePrice,
-           IHttpContextAccessor httpContextAccessor,
-           IRegionFromCookie regionFromCookie,
+           IDataFromCookie regionFromCookie,
            ILogger<CartQuery> logger,
            IUserRepository<User> userRepository,
            IRepository<Setting> setingsRepository)
         {
             _calculatePrice = calculatePrice;
-            _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
             _userRepository = userRepository;
             _setingsRepository = setingsRepository;
         }
 
-        public async Task<CartDto> UserCart(Guid UserId)
+        public async Task<CartDto> UserCart()
         {
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
-                _logger.LogInformation("Fetching user cart for TG ID: {TgId}", UserId);
+                var region = _regionFromCookie.GetUserRegion();
+                var tgId = _regionFromCookie.GetUserTgID();
+                _logger.LogInformation("Fetching user cart for TG ID: {TgId}", tgId);
 
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.Guid == UserId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user == null)
                 {
-                    _logger.LogWarning($"User not found {UserId}");
+                    _logger.LogWarning($"User not found {tgId}");
                     return new CartDto();
                 }
 
@@ -117,11 +115,12 @@ namespace Service.Application.Service.CartQuery
             }
         }
 
-        public async Task UpdateUserCart(Guid UserId, Guid ProductId)
+        public async Task UpdateUserCart(Guid ProductId)
         {
             try
             {
-                _logger.LogInformation($"Updating user {UserId} cart: {ProductId}");
+                var tgId = _regionFromCookie.GetUserTgID();
+                _logger.LogInformation($"Updating user {tgId} cart: {ProductId}");
 
                 var product = await _productRepository.GetEntityType(ProductId);
                 if (product is null)
@@ -130,11 +129,11 @@ namespace Service.Application.Service.CartQuery
                     throw new Exception($"Product with GUID {ProductId} not found");
                 }
 
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.Guid == UserId).Cart;
+                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart;
                 if (cart is null)
                 {
-                    _logger.LogError("User Cart with id {id} not found", UserId);
-                    throw new Exception($"User Cart with tg id {UserId} not found");
+                    _logger.LogError("User Cart with id {id} not found", tgId);
+                    throw new Exception($"User Cart with tg id {tgId} not found");
                 }
                 var result = new CartItem()
                 {
@@ -149,34 +148,35 @@ namespace Service.Application.Service.CartQuery
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user cart Id {tgid}, itemId {itemId}", UserId, ProductId);
+                _logger.LogError(ex.Message);
                 throw;
             }
         }
 
-        public async Task DeleteFromCart(Guid UserId, Guid ProductId)
+        public async Task DeleteFromCart(Guid ProductId)
         {
             try
             {
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.Guid == UserId).Cart.CartItems;
+                var tgId = _regionFromCookie.GetUserTgID();
+                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart.CartItems;
 
                 if (cart is null)
                 {
-                    _logger.LogError("User Cart with id {id} not found", UserId);
-                    throw new Exception($"User Cart with id {UserId} not found");
+                    _logger.LogError("User Cart with id {id} not found", tgId);
+                    throw new Exception($"User Cart with id {tgId} not found");
                 }
 
                 var item = cart.FirstOrDefault(c => c.ProductId == ProductId);
                 if (item is null)
                 {
-                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", ProductId, UserId);
-                    throw new Exception($"User Cart with id {UserId} not found");
+                    _logger.LogError("CartItem with id {id} not found in User {id} Cart", ProductId, tgId);
+                    throw new Exception($"User Cart with id {tgId} not found");
                 }
                 await _cartItemRepository.HardDelete(item.Guid);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user Cart Id {tgid}, itemId {itemId}", UserId, ProductId);
+                _logger.LogError(ex.Message);
                 throw;
             }
         }

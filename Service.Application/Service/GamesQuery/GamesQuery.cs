@@ -22,13 +22,13 @@ namespace Service.Application.Service.GamesQuery
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<GamesQuery> _logger;
 
         public GamesQuery(
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
-            IRegionFromCookie regionFromCookie,
+            IDataFromCookie regionFromCookie,
             ILogger<GamesQuery> logger,
             IRepository<Section> sectionRepository,
             IGameRepository<Game> gameRepository,

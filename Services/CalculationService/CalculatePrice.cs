@@ -18,7 +18,7 @@ namespace Services.CalculationService
         private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
 
         public CalculatePrice(
             IRepository<SettingPrice> settingPriceRepository,
@@ -27,7 +27,7 @@ namespace Services.CalculationService
             IRedisRepository redis,
             ILogger<CalculatePrice> logger,
             IHttpContextAccessor httpContextAccessor,
-            IRegionFromCookie regionFromCookie,
+            IDataFromCookie regionFromCookie,
             ICacheService cacheService)
         {
             _settingPriceRepository = settingPriceRepository;
@@ -87,7 +87,7 @@ namespace Services.CalculationService
 
         public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+            var region = _regionFromCookie.GetUserRegion();
             try
             {                
                 _logger.LogInformation("Calculating price for region {Region}, type {Type}.", region, type);
@@ -149,7 +149,7 @@ namespace Services.CalculationService
 
         public async Task<decimal> CalcJprice(decimal? price)
         {
-            var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+            var region = _regionFromCookie.GetUserRegion();
             try
             {
 

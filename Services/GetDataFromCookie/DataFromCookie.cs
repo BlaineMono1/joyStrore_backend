@@ -4,18 +4,19 @@ using Service.Application.Iterfaces;
 
 namespace Services.GetRegionFromCookie
 {
-    public class RegionFromCookie : IRegionFromCookie
+    public class DataFromCookie : IDataFromCookie
     {
-        private readonly ILogger<RegionFromCookie> _logger;
-
-        public RegionFromCookie(ILogger<RegionFromCookie> logger)
+        private readonly ILogger<DataFromCookie> _logger;
+        private readonly IHttpContextAccessor _contextAccessor;
+        public DataFromCookie(ILogger<DataFromCookie> logger, IHttpContextAccessor contextAccessor)
         {
             _logger = logger;
+            _contextAccessor = contextAccessor;
         }
 
-        public string GetUserRegion(IHttpContextAccessor _httpContextAccessor)
+        public string GetUserRegion()
         {
-            var httpContext = _httpContextAccessor.HttpContext;
+            var httpContext = _contextAccessor.HttpContext;
             try
             {
                 return httpContext.Request.Cookies["region"];
@@ -38,9 +39,9 @@ namespace Services.GetRegionFromCookie
             //}
         }
 
-        public string GetUserTgID(IHttpContextAccessor _httpContextAccessor)
+        public string GetUserTgID()
         {
-            var httpContext = _httpContextAccessor.HttpContext;
+            var httpContext = _contextAccessor.HttpContext;
             try
             {
                 return httpContext.Request.Cookies["tgid"];

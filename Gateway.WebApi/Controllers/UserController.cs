@@ -25,17 +25,16 @@ namespace Gateway.WebApi.Controllers
         /// <returns></returns>
         /// 
         [HttpGet]
-        public async Task<ActionResult<UserDto>> GetUserByTgId(string tgId)
+        public async Task<ActionResult<UserDto>> GetUserByTgId()
         {
             try
             {
-                _logger.LogInformation("Fetching User with tg ID : {id}", tgId);
-                var user = await _usersQuery.UserByTgId(tgId);
+                var user = await _usersQuery.UserByTgId();
                 return Ok(user);
             }
             catch(Exception ex) 
             {
-                _logger.LogError(ex, "Error occurred while Fetching User with tg ID : {id}", tgId);
+                _logger.LogError(ex.Message);
                 return StatusCode(500, "Error occurred while fetching user");
             }
 
@@ -49,17 +48,17 @@ namespace Gateway.WebApi.Controllers
 
         [HttpGet]
 
-        public async Task<ActionResult<List<OrderDto>>> GetUserHistoryOrders(string tgId)
+        public async Task<ActionResult<List<OrderDto>>> GetUserHistoryOrders()
         {
             try
             {
-                _logger.LogInformation("Fetching user order history with tg ID {id}", tgId);
-                var history = await _usersQuery.UserOrder(tgId);
+                
+                var history = await _usersQuery.UserOrder();
                 return Ok(history);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while Fetching user order historyh tg ID : {id}", tgId);
+                _logger.LogError(ex.Message);
                 return StatusCode(500, "Error occurred while fetching user order history");
             }
         }
@@ -72,17 +71,16 @@ namespace Gateway.WebApi.Controllers
 
         [HttpPut]
 
-        public async Task<ActionResult> UpdateUserConsole(string tgId, string Console)
+        public async Task<ActionResult> UpdateUserConsole(string Console)
         {
             try
             {
-                _logger.LogInformation("Updating users console with tg id {tgid}", tgId);
-                await _usersQuery.UpdateConsoleType(tgId, Console);
+                await _usersQuery.UpdateConsoleType(Console);
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while Updating users console with tg id {tgid}", tgId);
+                _logger.LogError(ex.Message);
                 return StatusCode(500, "Error occurred while Updating users console");
             }
         }
@@ -93,7 +91,7 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region as String);
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region);
                 return Ok();
             }
             catch(Exception ex)
@@ -104,11 +102,11 @@ namespace Gateway.WebApi.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult> UpdateUserSettings(Guid userId, string email, string password, string code)
+        public async Task<ActionResult> UpdateUserSettings(string email, string password, string code)
         {
             try
             {
-                await _usersQuery.UpdateUserSettings(userId, email, password, code);
+                await _usersQuery.UpdateUserSettings(email, password, code);
                 return Ok();
             }
             catch(Exception ex)

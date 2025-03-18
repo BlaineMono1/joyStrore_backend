@@ -25,17 +25,16 @@ namespace Gateway.WebApi.Controllers
         /// 
 
         [HttpGet]
-        public async Task<ActionResult<List<FavoriteDto>>> GetUserFavorite(Guid UserId)
+        public async Task<ActionResult<List<FavoriteDto>>> GetUserFavorite()
         {
             try
             {
-                _logger.LogInformation("Fetching user favorite items whith tg ID {id}", UserId);
-                var fav = await _favoriteQuery.UserFavorite(UserId);
+  
+                var fav = await _favoriteQuery.UserFavorite();
                 return Ok(fav);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while Fetching favorite items with tg ID : {id}", UserId);
                 return StatusCode(500, "Error occurred while fetching favorite items");
             }
 
@@ -49,17 +48,15 @@ namespace Gateway.WebApi.Controllers
 
         [HttpPut]
 
-        public async Task<ActionResult> AddItemInFavorite(Guid userId, Guid productId)
+        public async Task<ActionResult> AddItemInFavorite(Guid productId)
         {
             try
             {
-                _logger.LogInformation("Adding item with GUID {id} to user Favorite with tg id {tgid}", productId, userId);
-                await _favoriteQuery.UpdateUserFavorites(userId, productId);
+                await _favoriteQuery.UpdateUserFavorites(productId);
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while adding item in user Favorites with tg ID : {id}, item GUID {id}", userId, productId);
                 return StatusCode(500, "Error occurred while adding item in user Favorites");
             }
         }
@@ -72,17 +69,15 @@ namespace Gateway.WebApi.Controllers
 
         [HttpDelete]
 
-        public async Task<ActionResult> DeleteItemInFavorite(Guid userId, Guid productId)
+        public async Task<ActionResult> DeleteItemInFavorite(Guid productId)
         {
             try
             {
-                _logger.LogInformation("Deleting item with GUID {id} to user Favorite with tg id {tgid}", productId, userId);
-                await _favoriteQuery.DeleteFromFavorites(userId, productId);
+                await _favoriteQuery.DeleteFromFavorites(productId);
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while Deliting item in user Favorites with tg ID : {id}, item GUID {id}", userId, productId);
                 return StatusCode(500, "Error occurred while Deliting item in user Favorites");
             }
         }
