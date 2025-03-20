@@ -35,6 +35,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient(typeof(IGameRepository<>), typeof(GameRepository<>));
 builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductRepository<>));
@@ -44,7 +45,7 @@ builder.Services.AddTransient(typeof(IUserRepository<>), typeof(UserRepository<>
 builder.Services.AddTransient(typeof(IGenersRepository<>), typeof(GenersRepository<>));
 
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
-builder.Services.AddScoped<IRegionFromCookie, RegionFromCookie>();
+builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();
 
 builder.Services.AddScoped<FavoriteQuery>();

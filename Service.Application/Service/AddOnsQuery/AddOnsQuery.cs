@@ -18,12 +18,12 @@ namespace Service.Application.Service.AddOnsQuery
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<AddOnsQuery> _logger;
         public AddOnsQuery(
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
-            IRegionFromCookie regionFromCookie,
+            IDataFromCookie regionFromCookie,
             ILogger<AddOnsQuery> logger,
             IRepository<GroupAddOn> groupAddOnRepository,
             IProductRepository<Product> productRepository

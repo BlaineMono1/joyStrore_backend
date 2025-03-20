@@ -20,7 +20,7 @@ namespace Service.Application.Service.ProductQuery
 
 
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
         private readonly ICalculationService _calculatePrice;
         private readonly ILogger<ProductQuery> _logger;
 
@@ -30,7 +30,7 @@ namespace Service.Application.Service.ProductQuery
             IRepository<Subscription> subscriptionRepository,
             IUserRepository<User> userRepository,
             IHttpContextAccessor httpContextAccessor,
-            IRegionFromCookie regionFromCookie,
+            IDataFromCookie regionFromCookie,
             ICalculationService calculatePrice,
             ILogger<ProductQuery> logger)
         {
@@ -58,7 +58,7 @@ namespace Service.Application.Service.ProductQuery
                 result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
                 result.Discount = product.DiscountDate;
                 result.DiscountPercent = product.DiscountPercent;
-                var userTg = _regionFromCookie.GetUserTgID(_httpContextAccessor);
+                var userTg = _regionFromCookie.GetUserTgID();
                 var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems)
                     .FirstOrDefault(u => u.TgUserId == userTg);
 

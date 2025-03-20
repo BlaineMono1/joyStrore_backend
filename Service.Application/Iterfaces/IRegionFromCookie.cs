@@ -1,11 +1,9 @@
 ﻿
-using Microsoft.AspNetCore.Http;
-
 namespace Service.Application.Iterfaces
 {
-    public interface IRegionFromCookie
+    public interface IDataFromCookie
     {
-        string GetUserRegion(IHttpContextAccessor _httpContextAccessor);
-        string GetUserTgID(IHttpContextAccessor _httpContextAccessor);
+        string GetUserRegion();
+        string GetUserTgID();
     }
 }

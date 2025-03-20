@@ -24,13 +24,13 @@ namespace Service.Application.Service.UserQuery
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRegionFromCookie _regionFromCookie;
+        private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<UsersQuery> _logger;
 
         public UsersQuery(
             ICalculationService calculatePrice,
             IHttpContextAccessor httpContextAccessor,
-            IRegionFromCookie regionFromCookie,
+            IDataFromCookie regionFromCookie,
             ILogger<UsersQuery> logger,
             IUserRepository<User> userRepository,
             IRepository<Setting> setingsRepository,
@@ -57,11 +57,13 @@ namespace Service.Application.Service.UserQuery
             _cartRepository = cartRepository;
         }
 
-        public async Task<UserDto> UserByTgId(string tgId)
+        public async Task<UserDto> UserByTgId()
         {
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var region = _regionFromCookie.GetUserRegion();
+                var tgId = _regionFromCookie.GetUserTgID();
+
                 _logger.LogInformation("Fetching user by TG ID: {TgId}", tgId);
 
                 var user = await _userRepository.GetUserByTgId(tgId);
@@ -90,16 +92,17 @@ namespace Service.Application.Service.UserQuery
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching user by TG ID: {TgId}", tgId);
+                _logger.LogError(ex.Message);
                 throw;
             }
         }       
         
-        public async Task<List<OrderDto>> UserOrder(string tgId)
+        public async Task<List<OrderDto>> UserOrder()
         {
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var region = _regionFromCookie.GetUserRegion();
+                var tgId = _regionFromCookie.GetUserTgID();
                 _logger.LogInformation("Fetching user orders for TG ID: {TgId}", tgId);
 
                 var user = (await _userRepository.GetListQuery()).Include(u => u.ProductTransactionHistory).ThenInclude(c => c.Orders).FirstOrDefault(u => u.TgUserId == tgId);
@@ -159,15 +162,16 @@ namespace Service.Application.Service.UserQuery
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching user orders for TG ID: {TgId}", tgId);
+                _logger.LogError(ex.Message);
                 throw;
             }
         }
 
-        public async Task UpdateConsoleType(string tgId, string Console)
+        public async Task UpdateConsoleType(string Console)
         {
             try
             {
+                var tgId = _regionFromCookie.GetUserTgID();
                 var user = await _userRepository.GetUserByTgId(tgId);
 
                 user.Platform = Console;
@@ -180,15 +184,16 @@ namespace Service.Application.Service.UserQuery
             }
         }
 
-        public async Task UpdateUserSettings(Guid UserId, string email, string password, string code)
+        public async Task UpdateUserSettings(string email, string password, string code)
         {
             try
             {
-                var region = _regionFromCookie.GetUserRegion(_httpContextAccessor);
+                var region = _regionFromCookie.GetUserRegion();
+                var tgId = _regionFromCookie.GetUserTgID();
 
-                var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.Guid == UserId).Settings.FirstOrDefault(s => s.Region == region);
+                var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.TgUserId == tgId).Settings.FirstOrDefault(s => s.Region == region);
 
-                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user GUID {UserId}");
+                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user GUID {tgId}");
 
                 userSettings.Code = code;
                 userSettings.Email = email;

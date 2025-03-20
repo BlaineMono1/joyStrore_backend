@@ -28,11 +28,11 @@ namespace Gateway.WebApi.Controllers
 
         [HttpGet]
 
-        public async Task<ActionResult<CartDto>> GetUserCart(Guid userId)
+        public async Task<ActionResult<CartDto>> GetUserCart()
         {
             try
             {
-                var cart = await _cartQuery.UserCart(userId);
+                var cart = await _cartQuery.UserCart();
                 return Ok(cart);
             }
             catch (Exception ex)
@@ -49,17 +49,17 @@ namespace Gateway.WebApi.Controllers
 
         [HttpPut]
 
-        public async Task<ActionResult> AddItemInCart(Guid userId, Guid productId)
+        public async Task<ActionResult> AddItemInCart(Guid productId)
         {
             try
             {
-                _logger.LogInformation("Adding item with GUID {id} to user cart with tg id {tgid}", productId, userId);
-                await _cartQuery.UpdateUserCart(userId, productId);
+               
+                await _cartQuery.UpdateUserCart(productId);
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while adding item in user cart with tg ID : {id}, item GUID {id}", userId, productId);
+               
                 return StatusCode(500, "Error occurred while adding item in user cart");
             }
         }
@@ -72,17 +72,15 @@ namespace Gateway.WebApi.Controllers
 
         [HttpDelete]
 
-        public async Task<ActionResult> DeleteFromCart(Guid userId, Guid productId)
+        public async Task<ActionResult> DeleteFromCart(Guid productId)
         {
             try
             {
-                _logger.LogInformation("Deleting item with GUID {id} to user Cart with tg id {tgid}", productId, userId);
-                await _cartQuery.DeleteFromCart(userId, productId);
+                await _cartQuery.DeleteFromCart(productId);
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while Deliting item in user Cart with tg ID : {id}, item GUID {id}", userId, productId);
                 return StatusCode(500, "Error occurred while Deliting item in user Cart");
             }
         }

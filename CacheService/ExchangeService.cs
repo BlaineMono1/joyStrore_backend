@@ -33,8 +33,10 @@ namespace CacheService
             decimal Ua = await FetchExchangeRate(urlUa);
             decimal Tr = await FetchExchangeRate(urlTr);
 
-            await _redis.SetAsync(cacheKeyUa, Ua.ToString(), TimeSpan.FromMinutes(10));
-            await _redis.SetAsync(cacheKeyTr, Tr.ToString(), TimeSpan.FromMinutes(10));
+            var expireTime = TimeSpan.FromMinutes(10);
+
+            await _redis.SetAsync(cacheKeyUa, Ua.ToString(), expireTime);
+            await _redis.SetAsync(cacheKeyTr, Tr.ToString(), expireTime);
 
             _logger.LogInformation($"Обновлены курсы валют: UAH-RUB = {Ua}, TRY-RUB = {Tr}");
         }
