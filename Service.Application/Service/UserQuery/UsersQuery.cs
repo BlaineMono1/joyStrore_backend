@@ -173,7 +173,11 @@ namespace Service.Application.Service.UserQuery
             {
                 var tgId = _regionFromCookie.GetUserTgID();
                 var user = await _userRepository.GetUserByTgId(tgId);
-
+                if (user == null)
+                {
+                    _logger.LogError("User not found for TG ID: {TgId}", tgId);
+                    throw new Exception($"User not found for TG ID: {tgId}");
+                }
                 user.Platform = Console;
                 await _userRepository.Update(user);
             }
@@ -202,6 +206,61 @@ namespace Service.Application.Service.UserQuery
                 await _setingsRepository.Update(userSettings);
             }
             catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+        }
+
+        public async Task CreateUser(string tgId)
+        {
+            try
+            {
+                var user = await _userRepository.GetUserByTgId(tgId);
+                if(user is null)
+                {
+                    var newUser = new User
+                    {
+                        TgUserId = tgId,
+                        Platform = ""
+                    };
+                    var cart = new Cart
+                    {
+                        User = newUser,
+                    };
+                    var fav = new Favorite
+                    {
+                        User = newUser,
+                    };
+                    var settingUah = new Setting
+                    {
+                        Region = "UAH",
+                        User = newUser
+                    };
+                    var settingTRL = new Setting
+                    {
+                        Region = "TRL",
+                        User = newUser
+                    };
+                    var loyality = new LoyaltyCurrency{ User = newUser };
+                    var history = new ProductTransactionHistory{ User = newUser };
+
+                    var role = new Role()
+                    {
+                        Name = "User",
+                        Users = new List<User> { newUser }
+                    };
+                    newUser.Settings = new List<Setting>{ settingTRL, settingUah};
+                    newUser.Cart = cart;
+                    newUser.Favorite = fav;
+                    newUser.LoyaltyCurrency = loyality;
+                    newUser.ProductTransactionHistory = history;
+                    newUser.Role = role;
+                    await _userRepository.Add(newUser);
+                    
+                }
+            }
+            catch(Exception ex)
             {
                 _logger.LogError(ex.Message);
                 throw;

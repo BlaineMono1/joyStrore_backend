@@ -12,7 +12,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
         public async Task<User> GetUserByTgId(string tgId)
         {
             return (await GetListQuery())
-                .FirstOrDefault(u => u.TgUserId == tgId) ?? throw new Exception($"No User with {tgId} tg id");
+                .FirstOrDefault(u => u.TgUserId == tgId);
 
         }
     }

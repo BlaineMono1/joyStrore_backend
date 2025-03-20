@@ -1,4 +1,5 @@
 ﻿using Gateway.WebApi.Attributes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.UserQuery;
 using Service.Application.Service.UserQuery.Dto;
@@ -91,7 +92,11 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region);
+                var options = new CookieOptions
+                {
+                    Expires = DateTime.UtcNow.AddDays(1)
+                };
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region, options);
                 return Ok();
             }
             catch(Exception ex)
@@ -116,11 +121,17 @@ namespace Gateway.WebApi.Controllers
         }
 
         [HttpPost]
-        public ActionResult UpdateuserTgId(string tgId)
+        public async Task<ActionResult> UpdateuserTgId(string tgId)
         {
             try
             {
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("tgId", tgId);
+                var options = new CookieOptions
+                {
+                    Expires = DateTime.UtcNow.AddDays(1)
+                };
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("tgId", tgId, options);
+                _logger.LogError(_httpContextAccessor.HttpContext?.Request.Cookies["tgId"]);
+                await _usersQuery.CreateUser(tgId);
                 return Ok();
             }
             catch (Exception ex)
