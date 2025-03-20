@@ -1,0 +1,16 @@
+﻿namespace Business.Data.Iterfaces
+{
+    public interface IRepository<T> where T : IBaseEntity
+    {
+        Task<List<T>> GetAllList();
+        Task<T?> GetById(Guid id);
+        Task Update(T entity);
+        Task SoftDelete(Guid id);
+        Task Add(T entity);
+        Task HardDelete(Guid id);
+        Task<IQueryable<T>> GetListQuery();
+        Task SaveDb();
+
+
+    }
+}
