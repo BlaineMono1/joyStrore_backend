@@ -27,8 +27,7 @@ builder.Services.AddDbContext<BaseDbContext>(options =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var configuration = builder.Configuration.GetConnectionString("RedisConnection");
-    //return ConnectionMultiplexer.Connect(configuration);
-    return null;
+    return ConnectionMultiplexer.Connect(configuration);
 });
 
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();

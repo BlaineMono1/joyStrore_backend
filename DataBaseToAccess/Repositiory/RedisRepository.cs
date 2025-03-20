@@ -10,7 +10,7 @@ namespace DataBaseToAccess.Repositiory
 
         public RedisRepository(IConnectionMultiplexer redis)
         {
-            //_redisDb = redis.GetDatabase();
+            _redisDb = redis.GetDatabase();
         }
 
         public async Task SetAsync(string key, string value, TimeSpan? exp)
