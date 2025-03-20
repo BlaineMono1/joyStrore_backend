@@ -12,20 +12,31 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up SSH key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           env
           mkdir -p ~/.ssh/
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "{{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Copy repo to host
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          scp -P "${{ secrets.SSH_PORT }}" $PWD "${{ secrets.SSH_USER }}"@"${{ secrets.SSH_HOST }}":~/repo
+          scp -P "$SSH_PORT" $PWD "$SSH_USER"@"$SSH_HOST":~/repo
 
       - name: Build and images on host
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          export ASP_ENV=cloud
-          ssh -p "${{ secrets.SSH_PORT }}" << 'ENDSSH'
+          ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" << 'ENDSSH'
           cd repo
           docker compose build && docker compose up -d
           cd .. && rm -rf repo
