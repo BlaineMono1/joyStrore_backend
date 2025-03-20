@@ -1,0 +1,18 @@
+---
+services:
+  gateway:
+    container_name: gateway
+    image: gateway
+    build:
+      context: .
+      dockerfile: Gateway.WebApi/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASP_ENV} 
+    networks:
+      - joystore
+    ports:
+      - "127.0.0.1:8080:8080"
+
+networks:
+  joystore:
+    external: true
