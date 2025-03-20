@@ -28,7 +28,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          scp -P "$SSH_PORT" $PWD "$SSH_USER"@"$SSH_HOST":~/repo
+          scp -P "$SSH_PORT" -r $PWD "$SSH_USER"@"$SSH_HOST":~/repo
 
       - name: Build and images on host
         env:
