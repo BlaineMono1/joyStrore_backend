@@ -6,7 +6,7 @@ using Service.Application.Service.UserQuery.Dto;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -25,7 +25,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-        [HttpGet]
+        [HttpGet("current")]
         public async Task<ActionResult<UserDto>> GetUserByTgId()
         {
             try
@@ -46,9 +46,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpGet]
-
+        [HttpGet("purchase-history")]
         public async Task<ActionResult<List<OrderDto>>> GetUserHistoryOrders()
         {
             try
@@ -69,9 +67,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpPut]
-
+        [HttpPut("ps-setting")]
         public async Task<ActionResult> UpdateUserConsole(string Console)
         {
             try
@@ -86,8 +82,12 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
-
-        [HttpPost]
+        /// <summary>
+        /// Обновление региона для пользователя
+        /// </summary>
+        /// <param name="region"></param>
+        /// <returns></returns>
+        [HttpPost("region")]
         public ActionResult UpdateUserRegion(string region)
         {
             try
@@ -105,8 +105,14 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, ex);
             }
         }
-
-        [HttpPut]
+        /// <summary>
+        /// обновление настроек пользователя 
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="password"></param>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        [HttpPut("setting")]
         public async Task<ActionResult> UpdateUserSettings(string email, string password, string code)
         {
             try
@@ -119,9 +125,13 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, ex);
             }
         }
-
-        [HttpPost]
-        public async Task<ActionResult> UpdateuserTgId(string tgId)
+        /// <summary>
+        /// Принимаемый tg userId 
+        /// </summary>
+        /// <param name="tgId"></param>
+        /// <returns></returns>
+        [HttpPost("add")]
+        public async Task<ActionResult> UpdateUserTgId(string tgId)
         {
             try
             {

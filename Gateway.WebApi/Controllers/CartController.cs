@@ -6,7 +6,7 @@ using Service.Application.Service.UserQuery;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("cart")]
     [ApiController]
     public class CartController : ControllerBase
     {
@@ -25,9 +25,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpGet]
-
+        [HttpGet("by-user")]
         public async Task<ActionResult<CartDto>> GetUserCart()
         {
             try
@@ -47,8 +45,7 @@ namespace Gateway.WebApi.Controllers
         /// <returns></returns>
         /// 
 
-        [HttpPut]
-
+        [HttpPut("add-item")]
         public async Task<ActionResult> AddItemInCart(Guid productId)
         {
             try
@@ -69,9 +66,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpDelete]
-
+        [HttpDelete("remove-item")]
         public async Task<ActionResult> DeleteFromCart(Guid productId)
         {
             try

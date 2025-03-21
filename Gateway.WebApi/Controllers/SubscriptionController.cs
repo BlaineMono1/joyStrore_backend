@@ -4,7 +4,7 @@ using Service.Application.Service.SubscriptionsQuery;
 using Service.Application.Service.SubscriptionsQuery.Dto;
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("")]
     [ApiController]
     public class SubscriptionController : ControllerBase
     {
@@ -21,7 +21,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
 
-        [HttpGet]
+        [HttpGet("layout")]
         public async Task<ActionResult<List<SubscriptionsListDto>>> GetSubscriptionList()
         {
             try

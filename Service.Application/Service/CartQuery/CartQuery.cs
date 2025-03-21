@@ -139,9 +139,7 @@ namespace Service.Application.Service.CartQuery
                 {
                     CartId = cart.Guid,
                     ProductId = product.Guid,
-
                 };
-
                 cart.CartItems ??= new List<CartItem>();
                 cart.CartItems.Add(result);
                 await _cartItemRepository.Add(result);

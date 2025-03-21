@@ -8,7 +8,7 @@ using Service.Application.Service.ProductQuery.Dto;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("product")]
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -26,8 +26,7 @@ namespace Gateway.WebApi.Controllers
         /// <summary>
         /// Вывод продукта по его Id
         /// </summary>
-        [HttpGet]
-
+        [HttpGet("productById")]
         public async Task<ActionResult<ProductDto>> GetProduct(Guid ProductId)
         {
             try
@@ -44,7 +43,7 @@ namespace Gateway.WebApi.Controllers
         /// <summary>
         /// Фильтрация продуктов 
         /// </summary>
-        [HttpPost]
+        [HttpPost("filter")]
         public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, string? filterName = null,  string? platform = null, bool byDesc = false, bool byDiscount = false, List<string>? geners = null, int Page = 0)
         {
             try
@@ -64,7 +63,7 @@ namespace Gateway.WebApi.Controllers
         /// <summary>
         /// Выпадающий список
         /// </summary>
-        [HttpGet]
+        [HttpGet("drop-down-list")]
         public async Task<ActionResult<List<DropDownListDto>>> GetDropDownList(Guid productId)
         {
             try
