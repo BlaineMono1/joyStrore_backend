@@ -35,6 +35,7 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
+          ASP_ENV: cloud
         run: |
           ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" << 'ENDSSH'
           cd repo
