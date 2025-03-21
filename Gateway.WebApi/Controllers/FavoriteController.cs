@@ -5,7 +5,7 @@ using Service.Application.Service.FavoriteQuery.Dto;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("favorite")]
     [ApiController]
     public class FavoriteController : ControllerBase
     {
@@ -23,8 +23,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpGet]
+        [HttpGet("by-user")]
         public async Task<ActionResult<List<FavoriteDto>>> GetUserFavorite()
         {
             try
@@ -45,9 +44,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpPut]
-
+        [HttpPut("add-item")]
         public async Task<ActionResult> AddItemInFavorite(Guid productId)
         {
             try
@@ -66,9 +63,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// 
-
-        [HttpDelete]
-
+        [HttpDelete("remove-item")]
         public async Task<ActionResult> DeleteItemInFavorite(Guid productId)
         {
             try
