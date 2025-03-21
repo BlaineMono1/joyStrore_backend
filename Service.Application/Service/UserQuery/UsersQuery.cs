@@ -239,7 +239,7 @@ namespace Service.Application.Service.UserQuery
                     };
                     var settingTRL = new Setting
                     {
-                        Region = "TRL",
+                        Region = "TRY",
                         User = newUser
                     };
                     var loyality = new LoyaltyCurrency{ User = newUser };

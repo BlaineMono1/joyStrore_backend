@@ -64,7 +64,7 @@ namespace Services.CalculationService
                 }
 
             }
-            else if(region == "TRL")
+            else if(region == "TRY")
             {
                 string? cachedData = await _redis.GetAsync("TRL");
                 if (cachedData is null)
@@ -95,7 +95,7 @@ namespace Services.CalculationService
                 var price = region switch
                 {
                     "UAH" => priceua,
-                    "TRL" => pricetr,
+                    "TRY" => pricetr,
                     _ => throw new Exception("No region found")
                 };
 
