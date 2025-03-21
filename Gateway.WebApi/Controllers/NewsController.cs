@@ -5,7 +5,7 @@ using Service.Application.Service.GetNewsList;
 using Service.Application.Service.GetNewsList.Dto;
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("news")]
     [ApiController]
     public class NewsController : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace Gateway.WebApi.Controllers
         /// Получение новостника
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
+        [HttpGet("board")]
         public async Task<ActionResult<List<NewsDto>>> GetNewsList()
         {
             try

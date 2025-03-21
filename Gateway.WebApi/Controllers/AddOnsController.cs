@@ -5,7 +5,7 @@ using Service.Application.Service.AddOnsQuery;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("addon")]
     [ApiController]
     public class AddOnsController : ControllerBase
     {
@@ -23,7 +23,7 @@ namespace Gateway.WebApi.Controllers
         /// Вывод списка Донатов на главной странице
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
+        [HttpGet("layout")]
         public async Task<ActionResult<List<AddOnsListDto>>> GetGroupAddOnsList()
         {
             try
@@ -43,7 +43,7 @@ namespace Gateway.WebApi.Controllers
         /// Вывод списка Донатов
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
+        [HttpGet("by-game")]
         public async Task<ActionResult<List<GroupAddOnsDto>>> GetAddOnsList(Guid id)
         {
             try

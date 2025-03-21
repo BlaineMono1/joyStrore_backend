@@ -10,7 +10,7 @@ using Service.Application.Service.ProductQuery.Dto;
 
 namespace Gateway.WebApi.Controllers
 {
-    [SetRoute("api/[controller]/[action]")]
+    [SetRoute("game")]
     [ApiController]
     public class GamesController : ControllerBase
     {
@@ -26,7 +26,7 @@ namespace Gateway.WebApi.Controllers
         /// <summary>
         /// Вывод списка игр на главной странице
         /// </summary>
-        [HttpGet]
+        [HttpGet("layout")]
         public async Task<ActionResult<List<GamesListDto>>> GetGamesList()
         {
             try
