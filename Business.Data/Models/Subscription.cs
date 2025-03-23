@@ -49,7 +49,7 @@ namespace Business.Data.Models
         [ForeignKey("ProductId")]
         public Product? Product { get; set; }
 
-        public PriceSettingSubscription? PriceSettingSubscription { get; set; }
+        public List<PriceSettingSubscription>? PriceSettingSubscriptions { get; set; }
         #endregion
 
 
