@@ -1,6 +1,11 @@
 using System.Reflection;
+using Business.Data.Iterfaces.Store;
+using Business.Data.Iterfaces;
 using DataBaseToAccess;
+using DataBaseToAccess.Repositiory;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using Service.Application.Service.TransactionQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetConnectionString("RedisConnection");
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
+builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
+
+builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+
+builder.Services.AddScoped<TransactionQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
