@@ -89,19 +89,19 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
                     case "Price":
                         result = byDesc ? result.OrderByDescending(p => p.PriceUa) : result.OrderBy(p => p.PriceTr);
                         break;
-                    default:
-                        result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
-                        break;
+                   
                 }
 
-            }
+            }           
 
             if (!string.IsNullOrEmpty(platform)) result = result.Where(p => p.Type == "Game" ? p.Edition.Platform.Contains(platform) : p.AddOn.Platform.Contains(platform));
+
+            result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
 
             if (byDiscount)
             {
                 result = result.OrderByDescending(p => p.DiscountPercent ?? "0");
-            }
+            }            
 
             return result;
         }
