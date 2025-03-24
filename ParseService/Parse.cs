@@ -95,40 +95,60 @@ namespace Services.ParseService
             public string DiscountPercent { get; set; }
             public DateTime? DiscountDate { get; set; }
         }
-        //public async Task CreateSubs()
-        //{
-        //    var prods = (await _productRepository.GetListQuery()).FirstOrDefault();
-        //    var markup = new PriceSettingSubscription
-        //    {
-        //        Percent = 0,
-        //        Region = "UA"
-        //    };
-        //    var sub = new Subscription
-        //    {
-        //        CusaCodeUa = "UACODE",
-        //        CusaCodeTr = "TRCODE",
-        //        Name = "SUB1",
-        //        Type = "Subscription",
-        //        Image = "IMAGEPATH",
-        //        Platform = "PLATFORM",
-        //        Duration = "Duration",
-        //        PriceSettingSubscription = markup
-        //    };
 
-        //    var prod = new Product
-        //    {
-        //        TypeId = sub.Guid,
-        //        Type = "Subscription",
-        //        PriceUa = 228M,
-        //        PriceTr = 1337M,
-        //        DiscountPercent = "0",
-        //        DiscountDate = null,
-        //        Subscription = sub
-        //    };
 
-        //    await _productRepository.Add(prod);
 
-        //}
+        public async Task CreateGameMarcup()
+        {
+            var l = new List<int> { 0, 100, 1000, 3000, 5000 };
+
+            foreach(var price in l)
+            {
+                var markup = new SettingPrice
+                {
+                    Price = price,
+                    Percent = 0
+                };
+
+                await _settingPriceRepository.Add(markup);
+            }
+        }
+
+        public async Task CreateSubs()
+        {
+            var prods = (await _productRepository.GetListQuery()).FirstOrDefault();
+            var markup = new PriceSettingSubscription
+            {
+                Percent = 0,
+                Region = "UAH"
+            };
+            var sub = new Subscription
+            {
+                CusaCodeUa = "UACODE",
+                CusaCodeTr = "TRCODE",
+                Name = "SUB1",
+                Type = "Subscription",
+                Image = "IMAGEPATH",
+                Platform = "PLATFORM",
+                Duration = "Duration",
+                PriceSettingSubscription = markup
+            };
+
+            var prod = new Product
+            {
+                TypeId = sub.Guid,
+                Type = "Subscription",
+                PriceUa = 228M,
+                PriceTr = 1337M,
+                DiscountPercent = "0",
+                DiscountDate = null,
+                Subscription = sub
+            };
+
+            await _productRepository.Add(prod);
+
+        }
+
         public async Task CreateSections()
         {
             var edititons = (await _editionRepository.GetListQuery()).ToList();
