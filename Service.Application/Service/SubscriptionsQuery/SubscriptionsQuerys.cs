@@ -12,28 +12,19 @@ namespace Service.Application.Service.SubscriptionsQuery
     {
         private readonly IProductRepository<Product> _productRepository;
         private readonly ISubscriptionRepository<Subscription> _subscriptionRepository;
-        private readonly IUserRepository<User> _userRepository;
         private readonly ICalculationService _calculatePrice;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<SubscriptionsQuerys> _logger;
 
         public SubscriptionsQuerys(ICalculationService calculatePrice,
-            IHttpContextAccessor httpContextAccessor,
-            IDataFromCookie regionFromCookie,
             ILogger<SubscriptionsQuerys> logger,
             IProductRepository<Product> productRepository,
-            ISubscriptionRepository<Subscription> subscriptionRepository,
-            IUserRepository<User> userRepository)
+            ISubscriptionRepository<Subscription> subscriptionRepository)
         {
             _calculatePrice = calculatePrice;
-            _httpContextAccessor = httpContextAccessor;
-            _regionFromCookie = regionFromCookie;
             _logger = logger;
 
             _productRepository = productRepository;
             _subscriptionRepository = subscriptionRepository;
-            _userRepository = userRepository;
 
         }
 
