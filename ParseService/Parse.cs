@@ -97,6 +97,7 @@ namespace Services.ParseService
         }
 
 
+
         public async Task CreateGameMarcup()
         {
             var l = new List<int> { 0, 100, 1000, 3000, 5000 };
@@ -147,6 +148,7 @@ namespace Services.ParseService
             await _productRepository.Add(prod);
 
         }
+
         public async Task CreateSections()
         {
             var edititons = (await _editionRepository.GetListQuery()).ToList();

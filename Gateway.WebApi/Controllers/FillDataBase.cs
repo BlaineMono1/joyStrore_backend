@@ -58,6 +58,7 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
+
         [HttpGet]
         public async Task<ActionResult> CreateSub()
         {
@@ -86,5 +87,6 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, "An error occurred while parsing");
             }
         }
+
     }
 }
