@@ -114,40 +114,6 @@ namespace Services.ParseService
             }
         }
 
-        public async Task CreateSubs()
-        {
-            var prods = (await _productRepository.GetListQuery()).FirstOrDefault();
-            var markup = new PriceSettingSubscription
-            {
-                Percent = 0,
-                Region = "UAH"
-            };
-            var sub = new Subscription
-            {
-                CusaCodeUa = "UACODE",
-                CusaCodeTr = "TRCODE",
-                Name = "SUB1",
-                Type = "Subscription",
-                Image = "IMAGEPATH",
-                Platform = "PLATFORM",
-                Duration = "Duration",
-                PriceSettingSubscription = markup
-            };
-
-            var prod = new Product
-            {
-                TypeId = sub.Guid,
-                Type = "Subscription",
-                PriceUa = 228M,
-                PriceTr = 1337M,
-                DiscountPercent = "0",
-                DiscountDate = null,
-                Subscription = sub
-            };
-
-            await _productRepository.Add(prod);
-
-        }
 
         public async Task CreateSections()
         {
