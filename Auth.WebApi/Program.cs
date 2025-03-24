@@ -6,6 +6,7 @@ using DataBaseToAccess.Repositiory;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using Service.Application.Service.TransactionQuery;
+using Service.Application.Service.SectionQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,7 @@ builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddScoped<TransactionQuery>();
+builder.Services.AddScoped<SectionQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
