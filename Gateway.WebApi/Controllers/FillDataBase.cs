@@ -74,7 +74,7 @@ namespace Gateway.WebApi.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult> CreateGameMarkUp()
+        public async Task<ActionResult> CreateGamesMarkUp()
         {
             try
             {
