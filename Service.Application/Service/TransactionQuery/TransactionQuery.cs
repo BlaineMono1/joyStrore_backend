@@ -61,5 +61,7 @@ namespace Service.Application.Service.TransactionQuery
 
             await _joyBalRepository.Update(setting);
         }
+
+
     }
 }
