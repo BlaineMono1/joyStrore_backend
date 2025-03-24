@@ -71,5 +71,20 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, "An error occurred while create sections");
             }
         }
+
+
+        [HttpGet]
+        public async Task<ActionResult> CreateGameMarkUp()
+        {
+            try
+            {
+                await _parse.CreateGameMarcup();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while parsing");
+            }
+        }
     }
 }

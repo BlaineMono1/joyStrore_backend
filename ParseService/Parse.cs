@@ -95,13 +95,31 @@ namespace Services.ParseService
             public string DiscountPercent { get; set; }
             public DateTime? DiscountDate { get; set; }
         }
+
+
+        public async Task CreateGameMarcup()
+        {
+            var l = new List<int> { 0, 100, 1000, 3000, 5000 };
+
+            foreach(var price in l)
+            {
+                var markup = new SettingPrice
+                {
+                    Price = price,
+                    Percent = 0
+                };
+
+                await _settingPriceRepository.Add(markup);
+            }
+        }
+
         public async Task CreateSubs()
         {
             var prods = (await _productRepository.GetListQuery()).FirstOrDefault();
             var markup = new PriceSettingSubscription
             {
                 Percent = 0,
-                Region = "UA"
+                Region = "UAH"
             };
             var sub = new Subscription
             {

@@ -109,7 +109,7 @@ namespace Services.CalculationService
 
                 decimal priceWithMarkup = 0;
                 // Fetch markup data from the repository
-                var markupGame = (await _settingPriceRepository.GetListQuery()).FirstOrDefault(p => p.Price >= rubPrice);
+                var markupGame = (await _settingPriceRepository.GetListQuery()).OrderByDescending(p => p.Price).FirstOrDefault(p => rubPrice >= p.Price);
                 var markupSub = (await _priceSettingSubscription.GetListQuery()).FirstOrDefault(s => s.Region == region);
 
                 if (markupGame == null || markupSub == null)
