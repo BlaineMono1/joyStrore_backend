@@ -58,18 +58,18 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<ActionResult> CreateSub()
-        {
-            try
-            {
-                await _parse.CreateSubs();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while create sections");
-            }
-        }
+        //[HttpGet]
+        //public async Task<ActionResult> CreateSub()
+        //{
+        //    try
+        //    {
+        //        await _parse.CreateSubs();
+        //        return Ok();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "An error occurred while create sections");
+        //    }
+        //}
     }
 }
