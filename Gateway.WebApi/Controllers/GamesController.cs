@@ -27,7 +27,7 @@ namespace Gateway.WebApi.Controllers
         /// Вывод списка игр на главной странице
         /// </summary>
         [HttpGet("layout")]
-        public async Task<ActionResult<List<GamesListDto>>> GetGamesList()
+        public async Task<ActionResult<List<SectionDto>>> GetGamesList()
         {
             try
             {

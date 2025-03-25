@@ -15,10 +15,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
 
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var configuration = builder.Configuration.GetConnectionString("RedisConnection");
-    return ConnectionMultiplexer.Connect(configuration);
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        logger.LogInformation("[Resis] Поделючение к Redis... ");
+        var configuration = builder.Configuration.GetConnectionString("RedisConnection");
+        return ConnectionMultiplexer.Connect(configuration);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "[Resis] Ошибка подключения к Redis: {ErrorMessage}", ex.Message);
+        throw;
+    }
 });
 
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
