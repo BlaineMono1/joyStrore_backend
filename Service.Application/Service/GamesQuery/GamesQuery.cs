@@ -49,9 +49,9 @@ namespace Service.Application.Service.GamesQuery
             _userRepository = userRepository;
         }
 
-        public async Task<List<GamesListDto>> GamesList()
+        public async Task<List<SectionDto>> GamesList()
         {
-            var result = new List<GamesListDto>();
+            var result = new List<SectionDto>();
 
             try
             {
@@ -66,15 +66,18 @@ namespace Service.Application.Service.GamesQuery
                         _logger.LogWarning("Section {SectionName} has no editions.", section.Name);
                         continue;
                     }
-
+                    var sectionDto = new SectionDto
+                    {
+                        Name = section.Name,
+                    };
                     foreach (var edition in section.Editions)
                     {
                        
                         var product = await _productRepository.GetEntityType(edition.Guid);
 
+                       
                         var dto = new GamesListDto
                         {
-                            FIlterName = section.Name,
                             Name = edition.Game.Name,
                             ImageFilepath = edition.Image,
                             ProductId = (await _productRepository.GetEntityType(edition.Guid)).Guid,
@@ -83,8 +86,10 @@ namespace Service.Application.Service.GamesQuery
                         };
                         dto.Jprice = await _calculatePrice.CalcJprice(dto.Price);
 
-                        result.Add(dto);
+                        sectionDto.Editions.Add(dto);
                     }
+                    result.Add(sectionDto);
+
                 }
             }
             catch (Exception ex)

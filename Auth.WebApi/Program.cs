@@ -6,6 +6,7 @@ using DataBaseToAccess.Repositiory;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using Service.Application.Service.TransactionQuery;
+using Service.Application.Service.SectionQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,10 +15,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
 
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var configuration = builder.Configuration.GetConnectionString("RedisConnection");
-    return ConnectionMultiplexer.Connect(configuration);
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        logger.LogInformation("[Resis] Поделючение к Redis... ");
+        var configuration = builder.Configuration.GetConnectionString("RedisConnection");
+        return ConnectionMultiplexer.Connect(configuration);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "[Resis] Ошибка подключения к Redis: {ErrorMessage}", ex.Message);
+        throw;
+    }
 });
 
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
@@ -25,6 +37,7 @@ builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddScoped<TransactionQuery>();
+builder.Services.AddScoped<SectionQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
