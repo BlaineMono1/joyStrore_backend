@@ -29,7 +29,6 @@ namespace DataBaseToAccess.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     EdtitonId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: false),
                     SectionId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -39,8 +38,8 @@ namespace DataBaseToAccess.Migrations
                 {
                     table.PrimaryKey("PK_SectionsEditions", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_SectionsEditions_Editions_EditionGuid",
-                        column: x => x.EditionGuid,
+                        name: "FK_SectionsEditions_Editions_EditionId",
+                        column: x => x.EdtitonId,
                         principalTable: "Editions",
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
