@@ -34,19 +34,7 @@ namespace DataBaseToAccess.Repositiory
         /// <returns></returns>
         public async Task Update(T entity)
         {
-            var existingEntity = await _context.Set<T>().FindAsync(entity.Guid);
-
-            if (existingEntity != null)
-            {
-                // Обновляем значения существующей сущности
-                _context.Entry(existingEntity).CurrentValues.SetValues(entity);
-            }
-            else
-            {
-                // Если сущность не найдена, можно использовать Attach
-                _context.Set<T>().Attach(entity);
-                _context.Entry(entity).State = EntityState.Modified;
-            }
+            _context.Set<T>().Update(entity);
             await _context.SaveChangesAsync();
         }
 

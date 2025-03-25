@@ -13,18 +13,20 @@ namespace Service.Application.Service.SectionQuery
         private readonly ILogger<SectionQuery> _logger;
         private readonly IRepository<Section> _sectionRepository;
         private readonly IRepository<Edition> _editionRepository;
+        private readonly IRepository<SectionsEditions> _sectionsEditionsRepository;
 
-        public SectionQuery(ILogger<SectionQuery> logger, IRepository<Section> sectionRepository, IRepository<Edition> editionRepository)
+        public SectionQuery(ILogger<SectionQuery> logger, IRepository<Section> sectionRepository, IRepository<Edition> editionRepository, IRepository<SectionsEditions> sectionsEditionsRepository)
         {
             _logger = logger;
             _sectionRepository = sectionRepository;
             _editionRepository = editionRepository;
+            _sectionsEditionsRepository = sectionsEditionsRepository;
         }
 
 
         public async Task CreateSections(string sectionName, string imagePath)
         {
-            var section = new Section { Name = sectionName, FilePathImage = imagePath, Editions = new List<Edition>() };
+            var section = new Section { Name = sectionName, FilePathImage = imagePath, Editions = new List<SectionsEditions>() };
 
             await _sectionRepository.Add(section);
         }
@@ -34,9 +36,10 @@ namespace Service.Application.Service.SectionQuery
             
             var section = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).AsTracking().First(s => s.Guid == SectionId);
 
-            section.Editions.Clear();
-
-            await  _sectionRepository.Update(section);
+            foreach(var del in section.Editions)
+            {
+                await _sectionsEditionsRepository.HardDelete(del.Guid);
+            }
 
             await _sectionRepository.HardDelete(SectionId);
         }
@@ -64,26 +67,24 @@ namespace Service.Application.Service.SectionQuery
 
         public async Task AddGameInSection(Guid SectionId, Guid EditionId)
         {
+            var edition = await _editionRepository.GetById(EditionId);
             var section = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).AsTracking().First(s => s.Guid == SectionId);
 
-            var edition = (await _editionRepository.GetListQuery()).AsTracking().First(e => e.Guid == EditionId);
 
-            section.Editions.Add(edition);
+            var q = new SectionsEditions
+            { EditionId = EditionId, SectionId = SectionId };
 
-            await _sectionRepository.Update(section);
+
+            await _sectionsEditionsRepository.Add(q);
+
+            
         }
 
         public async Task DeleteGameFromSection(Guid SectionId, Guid EditionId)
         {
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).AsTracking().First(s => s.Guid == SectionId);
+            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.EditionId == EditionId);
 
-            var edition = (await _editionRepository.GetListQuery()).AsTracking().First(e => e.Guid == EditionId);
-
-            if (section.Editions is null || !section.Editions.Any()) throw new Exception($"Section with GUID {SectionId} has no editions, but trying to delete one");
-
-            if (!section.Editions.Remove(edition)) throw new Exception($"Section with GUID {SectionId} has no edition with GUID {EditionId}");
-
-            await _sectionRepository.Update(section);
+            await _sectionsEditionsRepository.HardDelete(delete.Guid);
         }
 
         public async Task<List<EditionsDto>> FindEditionsByName(string EditionName)

@@ -117,36 +117,36 @@ namespace Services.ParseService
 
         public async Task CreateSections()
         {
-            var edititons = (await _editionRepository.GetListQuery()).ToList();
+            //var edititons = (await _editionRepository.GetListQuery()).ToList();
 
-            int knt = 0;
+            //int knt = 0;
 
            
-            int start = 0;
-            for(int i = 1; i < 3; ++i)
-            {
+            //int start = 0;
+            //for(int i = 1; i < 3; ++i)
+            //{
 
-                var section = new Section
-                {
-                    Name = $"section_{i}",
-                    FilePathImage = "IMAGEPATH",
-                    Editions = new List<Edition>()
-                };
+            //    var section = new Section
+            //    {
+            //        Name = $"section_{i}",
+            //        FilePathImage = "IMAGEPATH",
+            //        Editions = new List<Edition>()
+            //    };
 
-                await _sectionRepository.Add(section);
-                for (int j = start; j < edititons.Count(); ++j)
-                {
-                    section.Editions.Add(edititons[j]);
-                    start++;
-                    if (start % 3 == 0)
-                    {
-                        start++;
-                        break;
-                    }
-                }
-                await _sectionRepository.SaveDb();
+            //    await _sectionRepository.Add(section);
+            //    for (int j = start; j < edititons.Count(); ++j)
+            //    {
+            //        section.Editions.Add(edititons[j]);
+            //        start++;
+            //        if (start % 3 == 0)
+            //        {
+            //            start++;
+            //            break;
+            //        }
+            //    }
+            //    await _sectionRepository.SaveDb();
 
-            }
+            //}
         }
         public async Task RegUser()
         {

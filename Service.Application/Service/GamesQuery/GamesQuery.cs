@@ -56,7 +56,7 @@ namespace Service.Application.Service.GamesQuery
             try
             {
                 _logger.LogInformation("Fetching all sections.");
-                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ThenInclude(e => e.Game).ToList();
+                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ThenInclude(se => se.Edition).ThenInclude(e => e.Game).ToList();
 
                 
                 foreach (var section in sections)
@@ -70,17 +70,17 @@ namespace Service.Application.Service.GamesQuery
                     {
                         Name = section.Name,
                     };
-                    foreach (var edition in section.Editions)
+                    foreach (var sectionEdition in section.Editions)
                     {
                        
-                        var product = await _productRepository.GetEntityType(edition.Guid);
+                        var product = await _productRepository.GetEntityType(sectionEdition.Edition.Guid);
 
                        
                         var dto = new GamesListDto
                         {
-                            Name = edition.Game.Name,
-                            ImageFilepath = edition.Image,
-                            ProductId = (await _productRepository.GetEntityType(edition.Guid)).Guid,
+                            Name = sectionEdition.Edition.Game.Name,
+                            ImageFilepath = sectionEdition.Edition.Image,
+                            ProductId = product.Guid,
                             Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
                             Discount = product.DiscountPercent
                         };
