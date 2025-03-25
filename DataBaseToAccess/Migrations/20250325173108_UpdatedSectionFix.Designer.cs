@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataBaseToAccess.Migrations
 {
     [DbContext(typeof(BaseDbContext))]
-    [Migration("20250323203134_Update Subscription")]
-    partial class UpdateSubscription
+    [Migration("20250325173108_UpdatedSectionFix")]
+    partial class UpdatedSectionFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -223,9 +223,6 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime?>("Release")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("SectionGuid")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Subscription")
                         .HasColumnType("text");
 
@@ -238,8 +235,6 @@ namespace DataBaseToAccess.Migrations
 
                     b.HasIndex("ProductId")
                         .IsUnique();
-
-                    b.HasIndex("SectionGuid");
 
                     b.ToTable("Editions");
                 });
@@ -857,6 +852,36 @@ namespace DataBaseToAccess.Migrations
                     b.ToTable("Sections");
                 });
 
+            modelBuilder.Entity("Business.Data.Models.SectionsEditions", b =>
+                {
+                    b.Property<Guid>("Guid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateUpdate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EditionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SectionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Guid");
+
+                    b.HasIndex("EditionId");
+
+                    b.HasIndex("SectionId");
+
+                    b.ToTable("SectionsEditions");
+                });
+
             modelBuilder.Entity("Business.Data.Models.Setting", b =>
                 {
                     b.Property<Guid>("Guid")
@@ -1100,10 +1125,6 @@ namespace DataBaseToAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Business.Data.Models.Section", null)
-                        .WithMany("Editions")
-                        .HasForeignKey("SectionGuid");
-
                     b.Navigation("Game");
 
                     b.Navigation("Product");
@@ -1225,6 +1246,25 @@ namespace DataBaseToAccess.Migrations
                     b.Navigation("ProductTransactionHistory");
                 });
 
+            modelBuilder.Entity("Business.Data.Models.SectionsEditions", b =>
+                {
+                    b.HasOne("Business.Data.Models.Edition", "Edition")
+                        .WithMany("Sections")
+                        .HasForeignKey("EditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Business.Data.Models.Section", "Section")
+                        .WithMany("Editions")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Edition");
+
+                    b.Navigation("Section");
+                });
+
             modelBuilder.Entity("Business.Data.Models.Setting", b =>
                 {
                     b.HasOne("Business.Data.Models.User", "User")
@@ -1301,6 +1341,8 @@ namespace DataBaseToAccess.Migrations
             modelBuilder.Entity("Business.Data.Models.Edition", b =>
                 {
                     b.Navigation("EditionGeners");
+
+                    b.Navigation("Sections");
                 });
 
             modelBuilder.Entity("Business.Data.Models.Favorite", b =>

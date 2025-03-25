@@ -29,13 +29,13 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var logger = sp.GetRequiredService<ILogger<Program>>();
     try
     {
-        logger.LogInformation("[Resis] Поделючение к Redis... ");
+        logger.LogInformation("[Resis] Connecting to Redis... ");
         var configuration = builder.Configuration.GetConnectionString("RedisConnection");
         return ConnectionMultiplexer.Connect(configuration);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "[Resis] Ошибка подключения к Redis: {ErrorMessage}", ex.Message);
+        logger.LogError(ex, "[Resis] Fail connection to Redis: {ErrorMessage}", ex.Message);
         throw;
     }
 });

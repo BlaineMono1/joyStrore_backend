@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataBaseToAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstCommitMigrate : Migration
+    public partial class UpdatedSectionFix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -321,6 +321,45 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Editions",
+                columns: table => new
+                {
+                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    CusaCodeUa = table.Column<string>(type: "text", nullable: false),
+                    CusaCodeTr = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: true),
+                    EditionName = table.Column<string>(type: "text", nullable: true),
+                    EditionType = table.Column<string>(type: "text", nullable: false),
+                    Image = table.Column<string>(type: "text", nullable: true),
+                    Platform = table.Column<string>(type: "text", nullable: true),
+                    Subscription = table.Column<string>(type: "text", nullable: true),
+                    Features = table.Column<string>(type: "text", nullable: true),
+                    Release = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Region = table.Column<string>(type: "text", nullable: false),
+                    GameId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDelete = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Editions", x => x.Guid);
+                    table.ForeignKey(
+                        name: "FK_Editions_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Editions_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "FavoriteItems",
                 columns: table => new
                 {
@@ -450,48 +489,61 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Editions",
+                name: "GenersToEdition",
                 columns: table => new
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    CusaCodeUa = table.Column<string>(type: "text", nullable: false),
-                    CusaCodeTr = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: true),
-                    EditionName = table.Column<string>(type: "text", nullable: true),
-                    EditionType = table.Column<string>(type: "text", nullable: false),
-                    Image = table.Column<string>(type: "text", nullable: true),
-                    Platform = table.Column<string>(type: "text", nullable: true),
-                    Subscription = table.Column<string>(type: "text", nullable: true),
-                    Features = table.Column<string>(type: "text", nullable: true),
-                    Release = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Region = table.Column<string>(type: "text", nullable: false),
-                    GameId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SectionGuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    EdtitonId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    GenerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GenersGuid = table.Column<Guid>(type: "uuid", nullable: false),
                     DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDelete = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Editions", x => x.Guid);
+                    table.PrimaryKey("PK_GenersToEdition", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_Editions_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
+                        name: "FK_GenersToEdition_Editions_EditionGuid",
+                        column: x => x.EditionGuid,
+                        principalTable: "Editions",
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Editions_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
+                        name: "FK_GenersToEdition_Gener_GenersGuid",
+                        column: x => x.GenersGuid,
+                        principalTable: "Gener",
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SectionsEditions",
+                columns: table => new
+                {
+                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    EditionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDelete = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SectionsEditions", x => x.Guid);
+                    table.ForeignKey(
+                        name: "FK_SectionsEditions_Editions_EditionId",
+                        column: x => x.EditionId,
+                        principalTable: "Editions",
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Editions_Sections_SectionGuid",
-                        column: x => x.SectionGuid,
+                        name: "FK_SectionsEditions_Sections_SectionId",
+                        column: x => x.SectionId,
                         principalTable: "Sections",
-                        principalColumn: "Guid");
+                        principalColumn: "Guid",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -617,36 +669,6 @@ namespace DataBaseToAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "GenersToEdition",
-                columns: table => new
-                {
-                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    EdtitonId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EditionGuid = table.Column<Guid>(type: "uuid", nullable: false),
-                    GenerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    GenersGuid = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsDelete = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GenersToEdition", x => x.Guid);
-                    table.ForeignKey(
-                        name: "FK_GenersToEdition_Editions_EditionGuid",
-                        column: x => x.EditionGuid,
-                        principalTable: "Editions",
-                        principalColumn: "Guid",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GenersToEdition_Gener_GenersGuid",
-                        column: x => x.GenersGuid,
-                        principalTable: "Gener",
-                        principalColumn: "Guid",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "OrdersProductItems",
                 columns: table => new
                 {
@@ -745,11 +767,6 @@ namespace DataBaseToAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Editions_SectionGuid",
-                table: "Editions",
-                column: "SectionGuid");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_FavoriteItems_FavoriteId",
                 table: "FavoriteItems",
                 column: "FavoriteId");
@@ -802,13 +819,22 @@ namespace DataBaseToAccess.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PriceSettings_SubscriptionId",
                 table: "PriceSettings",
-                column: "SubscriptionId",
-                unique: true);
+                column: "SubscriptionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductTransactionItems_ProductTransactionHistoryId",
                 table: "ProductTransactionItems",
                 column: "ProductTransactionHistoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SectionsEditions_EditionId",
+                table: "SectionsEditions",
+                column: "EditionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SectionsEditions_SectionId",
+                table: "SectionsEditions",
+                column: "SectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Settings_UserId",
@@ -891,6 +917,9 @@ namespace DataBaseToAccess.Migrations
                 name: "PriceSettings");
 
             migrationBuilder.DropTable(
+                name: "SectionsEditions");
+
+            migrationBuilder.DropTable(
                 name: "Settings");
 
             migrationBuilder.DropTable(
@@ -898,9 +927,6 @@ namespace DataBaseToAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "GroupAddOns");
-
-            migrationBuilder.DropTable(
-                name: "Editions");
 
             migrationBuilder.DropTable(
                 name: "Gener");
@@ -915,7 +941,7 @@ namespace DataBaseToAccess.Migrations
                 name: "Subscriptions");
 
             migrationBuilder.DropTable(
-                name: "Games");
+                name: "Editions");
 
             migrationBuilder.DropTable(
                 name: "Sections");
@@ -925,6 +951,9 @@ namespace DataBaseToAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProductTransactionItems");
+
+            migrationBuilder.DropTable(
+                name: "Games");
 
             migrationBuilder.DropTable(
                 name: "Products");

@@ -75,6 +75,11 @@ namespace Business.Data.Models
         /// Жанры игры
         /// </summary>
         public List<GenersToEdition> EditionGeners { get; set; }
+
+        /// <summary>
+        /// Секции
+        /// </summary>
+        public List<SectionsEditions> Sections { get; set; }
         #endregion
 
     }
