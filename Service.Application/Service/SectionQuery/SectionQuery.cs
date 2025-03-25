@@ -72,7 +72,7 @@ namespace Service.Application.Service.SectionQuery
 
 
             var q = new SectionsEditions
-            { EdtitonId = EditionId, SectionId = SectionId };
+            { EditionId = EditionId, SectionId = SectionId };
 
 
             await _sectionsEditionsRepository.Add(q);
@@ -82,7 +82,7 @@ namespace Service.Application.Service.SectionQuery
 
         public async Task DeleteGameFromSection(Guid SectionId, Guid EditionId)
         {
-            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.EdtitonId == EditionId);
+            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.EditionId == EditionId);
 
             await _sectionsEditionsRepository.HardDelete(delete.Guid);
         }

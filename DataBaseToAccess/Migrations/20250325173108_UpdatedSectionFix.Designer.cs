@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataBaseToAccess.Migrations
 {
     [DbContext(typeof(BaseDbContext))]
-    [Migration("20250325104406_sectionsFix")]
-    partial class sectionsFix
+    [Migration("20250325173108_UpdatedSectionFix")]
+    partial class UpdatedSectionFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -864,10 +864,7 @@ namespace DataBaseToAccess.Migrations
                     b.Property<DateTime>("DateUpdate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("EditionGuid")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EdtitonId")
+                    b.Property<Guid>("EditionId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsDelete")
@@ -878,7 +875,7 @@ namespace DataBaseToAccess.Migrations
 
                     b.HasKey("Guid");
 
-                    b.HasIndex("EditionGuid");
+                    b.HasIndex("EditionId");
 
                     b.HasIndex("SectionId");
 
@@ -1253,7 +1250,7 @@ namespace DataBaseToAccess.Migrations
                 {
                     b.HasOne("Business.Data.Models.Edition", "Edition")
                         .WithMany("Sections")
-                        .HasForeignKey("EditionGuid")
+                        .HasForeignKey("EditionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

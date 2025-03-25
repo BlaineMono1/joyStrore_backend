@@ -5,8 +5,8 @@ namespace Business.Data.Models
 {
     public class SectionsEditions : BaseEntity
     {
-        [ForeignKey("EdtitonId")]
-        public Guid EdtitonId { get; set; }
+        [ForeignKey("EditionId")]
+        public Guid EditionId { get; set; }
         public Edition Edition { get; set; }
 
         [ForeignKey("SectionId")]
