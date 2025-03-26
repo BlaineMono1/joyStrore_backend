@@ -47,7 +47,7 @@ namespace Services.CalculationService
                 _logger.LogWarning("Price is null for region {Region}. Returning 0.", region);
                 return 0;
             }
-            _logger.LogInformation($"Calculating price for {region} - {price.Value}")
+            _logger.LogInformation($"Calculating price for {region} - {price.Value}");
             decimal exchangeRate = 0;
            
             if (region == "UAH")
