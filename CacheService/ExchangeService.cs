@@ -1,5 +1,8 @@
 ﻿using System.Text.Json;
+using Business.Data.BaseEntities;
+using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
+using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 
@@ -9,13 +12,14 @@ namespace CacheService
     {
         private readonly IRedisRepository _redis;
         private readonly ILogger<ExchangeRate> _logger;
-
+        private readonly IRepository<LoyaltyCashback> _cashbackRepository;
         private static readonly HttpClient httpClient = new();
 
-        public ExchangeRate(IRedisRepository redis, ILogger<ExchangeRate> logger)
+        public ExchangeRate(IRedisRepository redis, ILogger<ExchangeRate> logger, IRepository<LoyaltyCashback> cashbackRepository)
         {
             _logger = logger;
             _redis = redis;
+            _cashbackRepository = cashbackRepository;
         }
 
               
@@ -42,6 +46,19 @@ namespace CacheService
             await _redis.SetAsync(cacheKeyTr, Tr.ToString(), expireTime);
 
             _logger.LogInformation($"Обновлены курсы валют: UAH-RUB = {Ua}, TRY-RUB = {Tr}");
+        }
+
+        public async Task UpdateCashBack()
+        {
+            string cacheKey = "cashback";
+
+            var entity = (await _cashbackRepository.GetListQuery()).First();
+
+            string jsonData = JsonSerializer.Serialize(entity.Percent);
+
+            await _redis.SetAsync(cacheKey, jsonData, null);
+
+            _logger.LogInformation($"Закэширована таблица Loyality cashback с процентом кэшбэка {entity.Percent}");
         }
         
         private async Task<decimal> FetchExchangeRate(string url)
