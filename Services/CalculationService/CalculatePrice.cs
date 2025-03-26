@@ -53,7 +53,7 @@ namespace Services.CalculationService
             if (region == "UAH")
             {
                 string? cachedData = await _redis.GetAsync("UAH");
-                
+                _logger.LogInformation($"Data from redis - {cachedData}");
                 if(cachedData is null)
                 {
                     await UpdateCahce();
@@ -69,6 +69,7 @@ namespace Services.CalculationService
             else if(region == "TRY")
             {
                 string? cachedData = await _redis.GetAsync("TRY");
+                _logger.LogInformation($"Data from redis - {cachedData}");
                 if (cachedData is null)
                 {
                     await UpdateCahce();
