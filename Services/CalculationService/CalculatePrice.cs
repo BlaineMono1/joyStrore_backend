@@ -40,19 +40,20 @@ namespace Services.CalculationService
             _cacheService = cacheService;
         }
 
-        private async Task<decimal> GetPrice(string region,decimal? price)
+        private async Task<decimal> GetPrice(string region, decimal? price)
         {
             if (price == null)
             {
                 _logger.LogWarning("Price is null for region {Region}. Returning 0.", region);
                 return 0;
             }
-
+            _logger.LogInformation($"Calculating price for {region} - {price.Value}")
             decimal exchangeRate = 0;
            
             if (region == "UAH")
             {
                 string? cachedData = await _redis.GetAsync("UAH");
+                
                 if(cachedData is null)
                 {
                     await UpdateCahce();
@@ -61,6 +62,7 @@ namespace Services.CalculationService
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
+                    _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
                 }
 
             }
@@ -71,10 +73,12 @@ namespace Services.CalculationService
                 {
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("TRY");
+
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
+                    _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
                 }
             }
             else
