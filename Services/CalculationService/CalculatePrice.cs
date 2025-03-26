@@ -66,11 +66,11 @@ namespace Services.CalculationService
             }
             else if(region == "TRY")
             {
-                string? cachedData = await _redis.GetAsync("TRL");
+                string? cachedData = await _redis.GetAsync("TRY");
                 if (cachedData is null)
                 {
                     await UpdateCahce();
-                    cachedData = await _redis.GetAsync("TRL");
+                    cachedData = await _redis.GetAsync("TRY");
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
@@ -101,7 +101,7 @@ namespace Services.CalculationService
 
                 if (price == null)
                 {
-                    _logger.LogWarning("Price is null for region {Region}. Returning 0.", region);
+                    _logger.LogError("Price is null for region {Region}. Returning 0.", region);
                     return 0;
                 }
 

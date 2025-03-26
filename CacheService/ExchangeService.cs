@@ -24,7 +24,7 @@ namespace CacheService
         {
             
             string cacheKeyUa = "UAH";
-            string cacheKeyTr = "TRL";
+            string cacheKeyTr = "TRY";
 
 
             string urlUa = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
@@ -32,7 +32,10 @@ namespace CacheService
 
             decimal Ua = await FetchExchangeRate(urlUa);
             decimal Tr = await FetchExchangeRate(urlTr);
-
+            if(Ua == 0M || Tr == 0M)
+            {
+                throw new Exception($"Bad data from api  UAH-RUB = {Ua}, TRY-RUB = {Tr}");
+            }
             var expireTime = TimeSpan.FromMinutes(10);
 
             await _redis.SetAsync(cacheKeyUa, Ua.ToString(), expireTime);
