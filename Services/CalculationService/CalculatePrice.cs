@@ -60,10 +60,14 @@ namespace Services.CalculationService
                     cachedData = await _redis.GetAsync("UAH");
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
                 }
-                if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
+                if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
                     _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
+                }
+                else
+                {
+                    _logger.LogError($"Can not parse data from redis {cachedData}"); 
                 }
 
             }
@@ -78,10 +82,14 @@ namespace Services.CalculationService
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
 
                 }
-                if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
+                if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
                     _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
+                }
+                else
+                {
+                    _logger.LogError($"Can not parse data from redis {cachedData}");
                 }
             }
             else
@@ -194,10 +202,20 @@ namespace Services.CalculationService
                 _logger.LogInformation("Calculating JPlus for price {Price}.", price);
 
                 var cachedData = await _redis.GetAsync("cashback");
+                _logger.LogInformation($"Data from redis for cashback - {cachedData}");
                 var cashback = 0M;
+
+                if(cachedData is null)
+                {
+                   await _cacheService.UpdateCashBack();
+                   cachedData = await _redis.GetAsync("cashback");
+                    _logger.LogInformation($"Data from redis for cashback - {cachedData}");
+                }
+
                 if (decimal.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedDecimal))
                 {
                     cashback = parsedDecimal;
+                    _logger.LogInformation($"Fetched data for cashback - {cashback}");
                 }
 
                 decimal jPlus = price * cashback;
