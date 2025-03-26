@@ -203,7 +203,7 @@ namespace Services.CalculationService
 
                 var cachedData = await _redis.GetAsync("cashback");
                 _logger.LogInformation($"Data from redis for cashback - {cachedData}");
-                var cashback = 0M;
+                decimal cashback = 0;
 
                 if(cachedData is null)
                 {
@@ -218,7 +218,7 @@ namespace Services.CalculationService
                     _logger.LogInformation($"Fetched data for cashback - {cashback}");
                 }
 
-                decimal jPlus = price * cashback;
+                decimal jPlus = Math.Round(price * cashback / 100, MidpointRounding.AwayFromZero);
                 _logger.LogInformation("Calculated JPlus: {JPlus}", jPlus);
                 return jPlus;
             }
