@@ -58,6 +58,7 @@ namespace Services.CalculationService
                 {
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("UAH");
+                    _logger.LogInformation($"Data from redis after update - {cachedData}");
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
                 {
@@ -74,6 +75,7 @@ namespace Services.CalculationService
                 {
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("TRY");
+                    _logger.LogInformation($"Data from redis after update - {cachedData}");
 
                 }
                 if (float.TryParse(cachedData, NumberStyles.Float, CultureInfo.GetCultureInfo("ru-RU"), out float parsedDecimal))
