@@ -19,6 +19,7 @@ namespace Service.Application.Service.GamesQuery
         private readonly IEditionRepository<Edition> _editionRepository;
         private readonly IGenersRepository<Geners> _genersRepository;
         private readonly IUserRepository<User> _userRepository;
+        private readonly IRepository<AddOn> _addOnRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -35,7 +36,9 @@ namespace Service.Application.Service.GamesQuery
             IProductRepository<Product> productRepository,
             IEditionRepository<Edition> editionRepository,
             IGenersRepository<Geners> genersRepository,
-            IUserRepository<User> userRepository)
+            IUserRepository<User> userRepository,
+            IRepository<AddOn> addOnRepository
+            )
         {
             _calculatePrice = calculatePrice;
             _httpContextAccessor = httpContextAccessor;
@@ -47,6 +50,7 @@ namespace Service.Application.Service.GamesQuery
             _productRepository = productRepository;
             _editionRepository = editionRepository;
             _userRepository = userRepository;
+            _addOnRepository = addOnRepository;
         }
 
         public async Task<List<SectionDto>> GamesList()
@@ -56,30 +60,30 @@ namespace Service.Application.Service.GamesQuery
             try
             {
                 _logger.LogInformation("Fetching all sections.");
-                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).ThenInclude(se => se.Edition).ThenInclude(e => e.Game).ToList();
+                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(se => se.Product).ToList();
 
                 
                 foreach (var section in sections)
                 {
-                    if (section.Editions is null || section.Editions.Count < 1)
+                    if (section.Products is null || section.Products.Count < 1)
                     {
-                        _logger.LogWarning("Section {SectionName} has no editions.", section.Name);
+                        _logger.LogWarning("Section {SectionName} has no products.", section.Name);
                         continue;
                     }
                     var sectionDto = new SectionDto
                     {
                         Name = section.Name,
                     };
-                    foreach (var sectionEdition in section.Editions)
+                    foreach (var sectionProduct in section.Products)
                     {
-                       
-                        var product = await _productRepository.GetEntityType(sectionEdition.Edition.Guid);
+
+                        var product = sectionProduct.Product;
 
                        
                         var dto = new GamesListDto
                         {
-                            Name = sectionEdition.Edition.Game.Name,
-                            ImageFilepath = sectionEdition.Edition.Image,
+                            Name = product.Type == "Game" ? (await _editionRepository.GetById(product.TypeId)).EditionName : (await _addOnRepository.GetById(product.TypeId)).Name,
+                            ImageFilepath = product.Type == "Game" ? (await _editionRepository.GetById(product.TypeId)).Image : (await _addOnRepository.GetById(product.TypeId)).Image,
                             ProductId = product.Guid,
                             Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
                             Discount = product.DiscountPercent

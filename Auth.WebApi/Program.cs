@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using Service.Application.Service.TransactionQuery;
 using Service.Application.Service.SectionQuery;
+using DataBaseToAccess.Repositiory.RepositoryEntity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductRepository<>));
 
 builder.Services.AddScoped<TransactionQuery>();
 builder.Services.AddScoped<SectionQuery>();
