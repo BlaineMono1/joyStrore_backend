@@ -34,6 +34,21 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [HttpPut("UpdateSection")]
+        public async Task<ActionResult> UpdateSection(Guid SectionId, string SectionName)
+        {
+            try
+            {
+                await _query.UpdateSection(SectionId, SectionName);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpDelete("DeleteSection")]
         public async Task<ActionResult> DeleteSections(Guid SectionId)
         {
@@ -81,13 +96,13 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-        [HttpPut("AddGame")]
+        [HttpPut("AddProduct")]
 
-        public async Task<ActionResult> AddGame(Guid SectionId, Guid EditionId)
+        public async Task<ActionResult> AddProduct(Guid SectionId, Guid ProductId)
         {
             try
             {
-                await _query.AddGameInSection(SectionId, EditionId);
+                await _query.AddProductInSection(SectionId, ProductId);
                 return Ok();
             }
             catch (Exception ex)
@@ -97,13 +112,13 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-        [HttpDelete("DeleteGame")]
+        [HttpDelete("DeleteProduct")]
 
-        public async Task<ActionResult> DeleteGame(Guid SectionId, Guid EditionId)
+        public async Task<ActionResult> DeleteProduct(Guid SectionId, Guid ProductId)
         {
             try
             {
-                await _query.DeleteGameFromSection(SectionId, EditionId);
+                await _query.DeleteProductFromSection(SectionId, ProductId);
                 return Ok();
             }
             catch (Exception ex)
@@ -113,13 +128,13 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-        [HttpGet("GetEditionsList")]
+        [HttpGet("GetProductList")]
 
-        public async Task<ActionResult<List<EditionsDto>>> GetEditionsList(string Name = "")
+        public async Task<ActionResult<List<ProductDto>>> GetEditionsList(string Name = "", bool isEdition = true)
         {
             try
             {
-                var result = await _query.FindEditionsByName(Name);
+                var result = await _query.FindProductByName(Name, isEdition);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -129,12 +144,12 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-        [HttpPut("UpdateEdition")]
-        public async Task<ActionResult> UpdateEdition(Guid EditionId, string Name, string url)
+        [HttpPut("UpdateProduct")]
+        public async Task<ActionResult> UpdateProduct(Guid ProductId, string Name, string url)
         {
             try
             {
-                await _query.UpdateEdition(EditionId, Name, url);
+                await _query.UpdateProduct(ProductId, Name, url);
                 return Ok();
             }
             catch (Exception ex)

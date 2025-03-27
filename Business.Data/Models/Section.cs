@@ -19,7 +19,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Игры
         /// </summary>
-        public List<SectionsEditions> Editions { get; set; }
+        public List<SectionsProducts> Products { get; set; }
         #endregion
 
     }

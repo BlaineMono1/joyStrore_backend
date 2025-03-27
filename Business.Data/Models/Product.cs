@@ -37,6 +37,8 @@ namespace Business.Data.Models
         public AddOn? AddOn { get; set; }
         public Subscription? Subscription { get; set; }
         public Edition? Edition { get; set; }
+
+        public List<SectionsProducts> Sections { get; set; }
         #endregion
 
     }
