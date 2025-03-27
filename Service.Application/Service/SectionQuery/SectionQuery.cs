@@ -2,9 +2,11 @@
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.SectionQuery.Dto;
+
 
 namespace Service.Application.Service.SectionQuery
 {
@@ -12,21 +14,26 @@ namespace Service.Application.Service.SectionQuery
     {
         private readonly ILogger<SectionQuery> _logger;
         private readonly IRepository<Section> _sectionRepository;
+        private readonly IProductRepository<Product> _productRepository;
         private readonly IRepository<Edition> _editionRepository;
-        private readonly IRepository<SectionsEditions> _sectionsEditionsRepository;
+        private readonly IRepository<SectionsProducts> _sectionsEditionsRepository;
+        private readonly IRepository<AddOn> _addOnRepository;
 
-        public SectionQuery(ILogger<SectionQuery> logger, IRepository<Section> sectionRepository, IRepository<Edition> editionRepository, IRepository<SectionsEditions> sectionsEditionsRepository)
+        public SectionQuery(ILogger<SectionQuery> logger, IRepository<Section> sectionRepository, IProductRepository<Product> productRepository, 
+            IRepository<SectionsProducts> sectionsEditionsRepository, IRepository<Edition> editionRepository, IRepository<AddOn> addOnRepository)
         {
             _logger = logger;
             _sectionRepository = sectionRepository;
-            _editionRepository = editionRepository;
+            _productRepository = productRepository;
             _sectionsEditionsRepository = sectionsEditionsRepository;
+            _editionRepository = editionRepository;
+            _addOnRepository = addOnRepository;
         }
 
 
         public async Task CreateSections(string sectionName, string imagePath)
         {
-            var section = new Section { Name = sectionName, FilePathImage = imagePath, Editions = new List<SectionsEditions>() };
+            var section = new Section { Name = sectionName, FilePathImage = imagePath, Products = new List<SectionsProducts>() };
 
             await _sectionRepository.Add(section);
         }
@@ -34,14 +41,26 @@ namespace Service.Application.Service.SectionQuery
         public async Task DeleteSection(Guid SectionId)
         {
             
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).AsTracking().First(s => s.Guid == SectionId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).First(s => s.Guid == SectionId);
 
-            foreach(var del in section.Editions)
+            foreach(var del in section.Products)
             {
                 await _sectionsEditionsRepository.HardDelete(del.Guid);
             }
 
             await _sectionRepository.HardDelete(SectionId);
+        }
+
+
+        public async Task UpdateSection(Guid SectionId,string SectionName)
+        {
+            var section = await _sectionRepository.GetById(SectionId);
+
+            if (section is null) throw new Exception($"Section with GUid {SectionId} not found");
+
+            section.Name = SectionName;
+
+            await _sectionRepository.Update(section);
         }
 
         public async Task<List<SectionsDto>> SectionsList()
@@ -57,22 +76,38 @@ namespace Service.Application.Service.SectionQuery
             return result;
         }
 
-        public async Task<Section> SectionById(Guid SectionId)
+        public async Task<SectionDto> SectionById(Guid SectionId)
         {
-            var result = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).First(s => s.Guid == SectionId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(p => p.Product).First(s => s.Guid == SectionId);
 
+            var result = new SectionDto
+            {
+                SectionId = section.Guid,
+                SectionName = section.Name,
+                Products = new List<ProductDto>()
+            };
+
+            result.Products.AddRange(await Task.WhenAll(
+                section.Products.Select(async item => new ProductDto
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.Product.Type == "Game" ? (await _editionRepository.GetById(item.Product.TypeId)).EditionName : (await _addOnRepository.GetById(item.Product.TypeId)).Name
+                }
+
+                ))
+                );
 
             return result;
         }
 
-        public async Task AddGameInSection(Guid SectionId, Guid EditionId)
+        public async Task AddProductInSection(Guid SectionId, Guid ProductId)
         {
-            var edition = await _editionRepository.GetById(EditionId);
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Editions).AsTracking().First(s => s.Guid == SectionId);
+            var product = await _productRepository.GetById(ProductId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).AsTracking().First(s => s.Guid == SectionId);
 
 
-            var q = new SectionsEditions
-            { EditionId = EditionId, SectionId = SectionId };
+            var q = new SectionsProducts
+            { ProductId = ProductId, SectionId = SectionId };
 
 
             await _sectionsEditionsRepository.Add(q);
@@ -80,37 +115,76 @@ namespace Service.Application.Service.SectionQuery
             
         }
 
-        public async Task DeleteGameFromSection(Guid SectionId, Guid EditionId)
+        public async Task DeleteProductFromSection(Guid SectionId, Guid ProductId)
         {
-            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.EditionId == EditionId);
+            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.ProductId == ProductId);
 
             await _sectionsEditionsRepository.HardDelete(delete.Guid);
         }
 
-        public async Task<List<EditionsDto>> FindEditionsByName(string EditionName)
+        public async Task<List<ProductDto>> FindProductByName(string Name, bool isEdition)
         {
-            var editions = (await _editionRepository.GetListQuery()).Where(e => e.EditionName.Contains(EditionName));
-
-            var result = editions.Select(item => new EditionsDto
+            var result = new List<ProductDto>();
+            if (isEdition)
             {
-                EditionId = item.Guid,
-                EditionName = item.EditionName
-            }).ToList();
+                var products = (await _productRepository.GetListQuery()).Include(p => p.Edition).Where(p => p.Type == "Game" && p.Edition.EditionName.Contains(Name));
+                result = products.Select(item => new ProductDto
+                {
+                    ProductId = item.Guid,
+                    ProductName = item.Edition.EditionName
+                }).ToList();
+            }
+            else
+            {
+                var products = (await _productRepository.GetListQuery()).Include(p => p.AddOn).Where(p => p.Type == "AddOn" && p.AddOn.Name.Contains(Name));
+                result = products.Select(item => new ProductDto
+                {
+                    ProductId = item.Guid,
+                    ProductName = item.AddOn.Name
+
+                }).ToList();
+            }
+
+            
 
             return result;
         }
 
-        public async Task UpdateEdition(Guid EditionId, string Name, string ImagePath)
+
+        public async Task UpdateProduct(Guid ProductId, string Name, string ImagePath)
         {
-            var edition = await _editionRepository.GetById(EditionId);
+            var product = await _productRepository.GetById(ProductId);
 
-            if (edition == null) throw new Exception($"Edition with GUID {EditionId} not found");
+            if(product is null) throw new Exception($"Product with GUID {ProductId} not found");
 
-            if(!string.IsNullOrEmpty(Name)) edition.EditionName = Name;
+            if (product.Type == "Game")
+            {
+                var edition = await _editionRepository.GetById(product.TypeId);
 
-            if(!string.IsNullOrEmpty(ImagePath)) edition.Image = ImagePath;
+                if (edition is null) throw new Exception($"Edition with GUID {product.TypeId} not found");
 
-            await _editionRepository.Update(edition);
+                if (!string.IsNullOrEmpty(Name)) edition.EditionName = Name;
+
+                if (!string.IsNullOrEmpty(ImagePath)) edition.Image = ImagePath;
+
+                await _editionRepository.Update(edition);
+            }
+            else if(product.Type == "AddOn")
+            {
+                var addOn = await _addOnRepository.GetById(product.TypeId);
+
+                if (addOn is null) throw new Exception($"AddOn with GUID {product.TypeId} not found");
+
+                if (!string.IsNullOrEmpty(Name)) addOn.Name = Name;
+
+                if (!string.IsNullOrEmpty(ImagePath)) addOn.Image = ImagePath;
+
+                await _addOnRepository.Update(addOn);
+            }
+            else
+            {
+                throw new Exception($"Unknown product type {product.Type}");
+            }
         }
     }
 }

@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Business.Data.Models
 {
-    public class SectionsEditions : BaseEntity
+    public class SectionsProducts : BaseEntity
     {
-        [ForeignKey("EditionId")]
-        public Guid EditionId { get; set; }
-        public Edition Edition { get; set; }
+        [ForeignKey("ProductId")]
+        public Guid ProductId { get; set; } 
+        public Product Product { get; set; }
 
         [ForeignKey("SectionId")]
         public Guid SectionId { get; set; }
