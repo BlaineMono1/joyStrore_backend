@@ -66,10 +66,23 @@ namespace Service.Application.Service.GetNewsList
         }
 
         public async Task DeleteNews(Guid NewsId)
-        {
-           
+        {           
             await _newsRepository.HardDelete(NewsId);
         }
 
+        public async Task UpdateNews(Guid NewsId, string? Name, string? Url, string? Image)
+        {
+            var current = await _newsRepository.GetById(NewsId);
+
+            if (current is null) throw new Exception($"News with GUID {NewsId} not found");
+
+            if(!string.IsNullOrEmpty(Name)) current.Name = Name;
+
+            if (!string.IsNullOrEmpty(Url)) current.Link = Url;
+
+            if (!string.IsNullOrEmpty(Image)) current.FilePathImage = Image;
+
+            await _newsRepository.Update(current);
+        }
     }
 }

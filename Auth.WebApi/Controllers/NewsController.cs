@@ -61,5 +61,19 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpPut("UpdateNews")]
+        public async Task<ActionResult> UpdateNews(Guid NewsId, string? Name = null, string? Url = null, string? Image = null)
+        {
+            try
+            {
+                await _query.UpdateNews(NewsId, Name, Url, Image);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }
