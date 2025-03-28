@@ -75,5 +75,19 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("GetNewsById")]
+        public async Task<ActionResult<NewsListDto>> GetNewsById(Guid NewsId)
+        {
+            try
+            {
+                var result = await _query.GetNewsById(NewsId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

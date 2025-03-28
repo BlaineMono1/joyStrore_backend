@@ -84,5 +84,13 @@ namespace Service.Application.Service.GetNewsList
 
             await _newsRepository.Update(current);
         }
+
+        public async Task<NewsListDto> GetNewsById(Guid NewsId)
+        {
+            var current = await _newsRepository.GetById(NewsId);
+            if (current is null) throw new Exception($"News with GUID {NewsId} not found");
+
+            return new NewsListDto { NewsId = current.Guid, NewsName = current.Name, Url = current.FilePathImage };
+        }
     }
 }
