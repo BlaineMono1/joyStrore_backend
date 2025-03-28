@@ -65,5 +65,11 @@ namespace Service.Application.Service.GetNewsList
             await _newsRepository.Add(entity);
         }
 
+        public async Task DeleteNews(Guid NewsId)
+        {
+           
+            await _newsRepository.HardDelete(NewsId);
+        }
+
     }
 }

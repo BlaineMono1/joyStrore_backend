@@ -47,5 +47,19 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpDelete("DeleteNews")]
+        public async Task<ActionResult> DeleteNews(Guid NewsId)
+        {
+            try
+            {
+                await _query.DeleteNews(NewsId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }
