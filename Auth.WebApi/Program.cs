@@ -8,6 +8,7 @@ using StackExchange.Redis;
 using Service.Application.Service.TransactionQuery;
 using Service.Application.Service.SectionQuery;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
+using Service.Application.Service.GetNewsList;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductReposi
 
 builder.Services.AddScoped<TransactionQuery>();
 builder.Services.AddScoped<SectionQuery>();
+builder.Services.AddScoped<NewsQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

@@ -2,6 +2,7 @@
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.GetNewsList.Dto;
+using Service.Application.Service.NewsQuery.Dto;
 
 namespace Service.Application.Service.GetNewsList
 {
@@ -21,7 +22,7 @@ namespace Service.Application.Service.GetNewsList
             var result = new List<NewsDto>();
             try
             {
-                var news = await _newsRepository.GetAllList();
+                var news = await _newsRepository.GetListQuery();
                 if (news is null) _logger.LogWarning("News is empty");
                 result.AddRange(news.Select(el => new NewsDto
                 {
@@ -36,5 +37,22 @@ namespace Service.Application.Service.GetNewsList
             }
             return result;
         }
+
+        public async Task<List<NewsListDto>> GetNewsListAdminPanel()
+        {
+            var news = await _newsRepository.GetListQuery();
+            if (news is null) _logger.LogWarning("News is empty");
+
+            var result = news.Select(item => new NewsListDto
+            {
+                NewsId = item.Guid,
+                NewsName = item.Name,
+                Url = item.Link
+            }).ToList();
+
+            return result;
+        }
+
+
     }
 }
