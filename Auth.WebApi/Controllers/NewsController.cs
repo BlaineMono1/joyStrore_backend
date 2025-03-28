@@ -33,5 +33,19 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("CreateNews")]
+        public async Task<ActionResult> CreateNews(string Name, string Url, string Image)
+        {
+            try
+            {
+                await _query.CreateNews(Name, Url, Image);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

@@ -53,6 +53,17 @@ namespace Service.Application.Service.GetNewsList
             return result;
         }
 
+        public async Task CreateNews(string Name, string Url, string Image)
+        {
+            var entity = new News
+            {
+                Name = Name,
+                Link = Url,
+                FilePathImage = Image
+            };
+
+            await _newsRepository.Add(entity);
+        }
 
     }
 }
