@@ -226,19 +226,23 @@ namespace Service.Application.Service.UserQuery
                     };
                     var cart = new Cart
                     {
+                        UserId = newUser.Guid,
                         User = newUser,
                     };
                     var fav = new Favorite
                     {
+                        UserId = newUser.Guid,
                         User = newUser,
                     };
                     var settingUah = new Setting
                     {
+                        UserId = newUser.Guid,
                         Region = "UAH",
                         User = newUser
                     };
                     var settingTRL = new Setting
                     {
+                        UserId = newUser.Guid,
                         Region = "TRY",
                         User = newUser
                     };

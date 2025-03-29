@@ -1,7 +1,6 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
@@ -25,13 +24,17 @@ namespace Service.Application.Service.CartQuery
            IDataFromCookie regionFromCookie,
            ILogger<CartQuery> logger,
            IUserRepository<User> userRepository,
-           IRepository<Setting> setingsRepository)
+           IRepository<Setting> setingsRepository,
+           IProductRepository<Product> productRepository,
+           IRepository<CartItem> cartItemRepository)
         {
             _calculatePrice = calculatePrice;
             _regionFromCookie = regionFromCookie;
             _logger = logger;
             _userRepository = userRepository;
             _setingsRepository = setingsRepository;
+            _productRepository = productRepository;
+            _cartItemRepository = cartItemRepository;
         }
 
         public async Task<CartDto> UserCart()
@@ -49,7 +52,7 @@ namespace Service.Application.Service.CartQuery
                     return new CartDto();
                 }
 
-                var userCartItems = user.Cart.CartItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<CartItem>();
+                var userCartItems = user.Cart.CartItems;
 
                 var cart = await Task.WhenAll(userCartItems.Select(async item =>
                 {
@@ -60,34 +63,40 @@ namespace Service.Application.Service.CartQuery
                     switch (item.Product.Type)
                     {
                         case "Game":
-                            result.image = item.Product.Edition.Image;
-                            result.Name = item.Product.Edition.EditionName;
-                            result.EditionName = item.Product.Edition.EditionType;
-                            result.Id = item.Product.Edition.Guid;
+                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            result.image = edition.Image;
+                            result.Name = edition.EditionName;
+                            result.EditionName = edition.EditionType;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.Platform = item.Product.Edition.Platform;
+                            result.Platform = edition.Platform;
                             break;
                         case "AddOn":
-                            result.image = item.Product.AddOn.Image;
-                            result.Name = item.Product.AddOn.Name;
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            result.image = addOn.Image;
+                            result.Name = addOn.Name;
                             result.EditionName = "";
-                            result.Id = item.Product.AddOn.Guid;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.Platform = item.Product.AddOn.Platform;
+                            result.Platform = addOn.Platform;
                             break;
                         case "Subscription":
-                            result.image = item.Product.Subscription.Image;
-                            result.Name = item.Product.Subscription.Name;
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            result.image = sub.Image;
+                            result.Name = sub.Name;
                             result.EditionName = "";
-                            result.Id = item.Product.Subscription.Guid;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.Platform = item.Product.Subscription.Platform;
+                            result.Platform = sub.Platform;
                             break;
                     }
 
@@ -122,26 +131,25 @@ namespace Service.Application.Service.CartQuery
                 var tgId = _regionFromCookie.GetUserTgID();
                 _logger.LogInformation($"Updating user {tgId} cart: {ProductId}");
 
-                var product = await _productRepository.GetEntityType(ProductId);
+                var product = await _productRepository.GetById(ProductId);
                 if (product is null)
                 {
                     _logger.LogError("No Product with GUID {id}", ProductId);
                     throw new Exception($"Product with GUID {ProductId} not found");
                 }
 
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart;
-                if (cart is null)
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
+                if (user is null)
                 {
-                    _logger.LogError("User Cart with id {id} not found", tgId);
-                    throw new Exception($"User Cart with tg id {tgId} not found");
+                    _logger.LogError("User with id {id} not found", tgId);
+                    throw new Exception($"User with tg id {tgId} not found");
                 }
                 var result = new CartItem()
                 {
-                    CartId = cart.Guid,
+                    CartId = user.Cart.Guid,
                     ProductId = product.Guid,
                 };
-                cart.CartItems ??= new List<CartItem>();
-                cart.CartItems.Add(result);
+
                 await _cartItemRepository.Add(result);
             }
             catch (Exception ex)
@@ -156,15 +164,15 @@ namespace Service.Application.Service.CartQuery
             try
             {
                 var tgId = _regionFromCookie.GetUserTgID();
-                var cart = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Cart.CartItems;
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).FirstOrDefault(u => u.TgUserId == tgId);
 
-                if (cart is null)
+                if (user is null)
                 {
                     _logger.LogError("User Cart with id {id} not found", tgId);
                     throw new Exception($"User Cart with id {tgId} not found");
                 }
 
-                var item = cart.FirstOrDefault(c => c.ProductId == ProductId);
+                var item = user.Cart.CartItems.FirstOrDefault(c => c.ProductId == ProductId);
                 if (item is null)
                 {
                     _logger.LogError("CartItem with id {id} not found in User {id} Cart", ProductId, tgId);
