@@ -197,10 +197,10 @@ namespace Service.Application.Service.UserQuery
 
                 var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.TgUserId == tgId).Settings.FirstOrDefault(s => s.Region == region);
 
-                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user GUID {tgId}");
+                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user tgId {tgId}");
 
                 userSettings.Code = code;
-                userSettings.Email = email;
+                userSettings.EmailPsStore = email;
                 userSettings.PasswordPsStore = password;
 
                 await _setingsRepository.Update(userSettings);
