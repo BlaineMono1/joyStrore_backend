@@ -79,11 +79,13 @@ namespace Service.Application.Service.GamesQuery
 
                         var product = sectionProduct.Product;
 
-                       
+                        var addOn = (await _addOnRepository.GetById(product.TypeId));
+                        var edition = (await _editionRepository.GetById(product.TypeId));
+
                         var dto = new GamesListDto
                         {
-                            Name = product.Type == "Game" ? (await _editionRepository.GetById(product.TypeId)).EditionName : (await _addOnRepository.GetById(product.TypeId)).Name,
-                            ImageFilepath = product.Type == "Game" ? (await _editionRepository.GetById(product.TypeId)).Image : (await _addOnRepository.GetById(product.TypeId)).Image,
+                            Name = product.Type == "Game" ? edition.EditionName : addOn.Name,
+                            ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
                             ProductId = product.Guid,
                             Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
                             Discount = product.DiscountPercent

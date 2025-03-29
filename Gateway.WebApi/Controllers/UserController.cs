@@ -113,7 +113,7 @@ namespace Gateway.WebApi.Controllers
         /// <param name="code"></param>
         /// <returns></returns>
         [HttpPut("setting")]
-        public async Task<ActionResult> UpdateUserSettings(string email, string password, string code)
+        public async Task<ActionResult> UpdateUserSettings(string email, string password, string? code = null)
         {
             try
             {

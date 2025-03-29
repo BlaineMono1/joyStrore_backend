@@ -8,7 +8,7 @@ namespace Business.Data.Iterfaces.Store
         /// Получить объект(игру/подписку/аддон) через продукт
         /// </summary>
         /// <returns></returns>
-        Task<T> GetTypeEntity(Product product);
+        Task<T> GetTypeEntity<T>(Product product);
 
         /// <summary>
         /// Получить продукт через объект(игру/подписку/аддон)
