@@ -87,17 +87,32 @@ namespace Service.Application.Service.SectionQuery
                 Products = new List<ProductDto>()
             };
 
-            result.Products.AddRange(await Task.WhenAll(
-                section.Products.Select(async item => new ProductDto
+            // Список всех TypeId для одного запроса
+            var typeIds = section.Products.Select(p => p.Product.TypeId).ToList();
+
+            // Загружаем все Edition и AddOn одним запросом
+            var editions = await (await _editionRepository.GetListQuery())
+                .Where(e => typeIds.Contains(e.Guid))
+                .ToDictionaryAsync(e => e.Guid, e => e.EditionName);
+
+            var addOns = await (await _addOnRepository.GetListQuery())
+                .Where(a => typeIds.Contains(a.Guid))
+                .ToDictionaryAsync(a => a.Guid, a => a.Name);
+
+            foreach (var item in section.Products)
+            {
+                var productName = item.Product.Type == "Game"
+                    ? editions.GetValueOrDefault(item.Product.TypeId, "Unknown Edition")
+                    : addOns.GetValueOrDefault(item.Product.TypeId, "Unknown AddOn");
+
+                result.Products.Add(new ProductDto
                 {
                     ProductId = item.ProductId,
-                    ProductName = item.Product.Type == "Game" ? (await _editionRepository.GetById(item.Product.TypeId)).EditionName : (await _addOnRepository.GetById(item.Product.TypeId)).Name
-                }
+                    ProductName = productName
+                });
+            }
 
-                ))
-                );
-
-            return result;
+                return result;
         }
 
         public async Task AddProductInSection(Guid SectionId, Guid ProductId)
