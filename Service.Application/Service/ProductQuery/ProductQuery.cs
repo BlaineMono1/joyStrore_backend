@@ -17,7 +17,7 @@ namespace Service.Application.Service.ProductQuery
         private readonly IRepository<AddOn> _addOnRepository;
         private readonly IRepository<Subscription> _subscriptionRepository;
         private readonly IUserRepository<User> _userRepository;
-
+        private readonly IRepository<Game> _gameRepository;
 
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDataFromCookie _regionFromCookie;
@@ -32,7 +32,8 @@ namespace Service.Application.Service.ProductQuery
             IHttpContextAccessor httpContextAccessor,
             IDataFromCookie regionFromCookie,
             ICalculationService calculatePrice,
-            ILogger<ProductQuery> logger)
+            ILogger<ProductQuery> logger,
+            IRepository<Game> gameRepository)
         {
             _productRepository = productRepository;
             _editonRepository = editonRepository;
@@ -44,6 +45,7 @@ namespace Service.Application.Service.ProductQuery
             _regionFromCookie = regionFromCookie;
             _calculatePrice = calculatePrice;
             _logger = logger;
+            _gameRepository = gameRepository;
         }
         public async Task<ProductDto> GetProduct(Guid ProductId)
         {
@@ -114,11 +116,11 @@ namespace Service.Application.Service.ProductQuery
                 switch (product.Type)
                 {
                     case "Game":
+                        var edition = await _editonRepository.GetById(product.TypeId);
+                        var editions = (await _gameRepository.GetListQuery()).Include(g => g.Editions).FirstOrDefault(g => g.Editions.Contains(edition)).Editions;
 
-                        var edition = (await _editonRepository.GetListQuery()).Include(e => e.Game).ThenInclude(g => g.Editions).FirstOrDefault(e => e.Guid == product.TypeId);
-
-                        result.AddRange((IEnumerable<DropDownListDto>)Task.WhenAll(
-                            edition.Game.Editions.Where(e => e.Guid != product.TypeId).Select(
+                        result.AddRange(await Task.WhenAll(
+                            editions.Where(e => e.Guid != product.TypeId).Select(
                                 async item =>
                                 new DropDownListDto
                                 {
@@ -131,7 +133,7 @@ namespace Service.Application.Service.ProductQuery
 
                         var addOn = (await _addOnRepository.GetListQuery()).Include(a => a.Game).ThenInclude(g => g.AddOns).FirstOrDefault(a => a.Guid == product.TypeId);
 
-                        result.AddRange((IEnumerable<DropDownListDto>)Task.WhenAll(
+                        result.AddRange(await Task.WhenAll(
                             addOn.Game.AddOns.Where(a => a.Guid != product.TypeId).Select(
                                 async item =>
                                 new DropDownListDto
@@ -147,7 +149,7 @@ namespace Service.Application.Service.ProductQuery
                         var sub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(s => s.Guid == product.TypeId); //текущая подписка
                         var groupSubs = (await _subscriptionRepository.GetListQuery()).Where(s => s.Name == sub.Name && s.Guid != sub.Guid).ToList();
 
-                        result.AddRange((IEnumerable<DropDownListDto>)Task.WhenAll(
+                        result.AddRange(await Task.WhenAll(
                             groupSubs.Select(async item =>
                                  new DropDownListDto
                                  { 

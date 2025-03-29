@@ -10,17 +10,21 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
     public class ProductRepository<T> : Repository<Product>, IProductRepository<T> where T : class,IBaseEntity
     {
-        public ProductRepository(BaseDbContext contex, IRedisRepository redis) : base(contex)
-        {
-            _redis = redis;
-        }
-
         private readonly Repository<Edition> _editionRepository;
         private readonly Repository<AddOn> _addOnRepository;
         private readonly Repository<Subscription> _subscriptionRepository;
+        private readonly BaseDbContext _contex;
+        public ProductRepository(BaseDbContext contex, IRedisRepository redis) : base(contex)
+        {
+            _redis = redis;
+            _contex = contex;
+           
+        }
+
+       
 
         private readonly IRedisRepository _redis;
-        public async Task<T> GetTypeEntity(Product product)
+        public async Task<T> GetTypeEntity<T>(Product product)
         {
             if (product == null)
                 throw new KeyNotFoundException("Entity not found.");
@@ -30,19 +34,19 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             switch (product.Type)
             {
                 case "Game":
-                    result = await _editionRepository.GetById(product.TypeId);
+                    result = await _contex.Editions.FindAsync(product.TypeId);
                     break;
                 case "AddOn":
-                    result = await _addOnRepository.GetById(product.TypeId);
+                    result = await _contex.AddOns.FindAsync(product.TypeId);
                     break;
                 case "Subscription":
-                    result = await _subscriptionRepository.GetById(product.TypeId);
+                    result = await _contex.Subscriptions.FindAsync(product.TypeId);
                     break;
                 default:
                     throw new KeyNotFoundException($"Type '{product.Type}' is not found.");
             }
 
-            return result as T ?? throw new InvalidCastException($"Cannot convert {product.Type} to {typeof(T)}.");
+            return (T)result;
         }
 
         public async Task<T> GetEntityType(Guid id)

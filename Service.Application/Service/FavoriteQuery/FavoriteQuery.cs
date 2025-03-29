@@ -14,6 +14,8 @@ namespace Service.Application.Service.FavoriteQuery
         private readonly IUserRepository<User> _userRepository;
         private readonly IProductRepository<Product> _productRepository;
         private readonly IRepository<FavoriteItem> _favoriteItemRepository;
+        private readonly IRepository<Cart> _cartRepository;
+
         private readonly ICalculationService _calculatePrice;
         private readonly ILogger<FavoriteQuery> _logger;
         private readonly IDataFromCookie _regionFromCookie;
@@ -24,6 +26,7 @@ namespace Service.Application.Service.FavoriteQuery
             IUserRepository<User> userRepository,
             IProductRepository<Product> productRepository,
             IRepository<FavoriteItem> favoriteItemRepository,
+            IRepository<Cart> cartRepository,
             IDataFromCookie regionFromCookie)
 
 
@@ -34,6 +37,7 @@ namespace Service.Application.Service.FavoriteQuery
             _productRepository = productRepository;
             _favoriteItemRepository = favoriteItemRepository;
             _regionFromCookie = regionFromCookie;
+            _cartRepository = cartRepository;
         }
 
         public async Task<List<FavoriteDto>> UserFavorite()
@@ -60,37 +64,42 @@ namespace Service.Application.Service.FavoriteQuery
                     switch (item.Product.Type)
                     {
                         case "Game":
-                            result.image = item.Product.Edition.Image;
-                            result.Name = item.Product.Edition.EditionName;
-                            result.EditionName = item.Product.Edition.EditionType;
-                            result.Id = item.Product.Edition.Guid;
+                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            result.image = edition.Image;
+                            result.Name = edition.EditionName;
+                            result.EditionName = edition.EditionType;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
                             break;
                         case "AddOn":
-                            result.image = item.Product.AddOn.Image;
-                            result.Name = item.Product.AddOn.Name;
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            result.image = addOn.Image;
+                            result.Name = addOn.Name;
                             result.EditionName = "";
-                            result.Id = item.Product.AddOn.Guid;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
                             break;
                         case "Subscription":
-                            result.image = item.Product.Subscription.Image;
-                            result.Name = item.Product.Subscription.Name;
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            result.image = sub.Image;
+                            result.Name = sub.Name;
                             result.EditionName = "";
-                            result.Id = item.Product.Subscription.Guid;
+                            result.Id = item.Guid;
+                            result.ProductId = item.ProductId;
                             result.Discount = item.Product.DiscountPercent;
                             result.Price = price;
                             result.JPrice = jPrice;
-                            result.DiscountTime = item.Product.DiscountDate;
                             break;
                     }
-                    result.InCart = (user.Cart.CartItems is null) ? false : user.Cart.CartItems.Any(c => c.ProductId == item.ProductId);
+
+                    var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.UserId == user.Guid);
+                    result.InCart = (cart.CartItems is null) ? false : cart.CartItems.Any(c => c.ProductId == item.ProductId);
 
                     return result;
                 }));
@@ -112,29 +121,25 @@ namespace Service.Application.Service.FavoriteQuery
                 var tgId = _regionFromCookie.GetUserTgID();
                 _logger.LogInformation($"Updating user {tgId} favorites: {productId}");
 
-                var product = await _productRepository.GetEntityType(productId);
+                var product = await _productRepository.GetById(productId);
                 if (product is null)
                 {
                     _logger.LogError("No Product with GUID {id}", productId);
                     throw new Exception($"Product with GUID {productId} not found");
                 }
 
-                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite;
-                if (fav is null)
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).FirstOrDefault(u => u.TgUserId == tgId);
+                if (user is null)
                 {
-                    _logger.LogError("User Favorite with id {id} not found", tgId);
-                    throw new Exception($"User Favorite with tg id {tgId} not found");
+                    _logger.LogError("User with id {id} not found", tgId);
+                    throw new Exception($"User with tg id {tgId} not found");
                 }
                 var result = new FavoriteItem()
                 {
                     ProductId = product.Guid,
-                    FavoriteId = fav.Guid
+                    FavoriteId = user.Favorite.Guid
                 };
 
-
-
-                fav.FavoriteItems ??= new List<FavoriteItem>();
-                fav.FavoriteItems.Add(result);
                 await _favoriteItemRepository.Add(result);
             }
             catch (Exception ex)
@@ -152,15 +157,15 @@ namespace Service.Application.Service.FavoriteQuery
                 var tgId = _regionFromCookie.GetUserTgID();
                 _logger.LogInformation($"Deliting from user {tgId} favorites: {ProductId}");
 
-                var fav = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId).Favorite.FavoriteItems;
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).FirstOrDefault(u => u.TgUserId == tgId);
 
-                if (fav is null)
+                if (user is null)
                 {
-                    _logger.LogError("User Favorites with id {id} not found", tgId);
-                    throw new Exception($"User Favorites with id {tgId} not found");
+                    _logger.LogError("User with id {id} not found", tgId);
+                    throw new Exception($"User with id {tgId} not found");
                 }
 
-                var item = fav.FirstOrDefault(c => c.ProductId == ProductId);
+                var item = user.Favorite.FavoriteItems.FirstOrDefault(c => c.ProductId == ProductId);
                 if (item is null)
                 {
                     _logger.LogError("FavoriteItem with id {id} not found in User {id} Favorites", ProductId, tgId);
