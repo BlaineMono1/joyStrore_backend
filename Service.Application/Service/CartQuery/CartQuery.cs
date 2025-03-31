@@ -52,63 +52,64 @@ namespace Service.Application.Service.CartQuery
                     return new CartDto();
                 }
 
-                var userCartItems = user.Cart.CartItems;
+                var userCartItems = user.Cart.CartItems.ToList(); // Загружаем в память
 
-                var cart = await Task.WhenAll(userCartItems.Select(async item =>
+                var cart = new List<CartItemDto>();
+
+                foreach (var item in userCartItems)
                 {
                     var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
                     var jPrice = await _calculatePrice.CalcJprice(price);
-                    var result = new CartItemDto();
+                    var tmp = new CartItemDto();
 
                     switch (item.Product.Type)
                     {
                         case "Game":
                             var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
-                            result.image = edition.Image;
-                            result.Name = edition.EditionName;
-                            result.EditionName = edition.EditionType;
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = edition.Platform;
+                            tmp.image = edition.Image;
+                            tmp.Name = edition.EditionName;
+                            tmp.EditionName = edition.EditionType;
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
+                            tmp.Platform = edition.Platform;
                             break;
                         case "AddOn":
                             var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
-                            result.image = addOn.Image;
-                            result.Name = addOn.Name;
-                            result.EditionName = "";
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = addOn.Platform;
+                            tmp.image = addOn.Image;
+                            tmp.Name = addOn.Name;
+                            tmp.EditionName = "";
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
+                            tmp.Platform = addOn.Platform;
                             break;
                         case "Subscription":
                             var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
-                            result.image = sub.Image;
-                            result.Name = sub.Name;
-                            result.EditionName = "";
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
-                            result.Platform = sub.Platform;
+                            tmp.image = sub.Image;
+                            tmp.Name = sub.Name;
+                            tmp.EditionName = "";
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
+                            tmp.Platform = sub.Platform;
                             break;
                     }
 
-
-                    return result;
-                }));
+                    cart.Add(tmp);
+                }
 
                 var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
 
                 var result = new CartDto
                 {
-                    items = cart.ToList(),
+                    items = cart,
                     Email = settings?.EmailPsStore ?? "",
                     PayEmail = settings?.Email ?? "",
                     Password = settings?.PasswordPsStore ?? "",
@@ -138,11 +139,15 @@ namespace Service.Application.Service.CartQuery
                     throw new Exception($"Product with GUID {ProductId} not found");
                 }
 
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user is null)
                 {
                     _logger.LogError("User with id {id} not found", tgId);
                     throw new Exception($"User with tg id {tgId} not found");
+                }
+                if(user.Cart.CartItems.FirstOrDefault( c=> c.ProductId == product.Guid) != null)
+                {
+                    return;
                 }
                 var result = new CartItem()
                 {
