@@ -21,8 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CacheService\CacheService.csproj" />
     <ProjectReference Include="..\DataBaseToAccess\DataBaseToAccess.csproj" />
     <ProjectReference Include="..\Service.Application\Service.Application.csproj" />
+    <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
 </Project>

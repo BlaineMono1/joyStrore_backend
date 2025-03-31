@@ -100,7 +100,7 @@ namespace Services.ParseService
 
         public async Task CreateGameMarcup()
         {
-            var l = new List<int> { 0, 100, 1000, 3000, 5000 };
+            var l = new List<int> { 0, 100, 500, 1000, 1500, 2000, 4000, 6000, 10000 };
 
             foreach(var price in l)
             {

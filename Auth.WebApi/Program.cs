@@ -9,6 +9,12 @@ using Service.Application.Service.TransactionQuery;
 using Service.Application.Service.SectionQuery;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
 using Service.Application.Service.GetNewsList;
+using Service.Application.Service.MarkUpQuery;
+using Service.Application.Service.SubscriptionsQuery;
+using Service.Application.Iterfaces;
+using Services.CalculationService;
+using Services.GetRegionFromCookie;
+using CacheService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,15 +39,22 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         throw;
     }
 });
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductRepository<>));
+builder.Services.AddTransient(typeof(ISubscriptionRepository<>), typeof(SubscriptionRepository<>));
 
 builder.Services.AddScoped<TransactionQuery>();
 builder.Services.AddScoped<SectionQuery>();
 builder.Services.AddScoped<NewsQuery>();
+builder.Services.AddScoped<MarkUpQUery>();
+builder.Services.AddScoped<SubscriptionsQuerys>();
+builder.Services.AddScoped<ICalculationService, CalculatePrice>();
+builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
+builder.Services.AddScoped<ICacheService, ExchangeRate>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

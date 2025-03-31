@@ -15,7 +15,7 @@ namespace Business.Data.Models
         public decimal Percent {  get; set; }
 
         /// <summary>
-        /// регион UA | TR
+        /// регион UAH | TRY
         /// </summary>
         public string Region { get; set; }
         #endregion
