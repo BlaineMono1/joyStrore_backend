@@ -54,58 +54,58 @@ namespace Service.Application.Service.FavoriteQuery
                     return new List<FavoriteDto>();
                 }
 
-                var favoriteItems = user.Favorite.FavoriteItems?.Where(item => !item.IsDelete) ?? Enumerable.Empty<FavoriteItem>();
+                var favoriteItems = user.Favorite.FavoriteItems?.Where(item => !item.IsDelete).ToList() ?? Enumerable.Empty<FavoriteItem>();
 
-                var result = await Task.WhenAll(favoriteItems.Select(async item =>
+                var result = new List<FavoriteDto>();
+                foreach (var item in favoriteItems)
                 {
                     var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
                     var jPrice = await _calculatePrice.CalcJprice(price);
-                    var result = new FavoriteDto();
+                    var tmp = new FavoriteDto();
                     switch (item.Product.Type)
                     {
                         case "Game":
                             var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
-                            result.image = edition.Image;
-                            result.Name = edition.EditionName;
-                            result.EditionName = edition.EditionType;
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
+                            tmp.image = edition.Image;
+                            tmp.Name = edition.EditionName;
+                            tmp.EditionName = edition.EditionType;
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
                             break;
                         case "AddOn":
                             var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
-                            result.image = addOn.Image;
-                            result.Name = addOn.Name;
-                            result.EditionName = "";
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
+                            tmp.image = addOn.Image;
+                            tmp.Name = addOn.Name;
+                            tmp.EditionName = "";
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
                             break;
                         case "Subscription":
                             var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
-                            result.image = sub.Image;
-                            result.Name = sub.Name;
-                            result.EditionName = "";
-                            result.Id = item.Guid;
-                            result.ProductId = item.ProductId;
-                            result.Discount = item.Product.DiscountPercent;
-                            result.Price = price;
-                            result.JPrice = jPrice;
+                            tmp.image = sub.Image;
+                            tmp.Name = sub.Name;
+                            tmp.EditionName = "";
+                            tmp.Id = item.Guid;
+                            tmp.ProductId = item.ProductId;
+                            tmp.Discount = item.Product.DiscountPercent;
+                            tmp.Price = price;
+                            tmp.JPrice = jPrice;
                             break;
                     }
 
                     var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.UserId == user.Guid);
-                    result.InCart = (cart.CartItems is null) ? false : cart.CartItems.Any(c => c.ProductId == item.ProductId);
-
-                    return result;
-                }));
+                    tmp.InCart = (cart.CartItems is null) ? false : cart.CartItems.Any(c => c.ProductId == item.ProductId);
+                    result.Add(tmp);
+                }
 
                 _logger.LogInformation("Successfully fetched user favorite items for ID: {TgId}", tgId);
-                return result.ToList();
+                return result;
             }
             catch (Exception ex)
             {
@@ -128,12 +128,15 @@ namespace Service.Application.Service.FavoriteQuery
                     throw new Exception($"Product with GUID {productId} not found");
                 }
 
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).FirstOrDefault(u => u.TgUserId == tgId);
+                var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems).FirstOrDefault(u => u.TgUserId == tgId);
                 if (user is null)
                 {
                     _logger.LogError("User with id {id} not found", tgId);
                     throw new Exception($"User with tg id {tgId} not found");
                 }
+
+                if (user.Favorite.FavoriteItems.FirstOrDefault(f => f.ProductId == product.Guid) != null) return;
+
                 var result = new FavoriteItem()
                 {
                     ProductId = product.Guid,
