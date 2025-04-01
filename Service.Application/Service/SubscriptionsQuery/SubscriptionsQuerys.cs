@@ -1,6 +1,5 @@
 ﻿using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
@@ -79,6 +78,83 @@ namespace Service.Application.Service.SubscriptionsQuery
                 throw;
             }
         }
-               
+
+
+        public async Task<List<PriceSubDto>> GetPriceSubList()
+        {
+            var result = new List<PriceSubDto>();
+
+            var settings = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
+
+            result.AddRange(settings.Select(item => new PriceSubDto
+            {
+                Id = item.Guid,
+                PriceUAH = item.Product.PriceUa,
+                PriceTRY = item.Product.PriceTr,
+                SectionName = item.SectionName,
+                Duration = item.Duration
+            }
+            ));
+
+            return result;
+        }
+
+        public async Task UpdateSubPrice(Guid SubId, decimal Price, string Region)
+        {
+            if (Price < 0) throw new Exception("Price can't be lower then 0");
+
+            var product = await _productRepository.GetEntityType(SubId);
+
+            if (product == null) throw new Exception($"Product for subscription with GUID {SubId} not found");
+
+            switch (Region)
+            {
+                case "UAH":
+                    product.PriceUa = Price;
+                    break;
+                case "TRY":
+                    product.PriceTr = Price;
+                    break;
+
+            }
+
+            await _productRepository.Update(product);
+        }
+
+        public async Task<List<DiscountSubDto>> GetDiscountSubList()
+        {
+            var result = new List<DiscountSubDto>();
+
+            var settings = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
+
+            result.AddRange(settings.Select(item => new DiscountSubDto
+            {
+                Id = item.Guid,
+                Percent = item.Product.DiscountPercent,
+                SectionName = item.SectionName,
+                Duration = item.Duration
+            }
+            ));
+
+            return result;
+        }
+
+        public async Task UpdateSubDiscount(Guid SubId, string Percent)
+        {
+            if (decimal.Parse(Percent) < 0) throw new Exception("Price can't be lower then 0");
+            if (decimal.Parse(Percent) > 100) throw new Exception("Price can't be greater then 100");
+
+            var product = await _productRepository.GetEntityType(SubId);
+
+            if (product == null) throw new Exception($"Product for subscription with GUID {SubId} not found");
+
+            product.DiscountPercent = Percent;
+
+            if (decimal.Parse(Percent) > 0) product.DiscountDate = DateTime.MaxValue;
+            else if (decimal.Parse(Percent) == 0) product.DiscountDate = null;
+
+            await _productRepository.Update(product);
+        }
+
     }
 }
