@@ -44,14 +44,14 @@ namespace Gateway.WebApi.Controllers
         /// Фильтрация продуктов 
         /// </summary>
         [HttpPost("filter")]
-        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, string? filterName = null,  string? platform = null, bool byDesc = false, bool byDiscount = false, List<string>? geners = null, int Page = 0)
+        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, string? filterName = null,  string? platform = null, bool byDesc = false, bool byDiscount = false, List<string>? geners = null, int Page = 0, decimal MinPrice = 0, decimal MaxPrice = 1e18M)
         {
             try
             {
                 _logger.LogInformation("Filtering games");
-                var games = await _productRepository.FilterProducts(name, filterName, platform, byDesc, byDiscount, geners);
+                var games = await _productQuery.FilterProducts(name, filterName, platform, byDesc, byDiscount, geners, MinPrice, MaxPrice);
 
-                var result = await _productQuery.GetProductList(new PaginatedList<Product>(games, Page).Entities);
+                var result = await _productQuery.MapProducts(new PaginatedList<Product>(games, Page).Entities);
                 return Ok(result);
             }
             catch (Exception ex)
