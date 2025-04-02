@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.ProductQuery.Dto;
-using System.Collections.Generic;
 
 namespace Service.Application.Service.ProductQuery
 {
@@ -19,7 +18,9 @@ namespace Service.Application.Service.ProductQuery
         private readonly IUserRepository<User> _userRepository;
         private readonly IRepository<Game> _gameRepository;
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRedisRepository _redis;
+        private readonly ICacheService _cacheService;
+
         private readonly IDataFromCookie _regionFromCookie;
         private readonly ICalculationService _calculatePrice;
         private readonly ILogger<ProductQuery> _logger;
@@ -33,7 +34,9 @@ namespace Service.Application.Service.ProductQuery
             IDataFromCookie regionFromCookie,
             ICalculationService calculatePrice,
             ILogger<ProductQuery> logger,
-            IRepository<Game> gameRepository)
+            IRepository<Game> gameRepository,
+            IRedisRepository redis,
+            ICacheService cacheService)
         {
             _productRepository = productRepository;
             _editonRepository = editonRepository;
@@ -41,11 +44,12 @@ namespace Service.Application.Service.ProductQuery
             _subscriptionRepository = subscriptionRepository;
             _userRepository = userRepository;
 
-            _httpContextAccessor = httpContextAccessor;
             _regionFromCookie = regionFromCookie;
             _calculatePrice = calculatePrice;
             _logger = logger;
             _gameRepository = gameRepository;
+            _redis = redis;
+            _cacheService = cacheService;
         }
         public async Task<ProductDto> GetProduct(Guid ProductId)
         {
@@ -175,30 +179,87 @@ namespace Service.Application.Service.ProductQuery
         }
 
 
-        public async Task<List<ProductListDto>> GetProductList(IEnumerable<Product> source)
+        public async Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? FilterGeners, decimal MinPrice, decimal MaxPrice)
         {
-            var result = new List<ProductListDto>();
-            try
-            {
-                foreach (var item in source)
-                {
-                    var t = new ProductListDto();
-                    t.ProductId = item.Guid;
-                    t.ImageFilepath = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Image : (await _addOnRepository.GetById(item.TypeId)).Image;
-                    t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).EditionName: (await _addOnRepository.GetById(item.TypeId)).Name;
-                    t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type);
-                    t.Jprice = await _calculatePrice.CalcJprice(t.Price);
-                    t.Discount = item.DiscountPercent;
-                    result.Add(t);
+            var products = (await _productRepository.GetListQuery()).Where(p => p.Type == "Game");
 
-                }
-                return result;
-            }
-            catch (Exception ex)
+            var filteredByName = products;
+            if (!string.IsNullOrEmpty(name))
             {
-                _logger.LogError(ex.Message);
-                throw;
+                filteredByName = products.Where(p => p.Edition.EditionName.ToLower().Contains(name.ToLower()));
+
             }
+
+            var filteredByGener = filteredByName;
+
+            if (FilterGeners != null && FilterGeners.Any())
+            {
+                filteredByGener = filteredByName.Where(p => p.Edition.EditionGeners.Any(g => FilterGeners.Contains(g.Geners.Name)));
+
+            }
+
+            var games = filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game);
+
+            var set = games.Select(p => p.Edition.Game.Guid).ToHashSet();
+
+            var result = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).Include(p => p.AddOn).ThenInclude(a => a.Game).Where(p => (p.Type == "Game" && set.Contains(p.Edition.Game.Guid)) || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid)));
+
+            if (!string.IsNullOrEmpty(filterName))
+            {
+                switch (filterName)
+                {
+                    case "Date":
+                        result = byDesc ? result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Release : DateTime.MaxValue) : result.OrderBy(p => p.Type == "Game" ? p.Edition.Release : DateTime.MinValue);
+                        break;
+                    case "Price":
+                        result = byDesc ? result.OrderByDescending(p => p.PriceUa) : result.OrderBy(p => p.PriceUa);
+                        break;
+                    default:
+                        result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
+                        break;
+                }
+
+            }
+
+            if (!string.IsNullOrEmpty(platform)) result = result.Where(p => p.Type == "Game" ? p.Edition.Platform.Contains(platform) : p.AddOn.Platform.Contains(platform));
+
+            if (byDiscount)
+            {
+                result = result.OrderByDescending(p => p.DiscountPercent ?? "0");
+            }
+
+            var region = _regionFromCookie.GetUserRegion();
+
+            string? cachedData = await _redis.GetAsync(region);
+            if (cachedData is null)
+            {
+                await _cacheService.UpdateExchangeRates();
+                cachedData = await _redis.GetAsync(region);
+            }
+
+            decimal coff = decimal.Parse(cachedData);
+
+            result = result.Where(p => region == "UAH" ? p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
+
+            return result;
+        }
+
+        public async Task<List<ProductListDto>> MapProducts(IEnumerable<Product> source)
+        {
+           var result = new List<ProductListDto>();
+            foreach(var item in source)
+            {
+                var t = new ProductListDto();
+                t.ProductId = item.Guid;
+                t.ImageFilepath = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Image : (await _addOnRepository.GetById(item.TypeId)).Image;
+                t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).EditionName : (await _addOnRepository.GetById(item.TypeId)).Name;
+                t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type);
+                t.Jprice = await _calculatePrice.CalcJprice(t.Price);
+                t.Discount = item.DiscountPercent;
+                result.Add(t);
+            }
+            
+            return result;
 
         }
     }

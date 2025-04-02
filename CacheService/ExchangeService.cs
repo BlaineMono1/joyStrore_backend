@@ -13,13 +13,15 @@ namespace CacheService
         private readonly IRedisRepository _redis;
         private readonly ILogger<ExchangeRate> _logger;
         private readonly IRepository<LoyaltyCashback> _cashbackRepository;
+        private readonly IRepository<SettingPrice> _priceRepository;
         private static readonly HttpClient httpClient = new();
 
-        public ExchangeRate(IRedisRepository redis, ILogger<ExchangeRate> logger, IRepository<LoyaltyCashback> cashbackRepository)
+        public ExchangeRate(IRedisRepository redis, ILogger<ExchangeRate> logger, IRepository<LoyaltyCashback> cashbackRepository, IRepository<SettingPrice> priceRepository)
         {
             _logger = logger;
             _redis = redis;
             _cashbackRepository = cashbackRepository;
+            _priceRepository = priceRepository;
         }
 
               
@@ -59,8 +61,23 @@ namespace CacheService
             await _redis.SetAsync(cacheKey, jsonData, null);
 
             _logger.LogInformation($"Закэширована таблица Loyality cashback с процентом кэшбэка {entity.Percent}");
+
+            
         }
         
+        public async Task UpdateMarkUp()
+        {
+            var percents = await _priceRepository.GetAllList();
+
+            foreach (var p in percents)
+            {
+                var jsonData = JsonSerializer.Serialize(p.Percent);
+                var key = $"MarkUpGame-{p.Price}";
+                await _redis.SetAsync(key, jsonData, null);
+                _logger.LogInformation($"Закэширована запись Setting price с ценой {p.Price} и наценкой {p.Percent}");
+            }
+        }
+
         private async Task<decimal> FetchExchangeRate(string url)
         {
 

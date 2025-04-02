@@ -5,6 +5,7 @@ using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
+using Services.CalculationService.Dto;
 
 
 namespace Services.CalculationService
@@ -17,7 +18,7 @@ namespace Services.CalculationService
         private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
         private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        
         private readonly IDataFromCookie _regionFromCookie;
 
         public CalculatePrice(
@@ -35,7 +36,7 @@ namespace Services.CalculationService
             _loyaltySettingRepository = loyaltySettingRepository;
             _redis = redis;
             _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+           
             _regionFromCookie = regionFromCookie;
             _cacheService = cacheService;
         }
@@ -124,10 +125,27 @@ namespace Services.CalculationService
 
                 decimal priceWithMarkup = 0;
                 // Fetch markup data from the repository
-                var markupGame = (await _settingPriceRepository.GetListQuery()).OrderByDescending(p => p.Price).FirstOrDefault(p => rubPrice >= p.Price);
-                var markupSub = (await _priceSettingSubscription.GetListQuery()).FirstOrDefault(s => s.Region == region);
-
-                if (markupGame == null || markupSub == null)
+                //var markupGame = (await _settingPriceRepository.GetListQuery()).OrderByDescending(p => p.Price).FirstOrDefault(p => rubPrice >= p.Price);
+                //var markupSub = (await _priceSettingSubscription.GetListQuery()).FirstOrDefault(s => s.Region == region);
+                var prices = new PricesDto();
+                decimal p = 0M;
+                foreach (var t in prices.l) 
+                {
+                    if(t > price)
+                    {
+                        break;
+                    }
+                    p = t;
+                }
+                string? cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
+                if(cachedData is null)
+                {
+                    await _cacheService.UpdateMarkUp();
+                    cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
+                }
+                decimal? markupGame = null;
+                markupGame = decimal.Parse(cachedData);
+                if (markupGame == null) //|| markupSub == null)
                 {
                     _logger.LogError("Markup data not found for the given price: {Price}.", rubPrice);
                     throw new Exception("Markup data not found.");
@@ -136,14 +154,14 @@ namespace Services.CalculationService
                 switch (type)
                 {
                     case "Game":
-                        priceWithMarkup = rubPrice * markupGame.Percent + rubPrice;
+                        priceWithMarkup = rubPrice * markupGame.Value + rubPrice;
                         break;
                     case "AddOn":
-                        priceWithMarkup = rubPrice * markupGame.Percent + rubPrice;
+                        priceWithMarkup = rubPrice * markupGame.Value + rubPrice;
                         break;
 
                     case "Subscription":
-                        priceWithMarkup = rubPrice * markupSub.Percent + rubPrice;
+                        priceWithMarkup = 0;//rubPrice * markupSub.Percent + rubPrice;
                         break;
 
                     default:
