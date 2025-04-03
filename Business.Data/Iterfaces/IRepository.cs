@@ -10,7 +10,5 @@
         Task HardDelete(Guid id);
         Task<IQueryable<T>> GetListQuery();
         Task SaveDb();
-
-
     }
 }

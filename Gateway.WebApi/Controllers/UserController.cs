@@ -140,14 +140,13 @@ namespace Gateway.WebApi.Controllers
                     Expires = DateTime.UtcNow.AddDays(1)
                 };
                 _httpContextAccessor.HttpContext?.Response.Cookies.Append("tgId", tgId, options);
-                _logger.LogError(_httpContextAccessor.HttpContext?.Request.Cookies["tgId"]);
                 await _usersQuery.CreateUser(tgId);
                 return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.Message);
             }
         }
     }
