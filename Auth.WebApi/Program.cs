@@ -15,6 +15,7 @@ using Service.Application.Iterfaces;
 using Services.CalculationService;
 using Services.GetRegionFromCookie;
 using CacheService;
+using Service.Application.Service.UserQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,12 +47,15 @@ builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient(typeof(IProductRepository<>), typeof(ProductRepository<>));
 builder.Services.AddTransient(typeof(ISubscriptionRepository<>), typeof(SubscriptionRepository<>));
+builder.Services.AddTransient(typeof(IUserRepository<>), typeof(UserRepository<>));
 
 builder.Services.AddScoped<TransactionQuery>();
 builder.Services.AddScoped<SectionQuery>();
 builder.Services.AddScoped<NewsQuery>();
 builder.Services.AddScoped<MarkUpQUery>();
 builder.Services.AddScoped<SubscriptionsQuerys>();
+builder.Services.AddScoped<UsersQuery>();
+
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();

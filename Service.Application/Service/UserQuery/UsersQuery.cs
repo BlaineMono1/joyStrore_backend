@@ -263,12 +263,51 @@ namespace Service.Application.Service.UserQuery
                     await _userRepository.Add(newUser);
                     
                 }
+                else if(user.IsDelete)
+                {
+                    throw new Exception("User is banned!");
+                }
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex.Message);
                 throw;
             }
+        }
+
+
+        public async Task AddToBlackList(string tgId)
+        {
+            var user = await _userRepository.GetUserByTgId(tgId);
+
+            if (user == null) throw new Exception($"User with TG ID {tgId} not found");
+
+            user.IsDelete = true;
+
+            await _userRepository.Update(user);
+        }
+
+        public async Task DeleteFromBlackList(string tgId)
+        {
+            var user = await _userRepository.GetUserByTgId(tgId);
+
+            if (user == null) throw new Exception($"User with TG ID {tgId} not found");
+
+            user.IsDelete = false;
+
+            await _userRepository.Update(user);
+        }
+
+        public async Task<List<BlackListDto>> GetBannedUsers()
+        {
+            var users = await _userRepository.GetDeletedQuery();
+
+            var result = users.Select(item => new BlackListDto
+            {
+                TgId = item.TgUserId,
+            }).ToList();
+
+            return result;
         }
     }
 }
