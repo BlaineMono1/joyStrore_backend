@@ -16,6 +16,7 @@ using Services.CalculationService;
 using Services.GetRegionFromCookie;
 using CacheService;
 using Service.Application.Service.UserQuery;
+using Service.Application.Service.AdminsQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,7 @@ builder.Services.AddScoped<NewsQuery>();
 builder.Services.AddScoped<MarkUpQUery>();
 builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<UsersQuery>();
+builder.Services.AddScoped<AdminsQuery>();
 
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();

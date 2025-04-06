@@ -9,19 +9,18 @@ namespace Business.Data.Models
     public class Admin:BaseEntity
     {
         #region поля
-        public string Email { get; set; }
+        public string Login { get; set; }
         public string Password { get; set; }
 
         #endregion
 
         #region связи 
-
         /// <summary>
-        /// Пользователь
+        /// Права 
         /// </summary>
-        public Guid UserId { get; set; }
-        [ForeignKey("UserId")]
-        public User User { get; set; }
+        public Guid RoleId { get; set; }
+        [ForeignKey("RoleId")]
+        public Role Role { get; set; }
         #endregion
 
     }
