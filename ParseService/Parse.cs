@@ -175,19 +175,13 @@ namespace Services.ParseService
                 {
                     User = user
                 };
-                var role = new Role()
-                {
-                    Name = "User",
-                    Users = new List<User>()
-                };
-                role.Users.Add(user);
+              
                 user.Cart = cart;
                 user.CartId = cart.Guid;
                 user.Favorite = fav;
                 user.FavoriteId = fav.Guid;
                 user.LoyaltyCurrency = l;
                 user.ProductTransactionHistory = p;
-                user.Role = role;
                 await _userRepo.Add(user);
             }
             catch (Exception ex) 

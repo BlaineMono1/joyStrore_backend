@@ -62,7 +62,7 @@ namespace Service.Application.Service.AdminsQuery
 
             if (admin is null) throw new Exception($"Admin with GUID {AdminId} not found");
 
-            var role = (await _roleRepository.GetById(admin.RoleId);
+            var role = await _roleRepository.GetById(admin.RoleId);
             
             return (role is null ? "" : role.Name);
         }
