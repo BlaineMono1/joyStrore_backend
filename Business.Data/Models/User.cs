@@ -18,13 +18,7 @@ namespace Business.Data.Models
         #endregion
 
         #region связи
-        /// <summary>
-        /// Права 
-        /// </summary>
-        public Guid RoleId { get; set; }
-        [ForeignKey("RoleId")]
-        public Role Role { get; set; }
-
+       
         /// <summary>
         /// Настройки пользователя
         /// </summary>

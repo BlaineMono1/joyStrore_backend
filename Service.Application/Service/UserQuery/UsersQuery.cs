@@ -248,18 +248,12 @@ namespace Service.Application.Service.UserQuery
                     };
                     var loyality = new LoyaltyCurrency{ User = newUser };
                     var history = new ProductTransactionHistory{ User = newUser };
-
-                    var role = new Role()
-                    {
-                        Name = "User",
-                        Users = new List<User> { newUser }
-                    };
+                   
                     newUser.Settings = new List<Setting>{ settingTRL, settingUah};
                     newUser.Cart = cart;
                     newUser.Favorite = fav;
                     newUser.LoyaltyCurrency = loyality;
                     newUser.ProductTransactionHistory = history;
-                    newUser.Role = role;
                     await _userRepository.Add(newUser);
                     
                 }
