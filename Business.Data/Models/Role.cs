@@ -15,7 +15,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Пользователи 
         /// </summary>
-        public List<User> Users { get; set; }
+        public List<Admin> Admins { get; set; }
         #endregion
     }
 }
