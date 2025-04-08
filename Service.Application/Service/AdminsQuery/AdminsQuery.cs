@@ -2,6 +2,7 @@
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.AdminsQuery.Dto;
+using Microsoft.AspNetCore.Identity;
 
 namespace Service.Application.Service.AdminsQuery
 {
@@ -11,6 +12,7 @@ namespace Service.Application.Service.AdminsQuery
         private readonly IRepository<Role> _roleRepository;
 
         private readonly ILogger<AdminsQuery> _logger;
+        private readonly PasswordHasher<Admin> _passwordHasher = new();
 
         public AdminsQuery(IRepository<Admin> adminRepository, IRepository<Role> roleRepository, ILogger<AdminsQuery> logger)
         {
@@ -48,10 +50,12 @@ namespace Service.Application.Service.AdminsQuery
         public async Task CreateAdmin(string Login, string Password, Guid RoleID)
         {
             var role = await _roleRepository.GetById(RoleID);
-
+                       
             if (role is null) throw new Exception($"Role with GUID {RoleID} not found");
 
             var admin = new Admin { Login = Login, Password = Password, RoleId = RoleID };
+
+            admin.Password = Generate(admin);
 
             await _adminRepository.Add(admin);
         }
@@ -81,6 +85,18 @@ namespace Service.Application.Service.AdminsQuery
         public async Task DeleteAdmin(Guid AdminId)
         {
             await _adminRepository.HardDelete(AdminId);
+        }
+
+        public string Generate(Admin admin)
+        {
+            return _passwordHasher.HashPassword(admin, admin.Password);
+        }
+
+        public bool Verify(Admin admin, string providedPassword)
+        {
+            var result = _passwordHasher.VerifyHashedPassword(admin, admin.Password, providedPassword);
+
+            return result == PasswordVerificationResult.Success;
         }
 
     }

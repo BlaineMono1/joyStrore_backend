@@ -107,7 +107,6 @@ namespace Auth.WebApi.Controllers
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
-        }
-
+        }       
     }
 }
