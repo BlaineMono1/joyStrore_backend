@@ -3,6 +3,7 @@ using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.AdminsQuery.Dto;
 using Microsoft.AspNetCore.Identity;
+using Service.Application.Iterfaces;
 
 namespace Service.Application.Service.AdminsQuery
 {
@@ -10,15 +11,15 @@ namespace Service.Application.Service.AdminsQuery
     {
         private readonly IRepository<Admin> _adminRepository;
         private readonly IRepository<Role> _roleRepository;
-
+        private readonly IAuthService _authService;
         private readonly ILogger<AdminsQuery> _logger;
-        private readonly PasswordHasher<Admin> _passwordHasher = new();
 
-        public AdminsQuery(IRepository<Admin> adminRepository, IRepository<Role> roleRepository, ILogger<AdminsQuery> logger)
+        public AdminsQuery(IRepository<Admin> adminRepository, IRepository<Role> roleRepository, ILogger<AdminsQuery> logger, IAuthService authService)
         {
             _adminRepository = adminRepository;
             _roleRepository = roleRepository;
             _logger = logger;
+            _authService = authService;
         }
 
         public async Task<List<AdminListDto>> AdminsList()
@@ -55,7 +56,7 @@ namespace Service.Application.Service.AdminsQuery
 
             var admin = new Admin { Login = Login, Password = Password, RoleId = RoleID };
 
-            admin.Password = Generate(admin);
+            admin.Password = _authService.Generate(admin);
 
             await _adminRepository.Add(admin);
         }
@@ -85,19 +86,6 @@ namespace Service.Application.Service.AdminsQuery
         public async Task DeleteAdmin(Guid AdminId)
         {
             await _adminRepository.HardDelete(AdminId);
-        }
-
-        public string Generate(Admin admin)
-        {
-            return _passwordHasher.HashPassword(admin, admin.Password);
-        }
-
-        public bool Verify(Admin admin, string providedPassword)
-        {
-            var result = _passwordHasher.VerifyHashedPassword(admin, admin.Password, providedPassword);
-
-            return result == PasswordVerificationResult.Success;
-        }
-
+        }      
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.MarkUpQuery;
 using Service.Application.Service.MarkUpQuery.Dto;
@@ -19,6 +20,8 @@ namespace Auth.WebApi.Controllers
             _query = query;
             _logger = logger;
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetMarkUpsProduct")]
         public async Task<ActionResult<List<PercentDto>>> GetMarkUpsProduct()
         {
@@ -34,6 +37,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("UpdateMarkUpProductPercent")]
         public async Task<ActionResult> UpdateMarkUp(Guid MarkUpId, decimal Percent)
         {
@@ -49,6 +53,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetMarkUpsSub")]
         public async Task<ActionResult<List<PercentSubDto>>> GetMarkUpsSub()
         {
@@ -64,6 +69,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("UpdateMarkUpSubPercent")]
         public async Task<ActionResult> UpdateMarkUpSub(Guid MarkUpId, decimal Percent)
         {

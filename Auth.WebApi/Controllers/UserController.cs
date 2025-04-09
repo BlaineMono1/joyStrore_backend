@@ -1,4 +1,5 @@
 ﻿using Auth.WebApi.Attributes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.UserQuery;
@@ -12,14 +13,13 @@ namespace Auth.WebApi.Controllers
     {
         private readonly UsersQuery _usersQuery;
         private readonly ILogger<UsersQuery> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserController(UsersQuery usersQuery, ILogger<UsersQuery> logger, IHttpContextAccessor httpContextAccessor)
+        public UserController(UsersQuery usersQuery, ILogger<UsersQuery> logger)
         {
             _usersQuery = usersQuery;
             _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("GetBannedUsers")]
         public async Task<ActionResult<List<BlackListDto>>> GetBannedUser()
         {
@@ -36,6 +36,7 @@ namespace Auth.WebApi.Controllers
 
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("AddToBlackList")]
         public async Task<ActionResult> AddToBlackList(string tgId)
         {
@@ -52,6 +53,7 @@ namespace Auth.WebApi.Controllers
 
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("DeleteFromBlackList")]
         public async Task<ActionResult> DeleteFromBlackList(string tgId)
         {

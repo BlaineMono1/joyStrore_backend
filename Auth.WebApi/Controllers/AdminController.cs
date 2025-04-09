@@ -1,5 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.AdminsQuery;
 using Service.Application.Service.AdminsQuery.Dto;
@@ -18,7 +19,7 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
             _query = query;
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetAdminsList")]
         public async Task<ActionResult<List<AdminListDto>>> GetAdminsList()
         {
@@ -34,6 +35,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetRolesList")]
         public async Task<ActionResult<List<RolesList>>> GetRolesList()
         {
@@ -49,6 +51,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("CreateAdmin")]
         public async Task<ActionResult> CreateAdmin(string Login, string Password, Guid RoleID)
         {
@@ -64,6 +67,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("ShowAdminRole")]
         public async Task<ActionResult<string>> ShowAdminRole(Guid AdminId)
         {
@@ -79,6 +83,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("UpdateAdmin")]
         public async Task<ActionResult<string>> UpdateAdmin(Guid AdminId, Guid RoleId)
         {
@@ -94,6 +99,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("DeleteAdmin")]
         public async Task<ActionResult<string>> DeleteAdmin(Guid AdminId)
         {
