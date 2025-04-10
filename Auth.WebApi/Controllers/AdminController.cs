@@ -9,6 +9,7 @@ namespace Auth.WebApi.Controllers
 {
     [ApiController]
     [SetRoute("Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController :ControllerBase
     {
         private readonly AdminsQuery _query;

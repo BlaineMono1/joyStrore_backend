@@ -45,7 +45,7 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JWT_ISSUER"],
-        ValidAudience = builder.Configuration["AdminPanel"],
+        ValidAudience = builder.Configuration["JWT_AUDIENCE"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
         RoleClaimType = ClaimTypes.Role
     };
@@ -104,8 +104,34 @@ builder.Services.AddSwaggerGen(config =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     config.IncludeXmlComments(xmlPath);
-}
-);
+
+    
+    config.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Введите JWT токен в формате: Bearer token"
+    });
+
+    
+    config.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 //To Do: Настроить Cors 
 builder.Services.AddCors(options =>
 options.AddPolicy("AllowAll", policy =>
@@ -130,6 +156,9 @@ app.UseRouting();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
