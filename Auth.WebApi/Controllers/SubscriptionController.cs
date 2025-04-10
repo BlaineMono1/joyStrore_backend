@@ -1,5 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.SubscriptionsQuery;
 using Service.Application.Service.SubscriptionsQuery.Dto;
@@ -22,6 +23,7 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetPriceSubList")]
         public async Task<ActionResult<List<PriceSubDto>>> GetPricesSubList()
         {
@@ -37,6 +39,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("UpdatePriceSub")]
         public async Task<ActionResult> UpdatePriceSub(Guid SubId, decimal Price, string Region)
         {
@@ -52,6 +55,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetDiscountSubList")]
         public async Task<ActionResult<List<DiscountSubDto>>> GetDiscountsSubList()
         {
@@ -67,6 +71,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("UpdateDiscountSub")]
         public async Task<ActionResult> UpdateDiscountsSub(Guid SubId, string Percent)
         {

@@ -2,6 +2,8 @@
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.AdminsQuery.Dto;
+using Microsoft.AspNetCore.Identity;
+using Service.Application.Iterfaces;
 
 namespace Service.Application.Service.AdminsQuery
 {
@@ -9,14 +11,15 @@ namespace Service.Application.Service.AdminsQuery
     {
         private readonly IRepository<Admin> _adminRepository;
         private readonly IRepository<Role> _roleRepository;
-
+        private readonly IAuthService _authService;
         private readonly ILogger<AdminsQuery> _logger;
 
-        public AdminsQuery(IRepository<Admin> adminRepository, IRepository<Role> roleRepository, ILogger<AdminsQuery> logger)
+        public AdminsQuery(IRepository<Admin> adminRepository, IRepository<Role> roleRepository, ILogger<AdminsQuery> logger, IAuthService authService)
         {
             _adminRepository = adminRepository;
             _roleRepository = roleRepository;
             _logger = logger;
+            _authService = authService;
         }
 
         public async Task<List<AdminListDto>> AdminsList()
@@ -48,10 +51,12 @@ namespace Service.Application.Service.AdminsQuery
         public async Task CreateAdmin(string Login, string Password, Guid RoleID)
         {
             var role = await _roleRepository.GetById(RoleID);
-
+                       
             if (role is null) throw new Exception($"Role with GUID {RoleID} not found");
 
             var admin = new Admin { Login = Login, Password = Password, RoleId = RoleID };
+
+            admin.Password = _authService.Generate(admin);
 
             await _adminRepository.Add(admin);
         }
@@ -81,7 +86,6 @@ namespace Service.Application.Service.AdminsQuery
         public async Task DeleteAdmin(Guid AdminId)
         {
             await _adminRepository.HardDelete(AdminId);
-        }
-
+        }      
     }
 }
