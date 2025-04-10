@@ -113,7 +113,7 @@ builder.Services.AddSwaggerGen(config =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "¬ведите JWT токен в формате: Bearer token"
+        Description = "Log in format: Bearer token"
     });
 
     
