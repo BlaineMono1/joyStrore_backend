@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using Newtonsoft.Json.Linq;
 
 namespace Service.Application.Service.AutahQuery
 {
@@ -33,9 +34,27 @@ namespace Service.Application.Service.AutahQuery
             _key = _config["JWT_KEY"];
         }
 
-        public string LogInByToken(string? Token)
+        public async Task<string> LogInByToken(string? Token)
         {
-            if (!string.IsNullOrEmpty(Token) && ValidateToken(Token)) return Token;
+            if (!string.IsNullOrEmpty(Token) && ValidateToken(Token))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var token = handler.ReadJwtToken(Token);
+
+
+                var role = token?.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+                var adminId = token?.Claims?.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+                _logger.LogInformation(role);
+                _logger.LogInformation(adminId);
+
+                var admin = (await _adminRepository.GetListQuery()).Include(a => a.Role).FirstOrDefault(a => a.Guid.ToString() == adminId);
+                if (admin == null)
+                {
+                    _logger.LogError($"Token {Token} with adminId {adminId} is bad!!!");
+                    return String.Empty;
+                }
+                return (admin.Role.Name == role ? Token : String.Empty);
+            }
             
             return String.Empty;
         }
