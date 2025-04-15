@@ -15,5 +15,6 @@ RUN dotnet publish "Auth.WebApi.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
+COPY Auth.WebApi/.env .
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Auth.WebApi.dll"]
