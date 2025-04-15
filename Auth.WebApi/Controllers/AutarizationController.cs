@@ -33,7 +33,7 @@ namespace Auth.WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return BadRequest("Invalid login or password");
+                return StatusCode(500, "Invalid login or password");
             }
         }
 
@@ -44,14 +44,14 @@ namespace Auth.WebApi.Controllers
             try
             {
                 var result = _query.LogInByToken(Token);
-                if(string.IsNullOrEmpty(result)) return BadRequest("Token null or expired");
+                if(string.IsNullOrEmpty(result)) return StatusCode(500, "Token null or expired");
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return BadRequest("Token null or expired");
+                return StatusCode(500, "Token null or expired");
             }
         }
     }
