@@ -1,4 +1,5 @@
 ﻿using Auth.WebApi.Attributes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.TransactionQuery;
 
@@ -17,6 +18,7 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("plus-joy-balance")]
 
         public async Task<ActionResult> UpdateUserJoyBalanceInc(string tgId, decimal amount)
@@ -33,6 +35,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("minus-joy-balance")]
 
         public async Task<ActionResult> UpdateUserJoyBalanceDec(string tgId, decimal amount)
@@ -49,6 +52,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("plus-joy-plus-balance")]
 
         public async Task<ActionResult> UpdateUserJoyPlusBalanceInc(string tgId, decimal amount)
@@ -65,6 +69,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("minus-joy-plus-balance")]
 
         public async Task<ActionResult> UpdateUserJoyPlusBalanceDec(string tgId, decimal amount)

@@ -17,10 +17,40 @@ using Services.GetRegionFromCookie;
 using CacheService;
 using Service.Application.Service.UserQuery;
 using Service.Application.Service.AdminsQuery;
+using DotNetEnv;
+using Service.Application.Service.AutahQuery;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+Env.Load();  // Это для работы с .env
+builder.Configuration.AddEnvironmentVariables(); // Подхватывает из ENV, включая из .env
+
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var key = Encoding.UTF8.GetBytes(builder.Configuration["JWT_KEY"]);
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JWT_ISSUER"],
+        ValidAudience = builder.Configuration["JWT_AUDIENCE"],
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        RoleClaimType = ClaimTypes.Role
+    };
+});
+
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
@@ -57,10 +87,12 @@ builder.Services.AddScoped<MarkUpQUery>();
 builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<UsersQuery>();
 builder.Services.AddScoped<AdminsQuery>();
+builder.Services.AddScoped<AutahQuery>();
 
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();
+builder.Services.AddScoped<IAuthService, Services.Autarization.Auth>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
@@ -72,8 +104,34 @@ builder.Services.AddSwaggerGen(config =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     config.IncludeXmlComments(xmlPath);
-}
-);
+
+    
+    config.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Log in format: Bearer token"
+    });
+
+    
+    config.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 //To Do: Настроить Cors 
 builder.Services.AddCors(options =>
 options.AddPolicy("AllowAll", policy =>
@@ -98,6 +156,9 @@ app.UseRouting();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

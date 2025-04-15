@@ -1,5 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.GetNewsList;
 using Service.Application.Service.NewsQuery.Dto;
@@ -20,6 +21,7 @@ namespace Auth.WebApi.Controllers
             _query = query;
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("NewsListAdmin")]
         public async Task<ActionResult<List<NewsListDto>>> GetNewsList()
         {
@@ -35,6 +37,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("CreateNews")]
         public async Task<ActionResult> CreateNews(string Name, string Url, string Image)
         {
@@ -50,6 +53,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpDelete("DeleteNews")]
         public async Task<ActionResult> DeleteNews(Guid NewsId)
         {
@@ -65,6 +69,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpPut("UpdateNews")]
         public async Task<ActionResult> UpdateNews(Guid NewsId, string? Name = null, string? Url = null, string? Image = null)
         {
@@ -80,6 +85,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("GetNewsById")]
         public async Task<ActionResult<NewsListDto>> GetNewsById(Guid NewsId)
         {

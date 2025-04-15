@@ -1,5 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.SectionQuery;
 using Service.Application.Service.SectionQuery.Dto;
@@ -19,6 +20,7 @@ namespace Auth.WebApi.Controllers
             _query = query;
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("CreateSection")]
         public async Task<ActionResult> CreateSection(string sectionName, string imagePath)
         {
@@ -34,6 +36,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpPut("UpdateSection")]
         public async Task<ActionResult> UpdateSection(Guid SectionId, string SectionName)
         {
@@ -49,6 +52,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpDelete("DeleteSection")]
         public async Task<ActionResult> DeleteSections(Guid SectionId)
         {
@@ -64,6 +68,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("GetSectionsList")]
         public async Task<ActionResult<List<SectionsDto>>> GetSectionsList()
         {
@@ -80,6 +85,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("GetSection")]
 
         public async Task<ActionResult<Section>> GetSection(Guid SectionId)
@@ -96,6 +102,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpPut("AddProduct")]
 
         public async Task<ActionResult> AddProduct(Guid SectionId, Guid ProductId)
@@ -112,6 +119,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpDelete("DeleteProduct")]
 
         public async Task<ActionResult> DeleteProduct(Guid SectionId, Guid ProductId)
@@ -128,6 +136,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet("GetProductList")]
 
         public async Task<ActionResult<List<ProductDto>>> GetEditionsList(string Name = "", bool isEdition = true)
@@ -144,6 +153,7 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Worker")]
         [HttpPut("UpdateProduct")]
         public async Task<ActionResult> UpdateProduct(Guid ProductId, string Name, string url)
         {
