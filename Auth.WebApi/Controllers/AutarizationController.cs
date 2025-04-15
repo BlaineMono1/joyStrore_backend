@@ -43,7 +43,7 @@ namespace Auth.WebApi.Controllers
         {
             try
             {
-                var result = _query.LogInByToken(Token);
+                var result = await _query.LogInByToken(Token);
                 if(string.IsNullOrEmpty(result)) return StatusCode(500, "Token null or expired");
 
                 return Ok(result);
