@@ -128,7 +128,7 @@ namespace Service.Application.Service.ProductQuery
                                 async item =>
                                 new DropDownListDto
                                 {
-                                    Name = item.EditionName,
+                                    Name = item.Name,
                                     ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
                                 })));
 
@@ -186,7 +186,7 @@ namespace Service.Application.Service.ProductQuery
             var filteredByName = products;
             if (!string.IsNullOrEmpty(name))
             {
-                filteredByName = products.Where(p => p.Edition.EditionName.ToLower().Contains(name.ToLower()));
+                filteredByName = products.Where(p => p.Edition.Name.ToLower().Contains(name.ToLower()));
 
             }
 
@@ -252,7 +252,7 @@ namespace Service.Application.Service.ProductQuery
                 var t = new ProductListDto();
                 t.ProductId = item.Guid;
                 t.ImageFilepath = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Image : (await _addOnRepository.GetById(item.TypeId)).Image;
-                t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).EditionName : (await _addOnRepository.GetById(item.TypeId)).Name;
+                t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Name : (await _addOnRepository.GetById(item.TypeId)).Name;
                 t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type);
                 t.Jprice = await _calculatePrice.CalcJprice(t.Price);
                 t.Discount = item.DiscountPercent;

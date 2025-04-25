@@ -67,7 +67,7 @@ namespace Service.Application.Service.CartQuery
                         case "Game":
                             var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
                             tmp.image = edition.Image;
-                            tmp.Name = edition.EditionName;
+                            tmp.Name = edition.Name;
                             tmp.EditionName = edition.EditionType;
                             tmp.Id = item.Guid;
                             tmp.ProductId = item.ProductId;
@@ -111,7 +111,7 @@ namespace Service.Application.Service.CartQuery
                 {
                     items = cart,
                     Email = settings?.EmailPsStore ?? "",
-                    PayEmail = settings?.Email ?? "",
+                    PayEmail = user.Email ?? "",
                     Password = settings?.PasswordPsStore ?? "",
                     Code = settings?.Code ?? ""
                 };

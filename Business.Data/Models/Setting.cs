@@ -22,10 +22,6 @@ namespace Business.Data.Models
         /// Одноразовый код
         /// </summary>
         public string? Code { get; set; }
-        /// <summary>
-        /// Почта пользователя для отпарвки чека 
-        /// </summary>
-        public string? Email {  get; set; }
 
         #endregion
 

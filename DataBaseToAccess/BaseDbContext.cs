@@ -41,7 +41,9 @@ namespace DataBaseToAccess
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
+            builder.Entity<Order>()
+            .Property(o => o.Status)
+                .HasConversion<string>();
             base.OnModelCreating(builder);
         }
     }

@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using Service.Application.Service.OrderQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,7 @@ builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<UsersQuery>();
 builder.Services.AddScoped<AdminsQuery>();
 builder.Services.AddScoped<AutahQuery>();
+builder.Services.AddScoped<OrderQuery>();
 
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();

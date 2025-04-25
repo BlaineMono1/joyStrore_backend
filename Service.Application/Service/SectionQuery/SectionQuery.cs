@@ -93,7 +93,7 @@ namespace Service.Application.Service.SectionQuery
             // Загружаем все Edition и AddOn одним запросом
             var editions = await (await _editionRepository.GetListQuery())
                 .Where(e => typeIds.Contains(e.Guid))
-                .ToDictionaryAsync(e => e.Guid, e => e.EditionName);
+                .ToDictionaryAsync(e => e.Guid, e => e.Name);
 
             var addOns = await (await _addOnRepository.GetListQuery())
                 .Where(a => typeIds.Contains(a.Guid))
@@ -142,11 +142,11 @@ namespace Service.Application.Service.SectionQuery
             var result = new List<ProductDto>();
             if (isEdition)
             {
-                var products = (await _productRepository.GetListQuery()).Include(p => p.Edition).Where(p => p.Type == "Game" && p.Edition.EditionName.Contains(Name));
+                var products = (await _productRepository.GetListQuery()).Include(p => p.Edition).Where(p => p.Type == "Game" && p.Edition.Name.Contains(Name));
                 result = products.Select(item => new ProductDto
                 {
                     ProductId = item.Guid,
-                    ProductName = item.Edition.EditionName
+                    ProductName = item.Edition.Name
                 }).ToList();
             }
             else
@@ -178,7 +178,7 @@ namespace Service.Application.Service.SectionQuery
 
                 if (edition is null) throw new Exception($"Edition with GUID {product.TypeId} not found");
 
-                if (!string.IsNullOrEmpty(Name)) edition.EditionName = Name;
+                if (!string.IsNullOrEmpty(Name)) edition.Name = Name;
 
                 if (!string.IsNullOrEmpty(ImagePath)) edition.Image = ImagePath;
 
