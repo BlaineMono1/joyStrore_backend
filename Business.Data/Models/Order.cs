@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Business.Data.BaseEntities;
+using Business.Data.Enums;
 
 namespace Business.Data.Models
 {
@@ -18,6 +19,21 @@ namespace Business.Data.Models
         /// </summary>
         public string OrderCode { get; set; }
 
+        /// <summary>
+        /// Статус заказа
+        /// </summary>
+        [Column(TypeName = "varchar(50)")]
+        public OrderStatus Status { get; set; }
+
+        /// <summary>
+        /// Сумма за заказ в рублях
+        /// </summary>
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Сумма за заказ в коинах
+        /// </summary>
+        public decimal JPrice { get; set; }
 
         #endregion
 

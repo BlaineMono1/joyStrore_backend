@@ -33,7 +33,7 @@ namespace Auth.WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, "Invalid login or password");
+                return StatusCode(403, "Invalid login or password");
             }
         }
 
@@ -51,7 +51,7 @@ namespace Auth.WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, "Token null or expired");
+                return StatusCode(403, "Token null or expired");
             }
         }
     }

@@ -272,7 +272,7 @@ namespace Services.ParseService
                                     CusaCodeTr = edition.CusaCodeTR is null ? "" : edition.CusaCodeTR,
                                     Type = edition.Type,
                                     EditionType = edition.EditionType,
-                                    EditionName = edition.EditionName,
+                                    Name = edition.EditionName,
                                     Image = edition.Image,
                                     Platform = edition.Platform,
                                     Subscription = edition.Subscription,
