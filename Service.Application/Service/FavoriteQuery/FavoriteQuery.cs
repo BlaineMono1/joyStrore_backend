@@ -67,7 +67,7 @@ namespace Service.Application.Service.FavoriteQuery
                         case "Game":
                             var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
                             tmp.image = edition.Image;
-                            tmp.Name = edition.EditionName;
+                            tmp.Name = edition.Name;
                             tmp.EditionName = edition.EditionType;
                             tmp.Id = item.Guid;
                             tmp.ProductId = item.ProductId;

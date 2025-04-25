@@ -24,7 +24,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Наименование издания 
         /// </summary>
-        public string? EditionName { get; set; }
+        public string? Name { get; set; }
         /// <summary>
         /// Тип издания 
         /// </summary>

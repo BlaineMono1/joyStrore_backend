@@ -84,7 +84,7 @@ namespace Service.Application.Service.GamesQuery
 
                         var dto = new GamesListDto
                         {
-                            Name = product.Type == "Game" ? edition.EditionName : addOn.Name,
+                            Name = product.Type == "Game" ? edition.Name : addOn.Name,
                             ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
                             ProductId = product.Guid,
                             Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),

@@ -127,11 +127,12 @@ namespace Service.Application.Service.UserQuery
                             {
                                 case "Game":
                                     result.image = item.Product.Edition.Image;
-                                    result.Name = item.Product.Edition.EditionName;
+                                    result.Name = item.Product.Edition.Name;
                                     result.EditionName = item.Product.Edition.EditionType;
                                     result.Id = item.Product.Edition.Guid;
                                     result.Discount = item.Product.DiscountPercent;
-                                    result.Price = item.Pirce;
+                                    result.Price = item.Price;
+                                    result.JPrice = item.Price;
                                     break;
                                 case "AddOn":
                                     result.image = item.Product.AddOn.Image;
@@ -139,7 +140,8 @@ namespace Service.Application.Service.UserQuery
                                     result.EditionName = "";
                                     result.Id = item.Product.AddOn.Guid;
                                     result.Discount = item.Product.DiscountPercent;
-                                    result.Price = item.Pirce;
+                                    result.Price = item.Price;
+                                    result.JPrice = item.Price;
                                     break;
                                 case "Subscription":
                                     result.image = item.Product.Subscription.Image;
@@ -147,7 +149,8 @@ namespace Service.Application.Service.UserQuery
                                     result.EditionName = "";
                                     result.Id = item.Product.Subscription.Guid;
                                     result.Discount = item.Product.DiscountPercent;
-                                    result.Price = item.Pirce;
+                                    result.Price = item.Price;
+                                    result.JPrice = item.Price;
                                     break;
                             }
                             return result;

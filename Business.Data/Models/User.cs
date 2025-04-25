@@ -15,6 +15,11 @@ namespace Business.Data.Models
         /// Платформа игры Ps4 или Ps5
         /// </summary>
         public string Platform { get; set; }
+
+        /// <summary>
+        /// Почта пользователя для отпарвки чека 
+        /// </summary>
+        public string? Email { get; set; }
         #endregion
 
         #region связи
