@@ -18,7 +18,7 @@ namespace Gateway.WebApi.Controllers
             _query = query;
             _logger = logger;
         }
-
+        [SetRoute("CreateOrder")]
         [HttpGet]
         public async Task<ActionResult<OrdersDto>> CreateOrder(bool IsTokenPayment)
         {
