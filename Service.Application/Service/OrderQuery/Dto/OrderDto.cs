@@ -1,6 +1,6 @@
 ﻿namespace Service.Application.Service.OrderQuery.Dto
 {
-    public class OrderDto
+    public class OrdersDto
     {
         public string OrderCode { get; set; }
         public string Region { get; set; }

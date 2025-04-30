@@ -34,13 +34,13 @@ namespace Service.Application.Service.OrderQuery
             _settingRepository = settingRepository;
         }
 
-        public async Task<OrderDto> CreateOrder(bool isTokenPayment) //Создание ордера в бд
+        public async Task<OrdersDto> CreateOrder(bool isTokenPayment) //Создание ордера в бд
         {
 
             var region = _regionFromCookie.GetUserRegion();
             var userTgId = _regionFromCookie.GetUserTgID();
 
-            var result = new OrderDto
+            var result = new OrdersDto
             {
                 Region = region,
                 TgUserId = userTgId,
