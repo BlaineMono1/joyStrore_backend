@@ -140,7 +140,6 @@ namespace Service.Application.Service.OrderQuery
             result.PsLogin = userSettings.EmailPsStore;
             result.PsPass = userSettings.PasswordPsStore;
             result.PsCode = userSettings.Code;
-            order.ProductTransactionItem = new ProductTransactionItem();
             await _orderRepository.Add(order);
 
             return result;

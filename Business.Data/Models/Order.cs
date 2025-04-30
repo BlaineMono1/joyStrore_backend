@@ -42,9 +42,9 @@ namespace Business.Data.Models
         /// <summary>
         /// Item истории транзакции пользователя 
         /// </summary>
-        public Guid ProductTransactionItemId {  get; set; }
-        [ForeignKey("ProductTransactionItemId")]
-        public ProductTransactionItem ProductTransactionItem { get; set; }
+        //public Guid ProductTransactionItemId {  get; set; }
+        //[ForeignKey("ProductTransactionItemId")]
+        //public ProductTransactionItem ProductTransactionItem { get; set; }
         /// <summary>
         /// Товар
         /// </summary>
