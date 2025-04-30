@@ -20,7 +20,7 @@ namespace Gateway.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<OrderDto>> CreateOrder(bool IsTokenPayment)
+        public async Task<ActionResult<OrdersDto>> CreateOrder(bool IsTokenPayment)
         {
             try
             {
