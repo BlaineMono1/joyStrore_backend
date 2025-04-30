@@ -75,9 +75,7 @@ namespace Service.Application.Service.OrderQuery
                     Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
                     Discount = product.DiscountPercent,                    
                     OrderId = order.Guid,
-                    Order = order,
                     ProductId = product.Guid,
-                    Product = product
                 };
 
                 orderItem.JPrice = await _calculatePrice.CalcJprice(orderItem.Price);
