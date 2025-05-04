@@ -19,6 +19,7 @@ using Service.Application.Service.ProductQuery;
 using Service.Application.Service.CartQuery;
 using Service.Application.Service.FavoriteQuery;
 using Service.Application.Service.OrderQuery;
+using Service.Application.Service.AddOnsQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,7 @@ builder.Services.AddScoped<UsersQuery>();
 builder.Services.AddScoped<NewsQuery>();
 builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<OrderQuery>();
+builder.Services.AddScoped<AddOnsQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

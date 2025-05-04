@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.GetNewsList;
 using Service.Application.Service.NewsQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Auth.WebApi.Controllers
 {
     [ApiController]
-    [SetRoute("NewsAdmin")]
+    [SetRoute("news")]
     public class NewsController : ControllerBase
     {
         private readonly ILogger<NewsController> _logger;
@@ -20,9 +21,12 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
             _query = query;
         }
-
+        /// <summary>
+        /// Спиоск новостей в адимн панеле
+        /// </summary>
+        /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("NewsListAdmin")]
+        [HttpGet("news-list")]
         public async Task<ActionResult<List<NewsListDto>>> GetNewsList()
         {
             try
@@ -36,9 +40,15 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Создание новости
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <param name="Url"></param>
+        /// <param name="Image"></param>
+        /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("CreateNews")]
+        [HttpGet("create-news")]
         public async Task<ActionResult> CreateNews(string Name, string Url, string Image)
         {
             try
@@ -52,9 +62,12 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Удаление новости
+        /// </summary>
+        /// <param name="NewsId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpDelete("DeleteNews")]
+        [HttpDelete("delete-news")]
         public async Task<ActionResult> DeleteNews(Guid NewsId)
         {
             try
@@ -69,8 +82,15 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Обновление новости
+        /// </summary>
+        /// <param name="NewsId"></param>
+        /// <param name="Name"></param>
+        /// <param name="Url"></param>
+        /// <param name="Image"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpPut("UpdateNews")]
+        [HttpPut("update-news")]
         public async Task<ActionResult> UpdateNews(Guid NewsId, string? Name = null, string? Url = null, string? Image = null)
         {
             try
@@ -78,21 +98,34 @@ namespace Auth.WebApi.Controllers
                 await _query.UpdateNews(NewsId, Name, Url, Image);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Получение новости по id
+        /// </summary>
+        /// <param name="NewsId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("GetNewsById")]
+        [HttpGet("get-news-by-id")]
         public async Task<ActionResult<NewsListDto>> GetNewsById(Guid NewsId)
         {
             try
             {
                 var result = await _query.GetNewsById(NewsId);
                 return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
             }
             catch (Exception ex)
             {

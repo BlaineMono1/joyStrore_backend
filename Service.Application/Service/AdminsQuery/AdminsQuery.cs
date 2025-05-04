@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Service.Application.Service.AdminsQuery.Dto;
 using Microsoft.AspNetCore.Identity;
 using Service.Application.Iterfaces;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.AdminsQuery
 {
@@ -51,8 +52,8 @@ namespace Service.Application.Service.AdminsQuery
         public async Task CreateAdmin(string Login, string Password, Guid RoleID)
         {
             var role = await _roleRepository.GetById(RoleID);
-                       
-            if (role is null) throw new Exception($"Role with GUID {RoleID} not found");
+
+            if (role is null) throw new NotFoundException(nameof(Role), RoleID);
 
             var admin = new Admin { Login = Login, Password = Password, RoleId = RoleID };
 
@@ -65,7 +66,7 @@ namespace Service.Application.Service.AdminsQuery
         {
             var admin = await _adminRepository.GetById(AdminId);
 
-            if (admin is null) throw new Exception($"Admin with GUID {AdminId} not found");
+            if (admin is null) throw new NotFoundException(nameof(Admin), AdminId);
 
             var role = await _roleRepository.GetById(admin.RoleId);
             
@@ -75,8 +76,10 @@ namespace Service.Application.Service.AdminsQuery
         public async Task UpdateAdmin(Guid AdminId, Guid RoleId)
         {
             var admin = await _adminRepository.GetById(AdminId);
+            var role = await _roleRepository.GetById(RoleId);
 
-            if (admin is null) throw new Exception($"Admin with GUID {AdminId} not found");
+            if (admin is null) throw new NotFoundException(nameof(Admin), AdminId);
+            if (role is null) throw new NotFoundException(nameof(Role), RoleId);
 
             admin.RoleId = RoleId;
 

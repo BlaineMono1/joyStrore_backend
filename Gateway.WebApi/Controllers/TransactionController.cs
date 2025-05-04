@@ -12,15 +12,25 @@ namespace Gateway.WebApi.Controllers
 
         public TransactionController(ILogger<TransactionController> logger) { _logger = logger; }
 
-        [HttpGet]
+
+        /// <summary>
+        /// Вывод joy
+        /// </summary>
+        /// <returns></returns>
+        /// 
+        [HttpGet("joy")]
         public ActionResult<List<int>> GetJoyDonat()
         {
             var result = new JoyesDonsDto();
 
             return Ok(result.Joy);
         }
-
-        [HttpGet]
+        /// <summary>
+        /// Вывод joy+
+        /// </summary>
+        /// <returns></returns>
+        /// 
+        [HttpGet("joy-plus")]
         public ActionResult<List<int>> GetJoyPlusDonat()
         {
             var result = new JoyesDonsDto();

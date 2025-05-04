@@ -1,6 +1,8 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.TransactionQuery
 {
@@ -17,9 +19,11 @@ namespace Service.Application.Service.TransactionQuery
 
         public async Task IncUserJoyBal(string tgId, decimal amount)
         {
-            var setting = (await _joyBalRepository.GetListQuery()).First(s => s.User.TgUserId == tgId);
+            var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s => s.User.TgUserId == tgId);
 
-            if (amount <= 0) throw new Exception("Invalid tockens amount");
+            if (setting == null) throw new NotFoundException(nameof(LoyaltyCurrency), tgId);
+
+            if (amount <= 0) throw new BadRequestExeption("Invalid tockens amount");
 
             setting.BalanceJoy += amount;
 
@@ -28,11 +32,13 @@ namespace Service.Application.Service.TransactionQuery
 
         public async Task DecUserJoyBal(string tgId, decimal amount)
         {
-            var setting = (await _joyBalRepository.GetListQuery()).First(s => s.User.TgUserId == tgId);
+            var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s => s.User.TgUserId == tgId);
 
-            if (amount <= 0) throw new Exception("Invalid tockens amount");
+            if (setting == null) throw new NotFoundException(nameof(LoyaltyCurrency), tgId);
 
-            if (amount > setting.BalanceJoy) throw new Exception($"User joy balance lower then {amount}");
+            if (amount <= 0) throw new BadRequestExeption("Invalid tockens amount");
+
+            if (amount > setting.BalanceJoy) throw new BadRequestExeption($"User joy balance lower then {amount}");
 
             setting.BalanceJoy -= amount;
 
@@ -41,9 +47,11 @@ namespace Service.Application.Service.TransactionQuery
 
         public async Task IncUserJoyPlusBal(string tgId, decimal amount)
         {
-            var setting = (await _joyBalRepository.GetListQuery()).First(s => s.User.TgUserId == tgId);
+            var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s => s.User.TgUserId == tgId);
 
-            if (amount <= 0) throw new Exception("Invalid tockens amount");
+            if (setting == null) throw new NotFoundException(nameof(LoyaltyCurrency), tgId);
+
+            if (amount <= 0) throw new BadRequestExeption("Invalid tockens amount");
 
             setting.BalanceJoyPlus += amount;
 
@@ -52,11 +60,13 @@ namespace Service.Application.Service.TransactionQuery
 
         public async Task DecUserJoyPlusBal(string tgId, decimal amount)
         {
-            var setting = (await _joyBalRepository.GetListQuery()).First(s => s.User.TgUserId == tgId);
+            var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s => s.User.TgUserId == tgId);
+
+            if (setting == null) throw new NotFoundException(nameof(LoyaltyCurrency), tgId);
 
             if (amount <= 0) throw new Exception("Invalid tockens amount");
 
-            if (amount > setting.BalanceJoyPlus) throw new Exception($"User joy+ balance lower then {amount}");
+            if (amount > setting.BalanceJoyPlus) throw new BadRequestExeption($"User joy+ balance lower then {amount}");
             setting.BalanceJoyPlus -= amount;
 
             await _joyBalRepository.Update(setting);

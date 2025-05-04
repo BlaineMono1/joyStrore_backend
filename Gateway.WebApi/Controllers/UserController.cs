@@ -1,8 +1,10 @@
 ﻿using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Service.Application.Exceptions;
 using Service.Application.Service.UserQuery;
 using Service.Application.Service.UserQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -33,10 +35,15 @@ namespace Gateway.WebApi.Controllers
                 var user = await _usersQuery.UserByTgId();
                 return Ok(user);
             }
-            catch(Exception ex) 
+            catch (NotFoundException ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, "Error occurred while fetching user");
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex) 
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
 
         }
@@ -55,16 +62,22 @@ namespace Gateway.WebApi.Controllers
                 var history = await _usersQuery.UserOrder();
                 return Ok(history);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, "Error occurred while fetching user order history");
+                return StatusCode(500, ex.Message);
             }
         }
-        
+
         /// <summary>
         /// Обновление консоли пользователя
         /// </summary>
+        /// <param name="Console"></param>
         /// <returns></returns>
         /// 
         [HttpPut("ps-setting")]
@@ -75,10 +88,15 @@ namespace Gateway.WebApi.Controllers
                 await _usersQuery.UpdateConsoleType(Console);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, "Error occurred while Updating users console");
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -102,7 +120,7 @@ namespace Gateway.WebApi.Controllers
             catch(Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.Message);
             }
         }
         /// <summary>
@@ -120,7 +138,12 @@ namespace Gateway.WebApi.Controllers
                 await _usersQuery.UpdateUserSettings(email, password, code);
                 return Ok();
             }
-            catch(Exception ex)
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
             {
                 return StatusCode(500, ex);
             }
@@ -143,11 +166,43 @@ namespace Gateway.WebApi.Controllers
                 await _usersQuery.CreateUser(tgId);
                 return Ok();
             }
+            catch (ForbiddenExeption ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(403, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
+
+        /// <summary>
+        /// Баланс Joy и Joy+ пользователя
+        /// </summary>
+        /// 
+
+        [HttpGet("balance")]
+
+        public async Task<ActionResult<BalDto>> GetUserBal()
+        {
+            try
+            {
+                var reuslt = await _usersQuery.UserBalance();
+                return Ok(reuslt);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

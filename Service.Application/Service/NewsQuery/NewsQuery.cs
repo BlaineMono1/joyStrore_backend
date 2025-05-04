@@ -1,8 +1,10 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
 using Service.Application.Service.GetNewsList.Dto;
 using Service.Application.Service.NewsQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.GetNewsList
 {
@@ -20,30 +22,32 @@ namespace Service.Application.Service.GetNewsList
         public async Task<List<NewsDto>> GetNewsList()
         {
             var result = new List<NewsDto>();
-            try
+            var news = await _newsRepository.GetListQuery();
+            if (news is null)
             {
-                var news = await _newsRepository.GetListQuery();
-                if (news is null) _logger.LogWarning("News is empty");
-                result.AddRange(news.Select(el => new NewsDto
-                {
-                    Url = el.Link,
-                    ImagePath = el.FilePathImage
-                }));
+                _logger.LogError("News is empty");
+                return result;
             }
-            catch (Exception ex)
+            result.AddRange(news.Select(el => new NewsDto
             {
-                _logger.LogError(ex, "An error occurred while retrieving the news list.");
-                throw;
-            }
+                Url = el.Link,
+                ImagePath = el.FilePathImage
+            }));
+
             return result;
         }
 
         public async Task<List<NewsListDto>> GetNewsListAdminPanel()
         {
             var news = await _newsRepository.GetListQuery();
-            if (news is null) _logger.LogWarning("News is empty");
+            if (news is null)
+            {
+                _logger.LogError("News is empty");
 
-            var result = news.Select(item => new NewsListDto
+                return new List<NewsListDto>();
+            }
+
+                var result = news.Select(item => new NewsListDto
             {
                 NewsId = item.Guid,
                 NewsName = item.Name,
@@ -74,7 +78,7 @@ namespace Service.Application.Service.GetNewsList
         {
             var current = await _newsRepository.GetById(NewsId);
 
-            if (current is null) throw new Exception($"News with GUID {NewsId} not found");
+            if (current is null) throw new NotFoundException(nameof(News), NewsId);
 
             if(!string.IsNullOrEmpty(Name)) current.Name = Name;
 
@@ -88,7 +92,7 @@ namespace Service.Application.Service.GetNewsList
         public async Task<NewsListDto> GetNewsById(Guid NewsId)
         {
             var current = await _newsRepository.GetById(NewsId);
-            if (current is null) throw new Exception($"News with GUID {NewsId} not found");
+            if (current is null) throw new NotFoundException(nameof(News), NewsId);
 
             return new NewsListDto { NewsId = current.Guid, NewsName = current.Name, Url = current.FilePathImage };
         }

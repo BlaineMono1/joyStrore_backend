@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.ProductQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.ProductQuery
 {
@@ -54,129 +55,117 @@ namespace Service.Application.Service.ProductQuery
         public async Task<ProductDto> GetProduct(Guid ProductId)
         {
             var result = new ProductDto();
-            try
+
+            var product = await _productRepository.GetById(ProductId);
+            if (product is null) throw new NotFoundException(nameof(Product), ProductId);
+            result.ProductId = ProductId;
+            result.ProductType = product.Type;
+            result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
+            result.JPrice = await _calculatePrice.CalcJprice(result.Price);
+            result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
+            result.Discount = product.DiscountDate;
+            result.DiscountPercent = product.DiscountPercent;
+            var userTg = _regionFromCookie.GetUserTgID();
+            var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems)
+                .FirstOrDefault(u => u.TgUserId == userTg);
+
+            result.InCart = user.Cart.CartItems.Any(c => c.ProductId == product.Guid);
+            result.InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == product.Guid);
+
+
+            switch (product.Type)
             {
-                var product = await _productRepository.GetById(ProductId);
-                result.ProductId = ProductId;
-                result.ProductType = product.Type;
-                result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
-                result.JPrice = await _calculatePrice.CalcJprice(result.Price);
-                result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
-                result.Discount = product.DiscountDate;
-                result.DiscountPercent = product.DiscountPercent;
-                var userTg = _regionFromCookie.GetUserTgID();
-                var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems)
-                    .FirstOrDefault(u => u.TgUserId == userTg);
+                case "Game":
 
-                result.InCart = user.Cart.CartItems.Any(c => c.ProductId == product.Guid);
-                result.InFavorite = user.Favorite.FavoriteItems.Any(c => c.ProductId == product.Guid);
-                
+                    var edition = (await _editonRepository.GetListQuery()).Include(e => e.Game)
+                        .Include(e => e.EditionGeners).ThenInclude(eg => eg.Geners).FirstOrDefault(e => e.Guid == product.TypeId);
+                    result.Image = edition.Image;
+                    result.Geners = edition.EditionGeners.Select(eg => eg.Geners.Name).ToList();
+                    result.RealiseDate = edition.Release;
+                    result.Platforms = edition.Platform;
+                    result.Languages = edition.Game.Languages;
+                    result.Subscription = edition.Subscription;
+                    result.Features = edition.Features;
+                    break;
 
-                switch (product.Type)
-                {
-                    case "Game":
+                case "AddOn":
 
-                        var edition = (await _editonRepository.GetListQuery()).Include(e => e.Game)
-                            .Include(e => e.EditionGeners).ThenInclude(eg => eg.Geners).FirstOrDefault(e => e.Guid == product.TypeId);
-                        result.Image = edition.Image;
-                        result.Geners = edition.EditionGeners.Select(eg => eg.Geners.Name).ToList();
-                        result.RealiseDate = edition.Release;
-                        result.Platforms = edition.Platform;
-                        result.Languages = edition.Game.Languages;
-                        result.Subscription = edition.Subscription;
-                        result.Features = edition.Features;
-                        break;
+                    var addOn = await _addOnRepository.GetById(product.TypeId);
+                    result.Image = addOn.Image;
+                    result.Platforms = addOn.Platform;
+                    break;
 
-                    case "AddOn":
+                case "Subscription":
 
-                        var addOn = await _addOnRepository.GetById(product.TypeId);
-                        result.Image = addOn.Image;
-                        result.Platforms = addOn.Platform;
-                        break;
-
-                    case "Subscription":
-
-                        var sub = await _subscriptionRepository.GetById(product.TypeId);
-                        result.Image = sub.Image;
-                        result.Platforms = sub.Platform;
-                        break;
-                }
-                result.IsPlatform = result.Platforms.Contains(user.Platform);
-                return result;
+                    var sub = await _subscriptionRepository.GetById(product.TypeId);
+                    result.Image = sub.Image;
+                    result.Platforms = sub.Platform;
+                    break;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            result.IsPlatform = result.Platforms.Contains(user.Platform);
+            return result;
         }
+
+
 
         public async Task<List<DropDownListDto>> DropDownList(Guid ProductId)
         {
             var result = new List<DropDownListDto>();
-            try
+
+            var product = await _productRepository.GetById(ProductId);
+            if (product is null) throw new NotFoundException(nameof(Product), ProductId);
+            switch (product.Type)
             {
-                var product = await _productRepository.GetById(ProductId);
-                switch (product.Type)
-                {
-                    case "Game":
-                        var edition = await _editonRepository.GetById(product.TypeId);
-                        var editions = (await _gameRepository.GetListQuery()).Include(g => g.Editions).FirstOrDefault(g => g.Editions.Contains(edition)).Editions;
+                case "Game":
+                    var edition = await _editonRepository.GetById(product.TypeId);
+                    var editions = (await _gameRepository.GetListQuery()).Include(g => g.Editions).FirstOrDefault(g => g.Editions.Contains(edition)).Editions;
 
-                        result.AddRange(await Task.WhenAll(
-                            editions.Where(e => e.Guid != product.TypeId).Select(
-                                async item =>
-                                new DropDownListDto
-                                {
-                                    Name = item.Name,
-                                    ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
-                                })));
+                    result.AddRange(await Task.WhenAll(
+                        editions.Where(e => e.Guid != product.TypeId).Select(
+                            async item =>
+                            new DropDownListDto
+                            {
+                                Name = item.Name,
+                                ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
+                            })));
 
-                        break;
-                    case "AddOn":
+                    break;
+                case "AddOn":
 
-                        var addOn = (await _addOnRepository.GetListQuery()).Include(a => a.Game).ThenInclude(g => g.AddOns).FirstOrDefault(a => a.Guid == product.TypeId);
+                    var addOn = (await _addOnRepository.GetListQuery()).Include(a => a.Game).ThenInclude(g => g.AddOns).FirstOrDefault(a => a.Guid == product.TypeId);
 
-                        result.AddRange(await Task.WhenAll(
-                            addOn.Game.AddOns.Where(a => a.Guid != product.TypeId).Select(
-                                async item =>
-                                new DropDownListDto
-                                {
-                                    Name = item.Name,
-                                    ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
-                                })));
+                    result.AddRange(await Task.WhenAll(
+                        addOn.Game.AddOns.Where(a => a.Guid != product.TypeId).Select(
+                            async item =>
+                            new DropDownListDto
+                            {
+                                Name = item.Name,
+                                ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
+                            })));
 
-                        break;
+                    break;
 
-                    case "Subscription":
+                case "Subscription":
 
-                        var sub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(s => s.Guid == product.TypeId); //текущая подписка
-                        var groupSubs = (await _subscriptionRepository.GetListQuery()).Where(s => s.Name == sub.Name && s.Guid != sub.Guid).ToList();
+                    var sub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(s => s.Guid == product.TypeId); //текущая подписка
+                    var groupSubs = (await _subscriptionRepository.GetListQuery()).Where(s => s.Name == sub.Name && s.Guid != sub.Guid).ToList();
 
-                        result.AddRange(await Task.WhenAll(
-                            groupSubs.Select(async item =>
-                                 new DropDownListDto
-                                 { 
-                                     Name = item.Duration,
-                                     ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
-                                 }
+                    result.AddRange(await Task.WhenAll(
+                        groupSubs.Select(async item =>
+                             new DropDownListDto
+                             {
+                                 Name = item.Duration,
+                                 ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid
+                             }
 
-                            )));
+                        )));
 
-                        break;
-
-                }
-
-
-
-                return result;
+                    break;
             }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+
+            return result;
         }
+
 
 
         public async Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? FilterGeners, decimal MinPrice, decimal MaxPrice)
