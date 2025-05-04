@@ -98,7 +98,7 @@ namespace Services.CalculationService
                 _logger.LogError($"No region {region}");
             }
 
-            return price.Value * 2;
+            return price.Value * exchangeRate;
         }
 
         public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type)
