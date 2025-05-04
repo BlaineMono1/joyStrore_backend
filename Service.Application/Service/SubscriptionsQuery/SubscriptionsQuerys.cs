@@ -2,8 +2,10 @@
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
 using Service.Application.Iterfaces;
 using Service.Application.Service.SubscriptionsQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.SubscriptionsQuery
 {
@@ -32,8 +34,7 @@ namespace Service.Application.Service.SubscriptionsQuery
         /// </summary>
         public async Task<List<SubscriptionsListDto>> GetSubscriptionsList()
         {
-            try
-            {
+            
                 var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
                 _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
@@ -43,7 +44,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                     try
                     {
                         var product = await _productRepository.GetById(sub.ProductId)
-                            ?? throw new KeyNotFoundException($"Product with TypeId {sub.Guid} not found");
+                            ?? throw new NotFoundException(nameof(Product), sub.ProductId);
 
                         var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
                         var jPrice = await _calculatePrice.CalcJprice(price);
@@ -71,12 +72,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                 _logger.LogInformation("Successfully processed {Count} subscriptions.", result.Count);
 
                 return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching subscriptions list.");
-                throw;
-            }
+
         }
 
 
@@ -101,11 +97,11 @@ namespace Service.Application.Service.SubscriptionsQuery
 
         public async Task UpdateSubPrice(Guid SubId, decimal Price, string Region)
         {
-            if (Price < 0) throw new Exception("Price can't be lower then 0");
+            if (Price < 0) throw new BadRequestExeption("Price can't be lower then 0");
 
             var product = await _productRepository.GetEntityType(SubId);
 
-            if (product == null) throw new Exception($"Product for subscription with GUID {SubId} not found");
+            if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
 
             switch (Region)
             {
@@ -141,12 +137,12 @@ namespace Service.Application.Service.SubscriptionsQuery
 
         public async Task UpdateSubDiscount(Guid SubId, string Percent)
         {
-            if (decimal.Parse(Percent) < 0) throw new Exception("Price can't be lower then 0");
-            if (decimal.Parse(Percent) > 100) throw new Exception("Price can't be greater then 100");
+            if (decimal.Parse(Percent) < 0) throw new BadRequestExeption("Price can't be lower then 0");
+            if (decimal.Parse(Percent) > 100) throw new BadRequestExeption("Price can't be greater then 100");
 
             var product = await _productRepository.GetEntityType(SubId);
 
-            if (product == null) throw new Exception($"Product for subscription with GUID {SubId} not found");
+            if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
 
             product.DiscountPercent = Percent;
 

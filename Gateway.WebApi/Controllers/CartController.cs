@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.CartQuery;
 using Service.Application.Service.CartQuery.Dto;
 using Service.Application.Service.UserQuery;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -33,8 +34,14 @@ namespace Gateway.WebApi.Controllers
                 var cart = await _cartQuery.UserCart();
                 return Ok(cart);
             }
+            catch(NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
@@ -54,10 +61,15 @@ namespace Gateway.WebApi.Controllers
                 await _cartQuery.UpdateUserCart(productId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-               
-                return StatusCode(500, "Error occurred while adding item in user cart");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -74,9 +86,15 @@ namespace Gateway.WebApi.Controllers
                 await _cartQuery.DeleteFromCart(productId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, "Error occurred while Deliting item in user Cart");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
     }

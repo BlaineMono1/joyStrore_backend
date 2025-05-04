@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.FavoriteQuery;
 using Service.Application.Service.FavoriteQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -32,9 +33,15 @@ namespace Gateway.WebApi.Controllers
                 var fav = await _favoriteQuery.UserFavorite();
                 return Ok(fav);
             }
+            catch(NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, "Error occurred while fetching favorite items");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
 
         }
@@ -51,6 +58,11 @@ namespace Gateway.WebApi.Controllers
             {
                 await _favoriteQuery.UpdateUserFavorites(productId);
                 return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
             }
             catch (Exception ex)
             {
@@ -70,6 +82,11 @@ namespace Gateway.WebApi.Controllers
             {
                 await _favoriteQuery.DeleteFromFavorites(productId);
                 return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
             }
             catch (Exception ex)
             {

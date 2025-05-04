@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.AdminsQuery;
 using Service.Application.Service.AdminsQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Auth.WebApi.Controllers
 {
     [ApiController]
-    [SetRoute("Admin")]
+    [SetRoute("admins")]
     [Authorize(Roles = "Admin")]
-    public class AdminController :ControllerBase
+    public class AdminController : ControllerBase
     {
         private readonly AdminsQuery _query;
         private readonly ILogger<AdminController> _logger;
@@ -20,8 +21,12 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
             _query = query;
         }
+
+        /// <summary>
+        /// Список всех админов и воркеров
+        /// </summary>
         [Authorize(Roles = "Admin")]
-        [HttpGet("GetAdminsList")]
+        [HttpGet("get-admin-list")]
         public async Task<ActionResult<List<AdminListDto>>> GetAdminsList()
         {
             try
@@ -35,9 +40,11 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Выпадающий список ролей
+        /// </summary>
         [Authorize(Roles = "Admin")]
-        [HttpGet("GetRolesList")]
+        [HttpGet("get-roles-list")]
         public async Task<ActionResult<List<RolesList>>> GetRolesList()
         {
             try
@@ -51,9 +58,15 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Создание нового админа
+        /// </summary>
+        /// <param name="Login"></param>
+        /// <param name="Password"></param>
+        /// <param name="RoleID"></param>
+        /// 
         [Authorize(Roles = "Admin")]
-        [HttpGet("CreateAdmin")]
+        [HttpGet("create-admin")]
         public async Task<ActionResult> CreateAdmin(string Login, string Password, Guid RoleID)
         {
             try
@@ -61,6 +74,11 @@ namespace Auth.WebApi.Controllers
                 await _query.CreateAdmin(Login, Password, RoleID);
                 return Ok();
             }
+            catch(NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
@@ -68,8 +86,12 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Роль админа
+        /// </summary>
+        /// <param name="AdminId"></param>
         [Authorize(Roles = "Admin")]
-        [HttpGet("ShowAdminRole")]
+        [HttpGet("show-admin-role")]
         public async Task<ActionResult<string>> ShowAdminRole(Guid AdminId)
         {
             try
@@ -77,6 +99,11 @@ namespace Auth.WebApi.Controllers
                 var result = await _query.ShowAdminRole(AdminId);
                 return Ok(result);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
@@ -84,8 +111,13 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Обновить роль админа 
+        /// </summary>
+        /// <param name="AdminId"></param>
+        /// <param name="RoleId"></param>
         [Authorize(Roles = "Admin")]
-        [HttpPut("UpdateAdmin")]
+        [HttpPut("update-admin")]
         public async Task<ActionResult<string>> UpdateAdmin(Guid AdminId, Guid RoleId)
         {
             try
@@ -93,15 +125,23 @@ namespace Auth.WebApi.Controllers
                 await _query.UpdateAdmin(AdminId, RoleId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Удалить админа 
+        /// </summary>
+        /// <param name="AdminId"></param>
         [Authorize(Roles = "Admin")]
-        [HttpDelete("DeleteAdmin")]
+        [HttpDelete("delete-admin")]
         public async Task<ActionResult<string>> DeleteAdmin(Guid AdminId)
         {
             try

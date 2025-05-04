@@ -2,7 +2,9 @@
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
 using Service.Application.Service.MarkUpQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.MarkUpQuery
 {
@@ -42,16 +44,16 @@ namespace Service.Application.Service.MarkUpQuery
 
             if(current is null)
             {
-                throw new Exception($"Setting Price with GUID {MarkUpId} not found");
+                throw new NotFoundException(nameof(SettingPrice), MarkUpId);
             }
 
             if(Percent < 0)
             {
-                throw new Exception("Percent can't be lower then 0");
+                throw new BadRequestExeption("Percent can't be lower then 0");
             }
             if(Percent > 100)
             {
-                throw new Exception("Percent can't be greater then 100");
+                throw new BadRequestExeption("Percent can't be greater then 100");
             }
 
             current.Percent = Percent;
@@ -83,16 +85,16 @@ namespace Service.Application.Service.MarkUpQuery
 
             if (current is null)
             {
-                throw new Exception($"Setting Price with GUID {MarkUpId} not found");
+                throw new NotFoundException(nameof(PriceSettingSubscription), MarkUpId);
             }
 
             if (Percent < 0)
             {
-                throw new Exception("Percent can't be lower then 0");
+                throw new BadRequestExeption("Percent can't be lower then 0");
             }
             if (Percent > 100)
             {
-                throw new Exception("Percent can't be greater then 100");
+                throw new BadRequestExeption("Percent can't be greater then 100");
             }
 
             current.Percent = Percent;

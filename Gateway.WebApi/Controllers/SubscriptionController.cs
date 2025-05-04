@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.SubscriptionsQuery;
 using Service.Application.Service.SubscriptionsQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 namespace Gateway.WebApi.Controllers
 {
     [SetRoute("")]
@@ -30,10 +31,15 @@ namespace Gateway.WebApi.Controllers
                 var subsList = await _subscriptoinsQuerys.GetSubscriptionsList(); ;
                 return Ok(subsList);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching subscription list.");
-                return StatusCode(500, "An error occurred while fetching subscription list.");
+                _logger.LogError(ex, ex.Message);
+                return StatusCode(500, ex.Message);
             }
             
         }

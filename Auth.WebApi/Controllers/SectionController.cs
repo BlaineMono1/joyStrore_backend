@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.SectionQuery;
 using Service.Application.Service.SectionQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Auth.WebApi.Controllers
 {
     [ApiController]
-    [SetRoute("Sections")]
+    [SetRoute("sections")]
     public class SectionController : ControllerBase
     {
         private readonly ILogger<SectionController> _logger;
@@ -20,8 +21,13 @@ namespace Auth.WebApi.Controllers
             _query = query;
         }
 
+        /// <summary>
+        /// Создание секций в админ панели
+        /// </summary>
+        /// <param name="sectionName"></param>
+        /// <param name="imagePath"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("CreateSection")]
+        [HttpGet("create-section")]
         public async Task<ActionResult> CreateSection(string sectionName, string imagePath)
         {
             try
@@ -35,9 +41,13 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Изменение имени секции в админ панели
+        /// </summary>
+        /// <param name="SectionId"></param>
+        /// <param name="SectionName"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpPut("UpdateSection")]
+        [HttpPut("update-sections")]
         public async Task<ActionResult> UpdateSection(Guid SectionId, string SectionName)
         {
             try
@@ -45,15 +55,23 @@ namespace Auth.WebApi.Controllers
                 await _query.UpdateSection(SectionId, SectionName);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Удаление секции в админ панели
+        /// </summary>
+        /// <param name="SectionId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpDelete("DeleteSection")]
+        [HttpDelete("delete-section")]
         public async Task<ActionResult> DeleteSections(Guid SectionId)
         {
             try
@@ -61,6 +79,11 @@ namespace Auth.WebApi.Controllers
                 await _query.DeleteSection(SectionId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
@@ -68,8 +91,11 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Получение секций в админ панели
+        /// </summary>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("GetSectionsList")]
+        [HttpGet("get-section-list")]
         public async Task<ActionResult<List<SectionsDto>>> GetSectionsList()
         {
 
@@ -85,8 +111,12 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Получение секции по id в админ панели
+        /// </summary>
+         /// <param name="SectionId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("GetSection")]
+        [HttpGet("get-section")]
 
         public async Task<ActionResult<Section>> GetSection(Guid SectionId)
         {
@@ -95,15 +125,24 @@ namespace Auth.WebApi.Controllers
                 var result = await _query.SectionById(SectionId);
                 return Ok(result);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Добавление продукта в секцию
+        /// </summary>
+        /// <param name="SectionId"></param>
+        /// /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpPut("AddProduct")]
+        [HttpPut("add-product")]
 
         public async Task<ActionResult> AddProduct(Guid SectionId, Guid ProductId)
         {
@@ -112,15 +151,24 @@ namespace Auth.WebApi.Controllers
                 await _query.AddProductInSection(SectionId, ProductId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Удаление продукта из секции
+        /// </summary>
+        /// <param name="SectionId"></param>
+        /// /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpDelete("DeleteProduct")]
+        [HttpDelete("delete-product")]
 
         public async Task<ActionResult> DeleteProduct(Guid SectionId, Guid ProductId)
         {
@@ -129,6 +177,11 @@ namespace Auth.WebApi.Controllers
                 await _query.DeleteProductFromSection(SectionId, ProductId);
                 return Ok();
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
@@ -136,8 +189,13 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Фильтр продуктов для добавления в секцию
+        /// </summary>
+        /// <param name="Name"></param>
+        /// /// <param name="isEdition"></param>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet("GetProductList")]
+        [HttpGet("get-prodcut-list")]
 
         public async Task<ActionResult<List<ProductDto>>> GetEditionsList(string Name = "", bool isEdition = true)
         {
@@ -153,14 +211,26 @@ namespace Auth.WebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Обновление карточки продукта
+        /// </summary>
+        /// <param name="ProductId"></param>
+        ///<param name="Name"></param>
+        ///<param name="url"></param>
+        ///
         [Authorize(Roles = "Admin,Worker")]
-        [HttpPut("UpdateProduct")]
+        [HttpPut("update-product")]
         public async Task<ActionResult> UpdateProduct(Guid ProductId, string Name, string url)
         {
             try
             {
                 await _query.UpdateProduct(ProductId, Name, url);
                 return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
             }
             catch (Exception ex)
             {
