@@ -33,8 +33,8 @@ namespace Gateway.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching news list.");
-                return StatusCode(500, "An error occurred while retrieving the news list.");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
     }

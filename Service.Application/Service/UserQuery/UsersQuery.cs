@@ -4,9 +4,11 @@ using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
 using Service.Application.Iterfaces;
 using Service.Application.Service.CartQuery.Dto;
 using Service.Application.Service.UserQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 
 namespace Service.Application.Service.UserQuery
@@ -59,21 +61,16 @@ namespace Service.Application.Service.UserQuery
 
         public async Task<UserDto> UserByTgId()
         {
-            try
-            {
+          
                 var region = _regionFromCookie.GetUserRegion();
                 var tgId = _regionFromCookie.GetUserTgID();
 
                 _logger.LogInformation("Fetching user by TG ID: {TgId}", tgId);
 
                 var user = await _userRepository.GetUserByTgId(tgId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
-                    return new UserDto();
-                }
+                if (user == null) throw new NotFoundException(nameof(User), tgId);
 
-                var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
+            var settings = (await _setingsRepository.GetListQuery()).FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
                 var loyaloty = await _loyalityRepository.GetById(user.LoyaltyCurrencyId);
 
                 var result = new UserDto
@@ -82,37 +79,37 @@ namespace Service.Application.Service.UserQuery
                     Email = settings?.EmailPsStore ?? "",
                     Password = settings?.PasswordPsStore ?? "",
                     Code = settings?.Code ?? "",
-                    JBal = loyaloty?.BalanceJoy ?? 0,
-                    JPlus = loyaloty?.BalanceJoyPlus ?? 0,
                     Platform = user.Platform
                 };
 
                 _logger.LogInformation("Successfully fetched user data for TG ID: {TgId}", tgId);
                 return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
-        }       
+            
+
+        }
+        
+        public async Task<BalDto> UserBalance()
+        {
+            var tgId = _regionFromCookie.GetUserTgID();
+            var user = (await _userRepository.GetListQuery()).Include(u => u.LoyaltyCurrency).FirstOrDefault(u => u.TgUserId == tgId);
+            if (user is null) throw new NotFoundException(nameof(User), tgId);
+            return new BalDto { JBal = user.LoyaltyCurrency.BalanceJoy, JPlusBal = user.LoyaltyCurrency.BalanceJoyPlus};
+        }
         
         public async Task<List<OrderDto>> UserOrder()
         {
-            try
-            {
+            
                 var region = _regionFromCookie.GetUserRegion();
                 var tgId = _regionFromCookie.GetUserTgID();
                 _logger.LogInformation("Fetching user orders for TG ID: {TgId}", tgId);
 
                 var user = (await _userRepository.GetListQuery()).Include(u => u.ProductTransactionHistory).ThenInclude(c => c.Orders).FirstOrDefault(u => u.TgUserId == tgId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found for TG ID: {TgId}", tgId);
-                    return new List<OrderDto>();
-                }
+                if (user == null) throw new NotFoundException(nameof(User), tgId);
 
-                var orders = user.ProductTransactionHistory.Orders?.Where(order => !order.IsDelete) ?? Enumerable.Empty<Order>();
+
+
+
+            var orders = user.ProductTransactionHistory.Orders?.Where(order => !order.IsDelete) ?? Enumerable.Empty<Order>();
 
                 var result = await Task.WhenAll(orders.Select(async orderItem =>
                 {
@@ -162,63 +159,43 @@ namespace Service.Application.Service.UserQuery
 
                 _logger.LogInformation("Successfully fetched user orders for TG ID: {TgId}", tgId);
                 return result.ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            
         }
+
 
         public async Task UpdateConsoleType(string Console)
         {
-            try
-            {
-                var tgId = _regionFromCookie.GetUserTgID();
-                var user = await _userRepository.GetUserByTgId(tgId);
-                if (user == null)
-                {
-                    _logger.LogError("User not found for TG ID: {TgId}", tgId);
-                    throw new Exception($"User not found for TG ID: {tgId}");
-                }
-                user.Platform = Console;
-                await _userRepository.Update(user);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            
+            var tgId = _regionFromCookie.GetUserTgID();
+            var user = await _userRepository.GetUserByTgId(tgId);
+            if (user == null) throw new NotFoundException(nameof(User), tgId);
+                
+            user.Platform = Console;
+            await _userRepository.Update(user);
+            
         }
 
         public async Task UpdateUserSettings(string email, string password, string code)
         {
-            try
-            {
-                var region = _regionFromCookie.GetUserRegion();
-                var tgId = _regionFromCookie.GetUserTgID();
+           
+            var region = _regionFromCookie.GetUserRegion();
+            var tgId = _regionFromCookie.GetUserTgID();
 
-                var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.TgUserId == tgId).Settings.FirstOrDefault(s => s.Region == region);
+            var userSettings = (await _userRepository.GetListQuery()).Include(u => u.Settings).First(u => u.TgUserId == tgId).Settings.FirstOrDefault(s => s.Region == region);
 
-                if (userSettings is null) throw new KeyNotFoundException($"No user settings with user tgId {tgId}");
+            if (userSettings is null) throw new NotFoundException(nameof(User), tgId);
+            userSettings.Code = code;
+            userSettings.EmailPsStore = email;
+            userSettings.PasswordPsStore = password;
 
-                userSettings.Code = code;
-                userSettings.EmailPsStore = email;
-                userSettings.PasswordPsStore = password;
-
-                await _setingsRepository.Update(userSettings);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            await _setingsRepository.Update(userSettings);
+           
+            
         }
 
         public async Task CreateUser(string tgId)
         {
-            try
-            {
+            
                 var user = await _userRepository.GetUserByTgId(tgId);
                 if(user is null)
                 {
@@ -262,14 +239,9 @@ namespace Service.Application.Service.UserQuery
                 }
                 else if(user.IsDelete)
                 {
-                    throw new Exception("User is banned!");
+                    throw new ForbiddenExeption("User is banned!");
                 }
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            
         }
 
 
@@ -277,7 +249,7 @@ namespace Service.Application.Service.UserQuery
         {
             var user = await _userRepository.GetUserByTgId(tgId);
 
-            if (user == null) throw new Exception($"User with TG ID {tgId} not found");
+            if (user == null) throw new NotFoundException(nameof(User), tgId);
 
             user.IsDelete = true;
 
@@ -288,7 +260,7 @@ namespace Service.Application.Service.UserQuery
         {
             var user = await _userRepository.GetUserByTgId(tgId);
 
-            if (user == null) throw new Exception($"User with TG ID {tgId} not found");
+            if (user == null) throw new NotFoundException(nameof(User), tgId);
 
             user.IsDelete = false;
 

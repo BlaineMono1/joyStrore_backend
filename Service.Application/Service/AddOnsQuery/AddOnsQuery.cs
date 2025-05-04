@@ -40,24 +40,18 @@ namespace Service.Application.Service.AddOnsQuery
         public async Task<List<AddOnsListDto>> GroupAddOnsList()
         {
             var result = new List<AddOnsListDto>();
-            try
-            {
-                _logger.LogInformation("Fetching all addons.");
-                var AddOns = await _groupAddOnRepository.GetAllList();
 
-                result.AddRange((IEnumerable<AddOnsListDto>)Task.WhenAll(AddOns.Select(async a => new AddOnsListDto
-                {
-                    ProductId = (await _productRepository.GetEntityType(a.Guid)).Guid,
-                    ImagePath = a.FilePathImage
-                }
+            _logger.LogInformation("Fetching all addons.");
+            var addOns = await _groupAddOnRepository.GetAllList();
 
-                )));
-            }
-            catch (Exception ex)
+            var dtoTasks = addOns.Select(async a => new AddOnsListDto
             {
-                _logger.LogError(ex, "An error occurred while retrieving the add ons list.");
-                throw;
-            }
+                ProductId = (await _productRepository.GetEntityType(a.Guid)).Guid,
+                ImagePath = a.FilePathImage
+            });
+
+            var dtoResults = await Task.WhenAll(dtoTasks);
+            result.AddRange(dtoResults);
 
             return result;
         }
@@ -65,28 +59,21 @@ namespace Service.Application.Service.AddOnsQuery
         public async Task<List<GroupAddOnsDto>> AddOnsList(Guid GroupAddOnId)
         {
             var result = new List<GroupAddOnsDto>();
-            try
+            var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
+            if (groupAddOns is null) _logger.LogError("group add on with guid: {guid} is null", GroupAddOnId);
+            else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", GroupAddOnId);
+            var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
             {
-                var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
-                if (groupAddOns is null) _logger.LogWarning("group add on with guid: {guid} is null", GroupAddOnId);
-                else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", GroupAddOnId);
-                var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
-                {
-                    ProductId = item.Product.Guid,
-                    Image = item.Image,
-                    Name = item.Name,
-                    Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),
-                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type)),
-                    Discount = item.Product.DiscountPercent
-                });
+                ProductId = item.Product.Guid,
+                Image = item.Image,
+                Name = item.Name,
+                Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),
+                JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type)),
+                Discount = item.Product.DiscountPercent
+            });
 
-                result.AddRange(await Task.WhenAll(tasks));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving the group add on list.");
-                throw;
-            }
+            result.AddRange(await Task.WhenAll(tasks));
+
             return result;
         }
 

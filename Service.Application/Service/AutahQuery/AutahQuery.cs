@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using Newtonsoft.Json.Linq;
+using Service.Application.Exceptions;
 
 namespace Service.Application.Service.AutahQuery
 {
@@ -65,13 +66,13 @@ namespace Service.Application.Service.AutahQuery
 
             if (admin == null)
             {
-                throw new Exception("Invalid login or password");
+                throw new ForbiddenExeption("Invalid login or password");
             }
 
             bool result = _autahService.Verify(admin, password);
 
 
-            if (!result) throw new Exception("Invalid login or password");
+            if (!result) throw new ForbiddenExeption("Invalid login or password");
 
 
             return await GenerateToken(admin.Guid);           

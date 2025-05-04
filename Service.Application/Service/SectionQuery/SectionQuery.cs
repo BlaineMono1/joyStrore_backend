@@ -1,11 +1,10 @@
-﻿
-using Business.Data.Iterfaces;
+﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Service.SectionQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 
 namespace Service.Application.Service.SectionQuery
@@ -41,9 +40,11 @@ namespace Service.Application.Service.SectionQuery
         public async Task DeleteSection(Guid SectionId)
         {
             
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).First(s => s.Guid == SectionId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).FirstOrDefault(s => s.Guid == SectionId);
 
-            foreach(var del in section.Products)
+            if (section is null) throw new NotFoundException(nameof(Section), SectionId);
+
+            foreach (var del in section.Products)
             {
                 await _sectionsEditionsRepository.HardDelete(del.Guid);
             }
@@ -56,7 +57,7 @@ namespace Service.Application.Service.SectionQuery
         {
             var section = await _sectionRepository.GetById(SectionId);
 
-            if (section is null) throw new Exception($"Section with GUid {SectionId} not found");
+            if (section is null) throw new NotFoundException(nameof(Section), SectionId);
 
             section.Name = SectionName;
 
@@ -78,7 +79,9 @@ namespace Service.Application.Service.SectionQuery
 
         public async Task<SectionDto> SectionById(Guid SectionId)
         {
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(p => p.Product).First(s => s.Guid == SectionId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(p => p.Product).FirstOrDefault(s => s.Guid == SectionId);
+
+            if (section is null) throw new NotFoundException(nameof(Section), SectionId);
 
             var result = new SectionDto
             {
@@ -118,8 +121,10 @@ namespace Service.Application.Service.SectionQuery
         public async Task AddProductInSection(Guid SectionId, Guid ProductId)
         {
             var product = await _productRepository.GetById(ProductId);
-            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).AsTracking().First(s => s.Guid == SectionId);
+            var section = (await _sectionRepository.GetListQuery()).Include(s => s.Products).AsTracking().FirstOrDefault(s => s.Guid == SectionId);
 
+            if (product is null) throw new NotFoundException(nameof(Product), ProductId);
+            if (section is null) throw new NotFoundException(nameof(Section), SectionId);
 
             var q = new SectionsProducts
             { ProductId = ProductId, SectionId = SectionId };
@@ -132,7 +137,9 @@ namespace Service.Application.Service.SectionQuery
 
         public async Task DeleteProductFromSection(Guid SectionId, Guid ProductId)
         {
-            var delete = (await _sectionsEditionsRepository.GetListQuery()).First(se => se.SectionId == SectionId && se.ProductId == ProductId);
+            var delete = (await _sectionsEditionsRepository.GetListQuery()).FirstOrDefault(se => se.SectionId == SectionId && se.ProductId == ProductId);
+
+            if (delete is null) throw new NotFoundException(nameof(SectionsProducts), SectionId);
 
             await _sectionsEditionsRepository.HardDelete(delete.Guid);
         }
@@ -176,7 +183,7 @@ namespace Service.Application.Service.SectionQuery
             {
                 var edition = await _editionRepository.GetById(product.TypeId);
 
-                if (edition is null) throw new Exception($"Edition with GUID {product.TypeId} not found");
+                if (edition is null) throw new NotFoundException(nameof(Edition), product.TypeId);
 
                 if (!string.IsNullOrEmpty(Name)) edition.Name = Name;
 
@@ -188,7 +195,7 @@ namespace Service.Application.Service.SectionQuery
             {
                 var addOn = await _addOnRepository.GetById(product.TypeId);
 
-                if (addOn is null) throw new Exception($"AddOn with GUID {product.TypeId} not found");
+                if (addOn is null) throw new NotFoundException(nameof(AddOn), product.TypeId);
 
                 if (!string.IsNullOrEmpty(Name)) addOn.Name = Name;
 
@@ -198,7 +205,7 @@ namespace Service.Application.Service.SectionQuery
             }
             else
             {
-                throw new Exception($"Unknown product type {product.Type}");
+                throw new NotFoundException(nameof(product.Type), product.TypeId);
             }
         }
     }

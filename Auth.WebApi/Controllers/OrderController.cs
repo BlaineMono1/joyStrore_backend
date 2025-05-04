@@ -8,7 +8,7 @@ using Service.Application.Service.OrderQuery.Dto;
 namespace Auth.WebApi.Controllers
 {
     [ApiController]
-    [SetRoute("Admin/Orders")]
+    [SetRoute("orders")]
     public class OrderController : ControllerBase
     {
         private readonly OrderQuery _query;
@@ -21,8 +21,12 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Список ордеров в админ панели
+        /// </summary>
+        /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
-        [HttpGet]
+        [HttpGet("orders-list")]
         public async Task<ActionResult<List<OrderListDto>>> GetOrdersList()
         {
             try

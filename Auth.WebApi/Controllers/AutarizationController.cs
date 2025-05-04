@@ -6,7 +6,7 @@ using Service.Application.Service.AutahQuery;
 namespace Auth.WebApi.Controllers
 {
     [ApiController]
-    [SetRoute("Auth")]
+    [SetRoute("auth")]
     public class AutarizationController : ControllerBase
     {
         private readonly AutahQuery _query;
@@ -20,8 +20,12 @@ namespace Auth.WebApi.Controllers
             _logger = logger;
         }
 
-        [SetRoute("LogIn")]
-        [HttpGet]
+        /// <summary>
+        /// Вход по логину и паролю
+        /// </summary>
+        /// <param name="Login"></param>
+        /// <param name="Password"></param>
+        [HttpGet("log-in")]
         public async Task<ActionResult<string>> LogIn(string Login, string Password)
         {
             try
@@ -33,26 +37,26 @@ namespace Auth.WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return StatusCode(403, "Invalid login or password");
+                return StatusCode(403, ex.Message);
             }
         }
 
-        [SetRoute("LogInByToken")]
-        [HttpGet]
-        public async Task<ActionResult> LogInByToken(string? Token = null)
-        {
-            try
-            {
-                var result = await _query.LogInByToken(Token);
-                if(string.IsNullOrEmpty(result)) return StatusCode(500, "Token null or expired");
+        //[SetRoute("LogInByToken")]
+        //[HttpGet]
+        //public async Task<ActionResult> LogInByToken(string? Token = null)
+        //{
+        //    try
+        //    {
+        //        var result = await _query.LogInByToken(Token);
+        //        if(string.IsNullOrEmpty(result)) return StatusCode(500, "Token null or expired");
 
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                return StatusCode(403, "Token null or expired");
-            }
-        }
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.Message);
+        //        return StatusCode(403, "Token null or expired");
+        //    }
+        //}
     }
 }

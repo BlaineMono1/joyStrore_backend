@@ -57,56 +57,50 @@ namespace Service.Application.Service.GamesQuery
         {
             var result = new List<SectionDto>();
 
-            try
-            {
-                _logger.LogInformation("Fetching all sections.");
-                var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(se => se.Product).ToList();
 
-                
-                foreach (var section in sections)
+            _logger.LogInformation("Fetching all sections.");
+            var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(se => se.Product).ToList();
+
+
+            foreach (var section in sections)
+            {
+                if (section.Products is null || section.Products.Count < 1)
                 {
-                    if (section.Products is null || section.Products.Count < 1)
-                    {
-                        _logger.LogWarning("Section {SectionName} has no products.", section.Name);
-                        continue;
-                    }
-                    var sectionDto = new SectionDto
-                    {
-                        Name = section.Name,
-                    };
-                    foreach (var sectionProduct in section.Products)
-                    {
-
-                        var product = sectionProduct.Product;
-
-                        var addOn = (await _addOnRepository.GetById(product.TypeId));
-                        var edition = (await _editionRepository.GetById(product.TypeId));
-
-                        var dto = new GamesListDto
-                        {
-                            Name = product.Type == "Game" ? edition.Name : addOn.Name,
-                            ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
-                            ProductId = product.Guid,
-                            Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
-                            Discount = product.DiscountPercent
-                        };
-                        dto.Jprice = await _calculatePrice.CalcJprice(dto.Price);
-
-                        sectionDto.Editions.Add(dto);
-                    }
-                    result.Add(sectionDto);
-
+                    _logger.LogWarning("Section {SectionName} has no products.", section.Name);
+                    continue;
                 }
+                var sectionDto = new SectionDto
+                {
+                    Name = section.Name,
+                };
+                foreach (var sectionProduct in section.Products)
+                {
+
+                    var product = sectionProduct.Product;
+
+                    var addOn = (await _addOnRepository.GetById(product.TypeId));
+                    var edition = (await _editionRepository.GetById(product.TypeId));
+
+                    var dto = new GamesListDto
+                    {
+                        Name = product.Type == "Game" ? edition.Name : addOn.Name,
+                        ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
+                        ProductId = product.Guid,
+                        Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
+                        Discount = product.DiscountPercent
+                    };
+                    dto.Jprice = await _calculatePrice.CalcJprice(dto.Price);
+
+                    sectionDto.Editions.Add(dto);
+                }
+                result.Add(sectionDto);
+
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving the games list.");
-                throw;
-            }
+
 
             return result;
         }
 
-         
+
     }
 }

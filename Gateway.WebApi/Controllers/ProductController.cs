@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Application.Extension.Pagination;
 using Service.Application.Service.ProductQuery;
 using Service.Application.Service.ProductQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -12,15 +13,13 @@ namespace Gateway.WebApi.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly IProductRepository<Product> _productRepository;
         private readonly ProductQuery _productQuery;
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(ProductQuery productQuery, ILogger<ProductController> logger, IProductRepository<Product> productRepository)
+        public ProductController(ProductQuery productQuery, ILogger<ProductController> logger)
         {
             _productQuery = productQuery;
             _logger = logger;
-            _productRepository = productRepository;
         }
 
         /// <summary>
@@ -34,7 +33,12 @@ namespace Gateway.WebApi.Controllers
                 var product = await _productQuery.GetProduct(ProductId);
                 return Ok(product);
             }
-            catch(Exception ex)
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
@@ -56,6 +60,7 @@ namespace Gateway.WebApi.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
             }
         }
@@ -70,6 +75,11 @@ namespace Gateway.WebApi.Controllers
             {
                 var result = await _productQuery.DropDownList(productId);
                 return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
             }
             catch (Exception ex)
             {

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.AddOnsQuery.Dto;
 using Service.Application.Service.AddOnsQuery;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -28,14 +29,18 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching group add ons list");
                 var addOnsList = await _addOnsQuery.GroupAddOnsList();
                 return Ok(addOnsList);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching group add ons list.");
-                return StatusCode(500, "An error occurred while retrieving the group add ons list.");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -48,14 +53,18 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching add ons list with id {id}", id);
                 var addOns = await _addOnsQuery.AddOnsList(id);
                 return Ok(addOns);
             }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching add ons list.");
-                return StatusCode(500, "An error occurred while retrieving the add ons list.");
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
