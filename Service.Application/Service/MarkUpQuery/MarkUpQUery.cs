@@ -31,6 +31,7 @@ namespace Service.Application.Service.MarkUpQuery
             result.AddRange(settings.Select(item => new PercentDto
             {
                 Id = item.Guid,
+                Price = item.Price,
                 Percent = item.Percent
             }
             ));

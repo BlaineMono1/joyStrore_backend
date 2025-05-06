@@ -79,6 +79,7 @@ namespace Service.Application.Service.ProductQuery
 
                     var edition = (await _editonRepository.GetListQuery()).Include(e => e.Game)
                         .Include(e => e.EditionGeners).ThenInclude(eg => eg.Geners).FirstOrDefault(e => e.Guid == product.TypeId);
+                    result.Name = edition.Name;
                     result.Image = edition.Image;
                     result.Geners = edition.EditionGeners.Select(eg => eg.Geners.Name).ToList();
                     result.RealiseDate = edition.Release;
@@ -91,6 +92,7 @@ namespace Service.Application.Service.ProductQuery
                 case "AddOn":
 
                     var addOn = await _addOnRepository.GetById(product.TypeId);
+                    result.Name = addOn.Name;
                     result.Image = addOn.Image;
                     result.Platforms = addOn.Platform;
                     break;
@@ -98,6 +100,7 @@ namespace Service.Application.Service.ProductQuery
                 case "Subscription":
 
                     var sub = await _subscriptionRepository.GetById(product.TypeId);
+                    result.Name = sub.Name;
                     result.Image = sub.Image;
                     result.Platforms = sub.Platform;
                     break;

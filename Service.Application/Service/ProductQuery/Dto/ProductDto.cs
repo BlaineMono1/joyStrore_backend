@@ -4,6 +4,7 @@ namespace Service.Application.Service.ProductQuery.Dto
     public class ProductDto
     {
         public Guid ProductId { get; set; }
+        public string Name { get; set; }
         public string ProductType { get; set; }
         public string Image { get; set; }
         public List<string>? Geners { get; set; }
