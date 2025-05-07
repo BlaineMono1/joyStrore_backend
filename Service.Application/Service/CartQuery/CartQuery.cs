@@ -50,10 +50,9 @@ namespace Service.Application.Service.CartQuery
             {
                 throw new NotFoundException(nameof(User), tgId);
             }
+            var cart = new List<CartItemDto>();
 
             var userCartItems = user.Cart.CartItems.ToList(); // Загружаем в память
-
-            var cart = new List<CartItemDto>();
 
             foreach (var item in userCartItems)
             {
@@ -112,7 +111,8 @@ namespace Service.Application.Service.CartQuery
                 Email = settings?.EmailPsStore ?? "",
                 PayEmail = user.Email ?? "",
                 Password = settings?.PasswordPsStore ?? "",
-                Code = settings?.Code ?? ""
+                Code = settings?.Code ?? "",
+                CartSize = cart.Count
             };
 
             return result;
