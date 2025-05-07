@@ -7,5 +7,6 @@
         public string Password { get; set; }
         public string Code { get; set; }
         public string PayEmail { get; set; }
+        public int CartSize { get; set; }
     }
 }
