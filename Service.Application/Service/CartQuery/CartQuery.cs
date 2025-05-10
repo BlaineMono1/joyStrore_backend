@@ -69,7 +69,7 @@ namespace Service.Application.Service.CartQuery
                         tmp.EditionName = edition.EditionType;
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         tmp.Platform = edition.Platform;
@@ -81,7 +81,7 @@ namespace Service.Application.Service.CartQuery
                         tmp.EditionName = "";
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         tmp.Platform = addOn.Platform;
@@ -93,7 +93,7 @@ namespace Service.Application.Service.CartQuery
                         tmp.EditionName = "";
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         tmp.Platform = sub.Platform;

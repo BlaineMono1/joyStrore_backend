@@ -56,7 +56,7 @@ namespace Service.Application.Service.GamesQuery
         public async Task<List<SectionDto>> GamesList()
         {
             var result = new List<SectionDto>();
-
+            var region = _regionFromCookie.GetUserRegion();
 
             _logger.LogInformation("Fetching all sections.");
             var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(se => se.Product).ToList();
@@ -87,7 +87,7 @@ namespace Service.Application.Service.GamesQuery
                         ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
                         ProductId = product.Guid,
                         Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
-                        Discount = product.DiscountPercent
+                        Discount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr)
                     };
                     dto.Jprice = await _calculatePrice.CalcJprice(dto.Price);
 

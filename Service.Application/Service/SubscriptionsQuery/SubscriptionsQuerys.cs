@@ -15,18 +15,20 @@ namespace Service.Application.Service.SubscriptionsQuery
         private readonly ISubscriptionRepository<Subscription> _subscriptionRepository;
         private readonly ICalculationService _calculatePrice;
         private readonly ILogger<SubscriptionsQuerys> _logger;
+        private readonly IDataFromCookie _dataFromCookie;
 
         public SubscriptionsQuerys(ICalculationService calculatePrice,
             ILogger<SubscriptionsQuerys> logger,
             IProductRepository<Product> productRepository,
-            ISubscriptionRepository<Subscription> subscriptionRepository)
+            ISubscriptionRepository<Subscription> subscriptionRepository,
+            IDataFromCookie dataFromCookie)
         {
             _calculatePrice = calculatePrice;
             _logger = logger;
 
             _productRepository = productRepository;
             _subscriptionRepository = subscriptionRepository;
-
+            _dataFromCookie = dataFromCookie;
         }
 
         /// <summary>
@@ -34,44 +36,40 @@ namespace Service.Application.Service.SubscriptionsQuery
         /// </summary>
         public async Task<List<SubscriptionsListDto>> GetSubscriptionsList()
         {
-            
-                var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
-                _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
+            var region = _dataFromCookie.GetUserRegion();
+            var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
-                var tasks = subscriptions.Select(async sub =>
+            _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
+
+            var tasks = subscriptions.Select(async sub =>
+            {
+
+                var product = await _productRepository.GetById(sub.ProductId)
+                        ?? throw new NotFoundException(nameof(Product), sub.ProductId);
+
+                var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
+                var jPrice = await _calculatePrice.CalcJprice(price);
+
+                return new SubscriptionsListDto
                 {
-                    try
-                    {
-                        var product = await _productRepository.GetById(sub.ProductId)
-                            ?? throw new NotFoundException(nameof(Product), sub.ProductId);
+                    ProductId = (await _productRepository.GetEntityType(sub.Guid)).Guid,
+                    Name = sub.Name,
+                    ImagePath = sub.Image,
+                    Dicount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr),
+                    Price = price,
+                    Jprice = jPrice,
+                    SectionName = sub.SectionName
 
-                        var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
-                        var jPrice = await _calculatePrice.CalcJprice(price);
+                };
 
-                        return new SubscriptionsListDto
-                        {
-                            ProductId = (await _productRepository.GetEntityType(sub.Guid)).Guid,
-                            Name = sub.Name,
-                            ImagePath = sub.Image,
-                            Dicount = product.DiscountPercent,
-                            Price = price,
-                            Jprice = jPrice,
-                            SectionName = sub.SectionName
-                            
-                        };
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error processing subscription {SubscriptionId}", sub.Guid);
-                        return null;
-                    }
-                });
 
-                var result = (await Task.WhenAll(tasks)).Where(t => t != null).ToList();
-                _logger.LogInformation("Successfully processed {Count} subscriptions.", result.Count);
+            });
 
-                return result;
+            var result = (await Task.WhenAll(tasks)).Where(t => t != null).ToList();
+            _logger.LogInformation("Successfully processed {Count} subscriptions.", result.Count);
+
+            return result;
 
         }
 
@@ -119,6 +117,7 @@ namespace Service.Application.Service.SubscriptionsQuery
 
         public async Task<List<DiscountSubDto>> GetDiscountSubList()
         {
+            var region = _dataFromCookie.GetUserRegion();
             var result = new List<DiscountSubDto>();
 
             var settings = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
@@ -126,7 +125,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             result.AddRange(settings.Select(item => new DiscountSubDto
             {
                 Id = item.Guid,
-                Percent = item.Product.DiscountPercent,
+                Percent = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr),
                 SectionName = item.SectionName,
                 Duration = item.Duration
             }
@@ -135,22 +134,22 @@ namespace Service.Application.Service.SubscriptionsQuery
             return result;
         }
 
-        public async Task UpdateSubDiscount(Guid SubId, string Percent)
-        {
-            if (decimal.Parse(Percent) < 0) throw new BadRequestExeption("Price can't be lower then 0");
-            if (decimal.Parse(Percent) > 100) throw new BadRequestExeption("Price can't be greater then 100");
+    //    public async Task UpdateSubDiscount(Guid SubId, string Percent)
+    //    {
+    //        if (decimal.Parse(Percent) < 0) throw new BadRequestExeption("Price can't be lower then 0");
+    //        if (decimal.Parse(Percent) > 100) throw new BadRequestExeption("Price can't be greater then 100");
 
-            var product = await _productRepository.GetEntityType(SubId);
+    //        var product = await _productRepository.GetEntityType(SubId);
 
-            if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
+    //        if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
 
-            product.DiscountPercent = Percent;
+    //        product.DiscountPercent = Percent;
 
-            if (decimal.Parse(Percent) > 0) product.DiscountDate = DateTime.MaxValue;
-            else if (decimal.Parse(Percent) == 0) product.DiscountDate = null;
+    //        if (decimal.Parse(Percent) > 0) product.DiscountDate = DateTime.MaxValue;
+    //        else if (decimal.Parse(Percent) == 0) product.DiscountDate = null;
 
-            await _productRepository.Update(product);
-        }
+    //        await _productRepository.Update(product);
+    //    }
 
     }
 }

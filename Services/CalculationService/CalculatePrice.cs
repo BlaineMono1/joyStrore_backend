@@ -16,6 +16,7 @@ namespace Services.CalculationService
         private readonly IRepository<SettingPrice> _settingPriceRepository;
         private readonly IRepository<PriceSettingSubscription> _priceSettingSubscription;
         private readonly IRepository<LoyaltySetting> _loyaltySettingRepository;
+        private readonly IProductRepository<Product> _productRepository;
         private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
         
@@ -29,7 +30,8 @@ namespace Services.CalculationService
             ILogger<CalculatePrice> logger,
             IHttpContextAccessor httpContextAccessor,
             IDataFromCookie regionFromCookie,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            IProductRepository<Product> productRepository)
         {
             _settingPriceRepository = settingPriceRepository;
             _priceSettingSubscription = priceSettingSubscription;
@@ -39,6 +41,7 @@ namespace Services.CalculationService
            
             _regionFromCookie = regionFromCookie;
             _cacheService = cacheService;
+            _productRepository = productRepository;
         }
 
         private async Task<decimal> GetPrice(string region, decimal? price)
@@ -101,7 +104,7 @@ namespace Services.CalculationService
             return price.Value * exchangeRate;
         }
 
-        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type)
+        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type, Guid? id = null)
         {
             var region = _regionFromCookie.GetUserRegion();
             try
@@ -124,9 +127,7 @@ namespace Services.CalculationService
                 var rubPrice = await GetPrice(region, price);
 
                 decimal priceWithMarkup = 0;
-                // Fetch markup data from the repository
-                //var markupGame = (await _settingPriceRepository.GetListQuery()).OrderByDescending(p => p.Price).FirstOrDefault(p => rubPrice >= p.Price);
-                //var markupSub = (await _priceSettingSubscription.GetListQuery()).FirstOrDefault(s => s.Region == region);
+                
                 var prices = new PricesDto();
                 decimal p = 0M;
                 foreach (var t in prices.l) 
@@ -145,7 +146,7 @@ namespace Services.CalculationService
                 }
                 decimal? markupGame = null;
                 markupGame = decimal.Parse(cachedData);
-                if (markupGame == null) //|| markupSub == null)
+                if (markupGame == null)
                 {
                     _logger.LogError("Markup data not found for the given price: {Price}.", rubPrice);
                     throw new Exception("Markup data not found.");
@@ -161,7 +162,13 @@ namespace Services.CalculationService
                         break;
 
                     case "Subscription":
-                        priceWithMarkup = 0;//rubPrice * markupSub.Percent + rubPrice;
+                        if (id is null) throw new Exception("Null sub Guid");
+                        var product = await _productRepository.GetById(id.Value);
+                        if (product is null) throw new Exception($"product with Guid {id} not found");
+                        var sub = await _productRepository.GetTypeEntity<Subscription>(product);
+                        var markupSub = (await _priceSettingSubscription.GetListQuery()).Where(p => p.SubscriptionId == sub.Guid).FirstOrDefault(p => p.Region == region);
+                        if (markupSub is null) throw new Exception($"markup for Sub with Guid {sub.Guid} not found");
+                        priceWithMarkup = rubPrice * markupSub.Percent + rubPrice;
                         break;
 
                     default:

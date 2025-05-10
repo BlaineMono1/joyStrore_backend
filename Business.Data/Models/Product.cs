@@ -21,14 +21,20 @@ namespace Business.Data.Models
         /// Цена в лирах
         /// </summary>
         public decimal? PriceTr {  get; set; }
-        /// Процент скидки
+        /// Процент скидки UAH
         /// </summary>
-        public string? DiscountPercent {  get; set; }
-
+        public string? DiscountPercentUa {  get; set; }
+        /// Процент скидки TRY
+        /// </summary>
+        public string? DiscountPercentTr { get; set; }
         /// <summary>
-        /// Длительность скидки 
+        /// Длительность скидки UAH
         /// </summary>
-        public DateTime? DiscountDate { get; set; }
+        public DateTime? DiscountDateUa { get; set; }
+        /// <summary>
+        /// Длительность скидки TRY
+        /// </summary>
+        public DateTime? DiscountDateTr { get; set; }
 
 
         #endregion

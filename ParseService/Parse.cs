@@ -13,6 +13,7 @@ using Business.Data.Iterfaces.Store;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
+using Npgsql.Internal.Postgres;
 
 namespace Services.ParseService
 {
@@ -96,7 +97,101 @@ namespace Services.ParseService
             public DateTime? DiscountDate { get; set; }
         }
 
+        public async Task CreatuSub()
+        {
+            var imageUrlPsPlus = "https://image.api.playstation.com/vulcan/ap/rnd/202204/0810/803Pm8uJoZ2Cl9fJPvTaXHqG.png";
+            var imageUrlGtaPlus = "https://image.api.playstation.com/vulcan/ap/rnd/202310/1615/3d064be55673552147bde9d990e3b1251375b0f56a7dcfe3.png";
 
+            var productPsPlus = new Product();
+
+            var PsSub = new Subscription
+            {
+                CusaCodeTr = "CusacodeTr",
+                CusaCodeUa = "CusacodeUa",
+                Name = "PlayStation Plus",
+                Type = "Subscription",
+                Image = imageUrlPsPlus,
+                Platform = "PS4|PS5",
+                Duration = "1 Месяц",
+                SectionName = "PlayStation Plus",
+                ProductId = productPsPlus.Guid                
+            };
+
+            productPsPlus.TypeId = PsSub.Guid;
+            productPsPlus.Type = PsSub.Type;
+            productPsPlus.PriceUa = 416;
+            productPsPlus.PriceTr = 388;
+            productPsPlus.DiscountPercentUa = "";
+            productPsPlus.DiscountPercentTr = "";
+            productPsPlus.DiscountDateUa = null;
+            productPsPlus.DiscountDateTr = null;
+
+            var psPriceUa = new PriceSettingSubscription
+            {
+                Region = "UAH",
+                Percent = 0,
+                SubscriptionId = PsSub.Guid
+            };
+
+            var psPriceTr = new PriceSettingSubscription
+            {
+                Region = "TRY",
+                Percent = 0,
+                SubscriptionId = PsSub.Guid
+            };
+
+            await _productRepository.Add(productPsPlus);
+            await _subscriptionRepository.Add(PsSub);
+
+            await _priceSettingSubscription.Add(psPriceUa);
+            await _priceSettingSubscription.Add(psPriceTr);
+
+
+            var productGtaPlus = new Product();
+
+            var GtaSub = new Subscription
+            {
+                CusaCodeTr = "CusacodeTr",
+                CusaCodeUa = "CusacodeUa",
+                Name = "Gta Plus",
+                Type = "Subscription",
+                Image = imageUrlGtaPlus,
+                Platform = "PS4|PS5",
+                Duration = "1 Месяц",
+                SectionName = "Gta Plus",
+                ProductId = productGtaPlus.Guid
+            };
+
+            productGtaPlus.TypeId = PsSub.Guid;
+            productGtaPlus.Type = PsSub.Type;
+            productGtaPlus.PriceUa = 416;
+            productGtaPlus.PriceTr = 388;
+            productGtaPlus.DiscountPercentUa = "";
+            productGtaPlus.DiscountPercentTr = "";
+            productGtaPlus.DiscountDateUa = null;
+            productGtaPlus.DiscountDateTr = null;
+
+            var gtaPriceUa = new PriceSettingSubscription
+            {
+                Region = "UAH",
+                Percent = 0,
+                SubscriptionId = PsSub.Guid
+            };
+
+            var gtaPriceTr = new PriceSettingSubscription
+            {
+                Region = "TRY",
+                Percent = 0,
+                SubscriptionId = PsSub.Guid
+            };
+
+            await _productRepository.Add(productGtaPlus);
+            await _subscriptionRepository.Add(GtaSub);
+
+            await _priceSettingSubscription.Add(gtaPriceUa);
+            await _priceSettingSubscription.Add(gtaPriceTr);
+
+        }
 
         public async Task CreateGameMarcup()
         {
@@ -291,8 +386,8 @@ namespace Services.ParseService
                                 productDto.Type = edition.Type;
                                 productDto.PriceUa = edition.Product.PriceUa;
                                 productDto.PriceTr = edition.Product.PriceTr;
-                                productDto.DiscountPercent = edition.Product.DiscountPercent;
-                                productDto.DiscountDate = edition.Product.DiscountDate is null ? null : DateTime.SpecifyKind((global::System.DateTime)edition.Product.DiscountDate, DateTimeKind.Utc);
+                               // productDto.DiscountPercent = edition.Product.DiscountPercent;
+                                //productDto.DiscountDate = edition.Product.DiscountDate is null ? null : DateTime.SpecifyKind((global::System.DateTime)edition.Product.DiscountDate, DateTimeKind.Utc);
 
                                 editionDto.Product = productDto;
 
