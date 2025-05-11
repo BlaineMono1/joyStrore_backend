@@ -55,16 +55,16 @@ namespace Service.Application.Service.ProductQuery
         public async Task<ProductDto> GetProduct(Guid ProductId)
         {
             var result = new ProductDto();
-
+            var region = _regionFromCookie.GetUserRegion();
             var product = await _productRepository.GetById(ProductId);
             if (product is null) throw new NotFoundException(nameof(Product), ProductId);
             result.ProductId = ProductId;
             result.ProductType = product.Type;
-            result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
+            result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, (product.Type == "Subscription" ? product.Guid : null));
             result.JPrice = await _calculatePrice.CalcJprice(result.Price);
             result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
-            result.Discount = product.DiscountDate;
-            result.DiscountPercent = product.DiscountPercent;
+            result.Discount = (region == "UAH" ? product.DiscountDateUa : product.DiscountDateTr);
+            result.DiscountPercent = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr);
             var userTg = _regionFromCookie.GetUserTgID();
             var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).Include(u => u.Favorite).ThenInclude(f => f.FavoriteItems)
                 .FirstOrDefault(u => u.TgUserId == userTg);
@@ -173,6 +173,7 @@ namespace Service.Application.Service.ProductQuery
 
         public async Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? FilterGeners, decimal MinPrice, decimal MaxPrice)
         {
+            var region = _regionFromCookie.GetUserRegion();
             var products = (await _productRepository.GetListQuery()).Where(p => p.Type == "Game");
 
             var filteredByName = products;
@@ -217,11 +218,10 @@ namespace Service.Application.Service.ProductQuery
 
             if (byDiscount)
             {
-                result = result.OrderByDescending(p => p.DiscountPercent ?? "0");
+                result = result.OrderByDescending(p => (region == "UAH" ? p.DiscountPercentUa : p.DiscountPercentTr) ?? "0");
             }
 
-            var region = _regionFromCookie.GetUserRegion();
-
+            
             string? cachedData = await _redis.GetAsync(region);
             if (cachedData is null)
             {
@@ -238,7 +238,8 @@ namespace Service.Application.Service.ProductQuery
 
         public async Task<List<ProductListDto>> MapProducts(IEnumerable<Product> source)
         {
-           var result = new List<ProductListDto>();
+            var region = _regionFromCookie.GetUserRegion();
+            var result = new List<ProductListDto>();
             foreach(var item in source)
             {
                 var t = new ProductListDto();
@@ -247,7 +248,7 @@ namespace Service.Application.Service.ProductQuery
                 t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Name : (await _addOnRepository.GetById(item.TypeId)).Name;
                 t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type);
                 t.Jprice = await _calculatePrice.CalcJprice(t.Price);
-                t.Discount = item.DiscountPercent;
+                t.Discount = (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr);
                 result.Add(t);
             }
             

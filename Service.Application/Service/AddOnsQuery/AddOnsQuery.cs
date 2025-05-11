@@ -58,6 +58,7 @@ namespace Service.Application.Service.AddOnsQuery
 
         public async Task<List<GroupAddOnsDto>> AddOnsList(Guid GroupAddOnId)
         {
+            var region = _regionFromCookie.GetUserRegion();
             var result = new List<GroupAddOnsDto>();
             var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
             if (groupAddOns is null) _logger.LogError("group add on with guid: {guid} is null", GroupAddOnId);
@@ -69,7 +70,7 @@ namespace Service.Application.Service.AddOnsQuery
                 Name = item.Name,
                 Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),
                 JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type)),
-                Discount = item.Product.DiscountPercent
+                Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr)
             });
 
             result.AddRange(await Task.WhenAll(tasks));
@@ -80,34 +81,29 @@ namespace Service.Application.Service.AddOnsQuery
 
         public async Task<List<GameAddOnListDto>> GetGameAddOnList(Guid ProductId)
         {
+            var region = _regionFromCookie.GetUserRegion();
             var result = new List<GameAddOnListDto>();
-            try
-            {
-                var product = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns)
-                    .FirstOrDefault(p => p.Guid == ProductId);
 
-                result.AddRange(await Task.WhenAll(
-                    product.Edition.Game.AddOns.Select(async item =>
-                    new GameAddOnListDto
-                    {
-                        ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid,
-                        AddOnName = item.Name,
-                        GameName = product.Edition.Game.Name,
-                        Image = item.Image,
-                        Platform = item.Platform,
-                        Price = await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type),
-                        JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type)),
-                        DiscountPercent = (await _productRepository.GetEntityType(item.Guid)).DiscountPercent
-                    }
-                    )));
+            var product = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns)
+                .FirstOrDefault(p => p.Guid == ProductId);
 
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+            result.AddRange(await Task.WhenAll(
+                product.Edition.Game.AddOns.Select(async item =>
+                new GameAddOnListDto
+                {
+                    ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid,
+                    AddOnName = item.Name,
+                    GameName = product.Edition.Game.Name,
+                    Image = item.Image,
+                    Platform = item.Platform,
+                    Price = await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type),
+                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type)),
+                    DiscountPercent = (region == "UAH" ? (await _productRepository.GetEntityType(item.Guid)).DiscountPercentUa : (await _productRepository.GetEntityType(item.Guid)).DiscountPercentTr)
+                }
+                )));
+
+            return result;
+
 
         }
     }

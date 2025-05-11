@@ -10,17 +10,14 @@ namespace Business.Data.Models
         /// Куса код игры Украина
         /// </summary>
         public string CusaCodeUa { get; set; }
-
         /// <summary>
         /// Куса код игры Турция
         /// </summary>
         public string CusaCodeTr { get; set; }
-
         /// <summary>
         /// Тип объекта(Игра)
         /// </summary>
         public string?Type {  get; set; }
-
         /// <summary>
         /// Наименование издания 
         /// </summary>
@@ -45,16 +42,18 @@ namespace Business.Data.Models
         /// Что входит в издание
         /// </summary>
         public string? Features { get; set; }
-
         /// <summary>
         /// Релиз игры
         /// </summary>
         public DateTime? Release { get; set; }
-
         /// <summary>
         /// Регион в котором доступна игра
         /// </summary>
         public string Region { get; set; }
+        /// <summary>
+        /// Предзаказ
+        /// </summary>
+        public bool IsPreOrder { get; set; }
         #endregion
 
         #region связи

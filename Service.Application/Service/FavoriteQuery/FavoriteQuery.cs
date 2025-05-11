@@ -43,7 +43,7 @@ namespace Service.Application.Service.FavoriteQuery
 
         public async Task<List<FavoriteDto>> UserFavorite()
         {
-
+            var region = _regionFromCookie.GetUserRegion();
             var tgId = _regionFromCookie.GetUserTgID();
             _logger.LogInformation("Fetching user favorite items for ID: {TgId}", tgId);
 
@@ -70,7 +70,7 @@ namespace Service.Application.Service.FavoriteQuery
                         tmp.EditionName = edition.EditionType;
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         break;
@@ -81,7 +81,7 @@ namespace Service.Application.Service.FavoriteQuery
                         tmp.EditionName = "";
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         break;
@@ -92,7 +92,7 @@ namespace Service.Application.Service.FavoriteQuery
                         tmp.EditionName = "";
                         tmp.Id = item.Guid;
                         tmp.ProductId = item.ProductId;
-                        tmp.Discount = item.Product.DiscountPercent;
+                        tmp.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                         tmp.Price = price;
                         tmp.JPrice = jPrice;
                         break;
