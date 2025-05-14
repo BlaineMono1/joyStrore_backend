@@ -99,30 +99,30 @@ namespace Auth.WebApi.Controllers
         /// </summary>
         /// <param name="SubId"></param>
         /// <param name="Percent"></param>
-        [Authorize(Roles = "Admin")]
-        [HttpPut("UpdateDiscountSub")]
-        public async Task<ActionResult> UpdateDiscountsSub(Guid SubId, string Percent)
-        {
-            try
-            {
-                await _query.UpdateSubDiscount(SubId, Percent);
-                return Ok();
-            }
-            catch (NotFoundException ex)
-            {
-                _logger.LogError(ex.Message);
-                return StatusCode(404, ex.Message);
-            }
-            catch (BadRequestExeption ex)
-            {
-                _logger.LogError(ex.Message);
-                return StatusCode(400, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                return StatusCode(500, ex.Message);
-            }
-        }
+        //[Authorize(Roles = "Admin")]
+        //[HttpPut("UpdateDiscountSub")]
+        //public async Task<ActionResult> UpdateDiscountsSub(Guid SubId, string Percent)
+        //{
+        //    try
+        //    {
+        //        await _query.UpdateSubDiscount(SubId, Percent);
+        //        return Ok();
+        //    }
+        //    catch (NotFoundException ex)
+        //    {
+        //        _logger.LogError(ex.Message);
+        //        return StatusCode(404, ex.Message);
+        //    }
+        //    catch (BadRequestExeption ex)
+        //    {
+        //        _logger.LogError(ex.Message);
+        //        return StatusCode(400, ex.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.Message);
+        //        return StatusCode(500, ex.Message);
+        //    }
+        //}
     }
 }

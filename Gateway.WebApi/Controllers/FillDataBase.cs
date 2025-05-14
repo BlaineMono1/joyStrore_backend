@@ -73,5 +73,19 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<ActionResult> CreateSub()
+        {
+            try
+            {
+                await _parse.CreatuSub();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

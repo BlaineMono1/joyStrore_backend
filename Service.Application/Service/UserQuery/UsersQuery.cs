@@ -127,7 +127,7 @@ namespace Service.Application.Service.UserQuery
                                     result.Name = item.Product.Edition.Name;
                                     result.EditionName = item.Product.Edition.EditionType;
                                     result.Id = item.Product.Edition.Guid;
-                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                                     result.Price = item.Price;
                                     result.JPrice = item.Price;
                                     break;
@@ -136,7 +136,7 @@ namespace Service.Application.Service.UserQuery
                                     result.Name = item.Product.AddOn.Name;
                                     result.EditionName = "";
                                     result.Id = item.Product.AddOn.Guid;
-                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                                     result.Price = item.Price;
                                     result.JPrice = item.Price;
                                     break;
@@ -145,7 +145,7 @@ namespace Service.Application.Service.UserQuery
                                     result.Name = item.Product.Subscription.Name;
                                     result.EditionName = "";
                                     result.Id = item.Product.Subscription.Guid;
-                                    result.Discount = item.Product.DiscountPercent;
+                                    result.Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr);
                                     result.Price = item.Price;
                                     result.JPrice = item.Price;
                                     break;
