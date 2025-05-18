@@ -14,6 +14,22 @@ namespace Business.Data.Models
         /// UserID tg
         /// </summary>
         public string TgUserId { get; set; }
+
+        /// <summary>
+        /// Логин аккаунта ps
+        /// </summary>
+        public string PsLogin { get; set; }
+
+        /// <summary>
+        /// Пароль аккаунта ps
+        /// </summary>
+        public string PsPass { get; set; }
+
+        /// <summary>
+        /// Одноразовый код на вход
+        /// </summary>
+        public string Code { get; set; }
+
         /// <summary>
         /// Номер заказа
         /// </summary>
@@ -30,10 +46,30 @@ namespace Business.Data.Models
         /// </summary>
         public decimal Price { get; set; }
 
+
         /// <summary>
-        /// Сумма за заказ в коинах
+        /// Оплечен ли тавар коинами
         /// </summary>
-        public decimal JPrice { get; set; }
+        public bool IsJPayment { get; set; }
+
+        /// <summary>
+        /// Guid воркера\админа кто взял заказ
+        /// </summary>
+        /// 
+        public Guid? WorkerId { get; set; }
+
+        /// <summary>
+        /// Регион заказа
+        /// </summary>
+        /// 
+        
+        public string Region { get; set; }
+
+        /// <summary>
+        /// Количество Joy+ за заказ
+        /// </summary>
+        /// 
+        public decimal TotalJoyPlus { get; set; }
 
         #endregion
 
