@@ -1,9 +1,11 @@
 ﻿
+using Business.Data.Enums;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Service.Application.Exceptions;
 using Service.Application.Iterfaces;
 using Service.Application.Service.OrderQuery.Dto;
@@ -24,9 +26,11 @@ namespace Service.Application.Service.OrderQuery
         private readonly ICalculationService _calculatePrice;
         private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<OrderQuery> _logger;
+        private readonly IRepository<Admin> _adminRepository;
         public OrderQuery(IUserRepository<User> userRepository, ICalculationService calculatePrice, IDataFromCookie regionFromCookie, 
                          IRepository<Cart> cartRepository, IProductRepository<Product> productRepository, IRepository<Order> orderRepository, 
-                         IRepository<CartItem> cartItemRepository, IRepository<Setting> settingRepository, ILogger<OrderQuery> logger, IRepository<LoyaltyCurrency> loyalitiRepository)
+                         IRepository<CartItem> cartItemRepository, IRepository<Setting> settingRepository, ILogger<OrderQuery> logger, IRepository<LoyaltyCurrency> loyalitiRepository,
+                         IRepository<Admin> adminRepository)
         {
             _userRepository = userRepository;
             _calculatePrice = calculatePrice;
@@ -38,11 +42,12 @@ namespace Service.Application.Service.OrderQuery
             _settingRepository = settingRepository;
             _logger = logger;
             _loyalitiRepository = loyalitiRepository;
+            _adminRepository = adminRepository;
         }
 
-        public async Task<OrdersDto> CreateOrderRub()
+        public async Task CreateOrderRub()
         {
-            var (order, result, totalJPlus) = await ProcessOrder("RUB");
+            var (order, totalJPlus) = await ProcessOrder("RUB");
 
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery())
@@ -58,13 +63,12 @@ namespace Service.Application.Service.OrderQuery
             foreach (var item in order.OrderProductItems)
                 await _cartItemRepository.HardDelete(item.ProductId);
 
-            return result;
         }
 
-        public async Task<OrdersDto> CreateOrderJ()
+        public async Task CreateOrderJ()
         {
-            var (order, result, totalJPlus) = await ProcessOrder("J");
-
+            var (order, totalJPlus) = await ProcessOrder("J");
+            order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery())
                 .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
@@ -82,29 +86,232 @@ namespace Service.Application.Service.OrderQuery
             foreach (var item in order.OrderProductItems)
                 await _cartItemRepository.HardDelete(item.ProductId);
 
-            return result;
         }
 
-        public async Task<List<OrderListDto>> OrdersList()
+        public async Task<List<OrderListDto>> WorkerOrders(Guid WorkerId)
         {
            
             var result = new List<OrderListDto>();
 
-            var orders = (await _orderRepository.GetListQuery()).OrderByDescending(o => o.DateCreate);
-
-            result.AddRange(orders.Select(item => new OrderListDto
+            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == WorkerId).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).ToList();
+            
+            foreach (var order in orders)
             {
-                OrderId = item.Guid,
-                UserChatId = item.TgUserId,
-                OrderCode = item.OrderCode,
-                Price = item.Price,
-                JPrice = item.JPrice,
-                Created = item.DateCreate
-            }));
+                var t = new OrderListDto
+                {
+                    OrderId = order.Guid,
+                    OrderCode = order.OrderCode,
+                    UserChatId = order.TgUserId,
+                    Items = new List<OrderItemsDto>(),
+                    UserInfo = new UserPsInfo
+                    {
+                       Login = order.PsLogin,
+                       Password = order.PsPass,
+                       Code = order.Code
+                    }
+                };
+
+                foreach(var item in order.OrderProductItems)
+                {
+                    switch (item.Product.Type)
+                    {
+                        case "Game":
+                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            break;
+                        case "AddOn":
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            break;
+                        default:
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            break;
+                    }
+
+                }
+
+                result.Add(t);
+            }
+
+            return result;
+
+        }
+
+
+        public async Task<List<OrderListDto>> NotTakenOreders()
+        {
+            var result = new List<OrderListDto>();
+
+            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == null).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
+
+            foreach (var order in orders)
+            {
+                var t = new OrderListDto
+                {
+                    OrderId = order.Guid,
+                    OrderCode = order.OrderCode,
+                    UserChatId = order.TgUserId,
+                    Items = new List<OrderItemsDto>(),
+                    UserInfo = new UserPsInfo
+                    {
+                        Login = order.PsLogin,
+                        Password = order.PsPass,
+                        Code = order.Code
+                    }
+                };
+
+                foreach (var item in order.OrderProductItems)
+                {
+                    switch (item.Product.Type)
+                    {
+                        case "Game":
+                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            break;
+                        case "AddOn":
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            break;
+                        default:
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            break;
+                    }
+
+                }
+
+                result.Add(t);
+            }
 
             return result;
         }
-           
+
+
+        public async Task TakeOrder(Guid OrderId, Guid WorkerId)
+        {
+            var oreder = await _orderRepository.GetById(OrderId);
+
+            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+
+            if (oreder.WorkerId != null) throw new BadRequestExeption("Order is alredy taken");
+
+            oreder.WorkerId = WorkerId;
+            oreder.Status = OrderStatus.Processing;
+
+            await _orderRepository.Update(oreder);
+
+        }
+
+        public async Task RefuseOrder(Guid OrderId, Guid WorkerId)
+        {
+            var oreder = await _orderRepository.GetById(OrderId);
+
+            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+
+            if (oreder.WorkerId != WorkerId) throw new BadRequestExeption("This is not your order");
+
+            oreder.WorkerId = null;
+
+            oreder.Status= OrderStatus.Created;
+
+            await _orderRepository.Update(oreder);
+        }
+
+        public async Task OrderDone(Guid OrderId, Guid WorkerId)
+        {
+            var oreder = await _orderRepository.GetById(OrderId);
+
+            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+
+            if (oreder.WorkerId != WorkerId) throw new BadRequestExeption("This is not your order");
+
+            oreder.Status = OrderStatus.Completed;
+
+            await _orderRepository.Update(oreder);
+        }
+
+        public async Task CancelOrder(Guid OrderId)
+        {
+            
+            var oreder = await _orderRepository.GetById(OrderId);
+
+            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+
+            var loyality = (await _loyalitiRepository.GetListQuery())
+                .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == oreder.TgUserId);
+            if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), oreder.TgUserId);
+
+            if (!oreder.IsJPayment)
+            {
+                //логика отметы за рубли
+            }
+            else
+            {
+                loyality.BalanceJoy += oreder.Price;
+                                
+            }
+
+            loyality.BalanceJoyPlus -= Math.Min(loyality.BalanceJoyPlus, oreder.TotalJoyPlus); // какая логика у того что joy+ меньше чем в заказе.
+
+            oreder.Status = OrderStatus.Cancelled;
+
+            await _loyalitiRepository.Update(loyality);
+            await _orderRepository.Update(oreder);
+
+        }
+
+        public async Task<List<AllOrdersDto>> GetAllOrdersList()
+        {
+            var result = new List<AllOrdersDto>();
+
+            var orders = (await _orderRepository.GetListQuery()).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
+
+            foreach (var order in orders)
+            {
+                var t = new AllOrdersDto
+                {
+                    OrderId = order.Guid,
+                    OrderCode = order.OrderCode,
+                    UserChatId = order.TgUserId,
+                    OrderPrice = order.Price,
+                    ManagerLogin = (order.WorkerId is null ? "" : (await _adminRepository.GetById(order.WorkerId.Value)).Login),
+                    Status = order.Status.ToString(),
+                    Items = new List<OrderItemsDto>(),
+                    UserInfo = new UserPsInfo
+                    {
+                        Login = order.PsLogin,
+                        Password = order.PsPass,
+                        Code = order.Code
+                    }
+                };
+
+                foreach (var item in order.OrderProductItems)
+                {
+                    switch (item.Product.Type)
+                    {
+                        case "Game":
+                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            break;
+                        case "AddOn":
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            break;
+                        default:
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            break;
+                    }
+
+                }
+
+                result.Add(t);
+            }
+
+            return result;
+        }
+
         public async Task<List<UserOrdersListDto>> GetUserOrldersList()
         {
             var result = new List<UserOrdersListDto>();
@@ -169,24 +376,18 @@ namespace Service.Application.Service.OrderQuery
 
         }
 
-        private async Task<(Order order, OrdersDto result, decimal totalJPlus)> ProcessOrder(string paymentType)
+        private async Task<(Order order, decimal totalJPlus)> ProcessOrder(string paymentType)
         {
             var region = _regionFromCookie.GetUserRegion();
             var userTgId = _regionFromCookie.GetUserTgID();
-
-            var result = new OrdersDto
-            {
-                Region = region,
-                TgUserId = userTgId,
-                Products = new List<OrderItemDto>()
-            };
 
             var order = new Order
             {
                 OrderProductItems = new List<OrderProductItem>(),
                 Status = Business.Data.Enums.OrderStatus.Created,
                 OrderCode = GenerateCode(Guid.NewGuid()),
-                TgUserId = userTgId
+                TgUserId = userTgId,
+                Region = region,
             };
 
             var user = (await _userRepository.GetListQuery())
@@ -247,7 +448,6 @@ namespace Service.Application.Service.OrderQuery
                     Price = paymentType == "J" ? orderItem.JPrice : orderItem.Price
                 };
 
-                result.Products.Add(orderItemDto);
                 totalPrice += orderItemDto.Price;
                 totalJPlus += await _calculatePrice.CalcJplus(orderItem.JPrice);
 
@@ -260,15 +460,12 @@ namespace Service.Application.Service.OrderQuery
                 .FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
             if (userSettings is null) throw new NotFoundException(nameof(Setting), userTgId);
 
-            result.OrderCode = order.OrderCode;
-            result.TotalPrice = order.Price;
-            result.UserPaid = result.TotalPrice;
-            result.Status = order.Status.ToString();
-            result.PsLogin = userSettings.EmailPsStore;
-            result.PsPass = userSettings.PasswordPsStore;
-            result.PsCode = userSettings.Code;
+            order.PsLogin = userSettings.EmailPsStore;
+            order.PsPass = userSettings.PasswordPsStore;
+            order.Code = userSettings.Code;
+            order.TotalJoyPlus = totalJPlus;
 
-            return (order, result, totalJPlus);
+            return (order, totalJPlus);
         }
         private static string GenerateCode(Guid guid)
         {

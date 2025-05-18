@@ -30,8 +30,8 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                var result = await _query.CreateOrderRub();
-                return Ok(result);
+                await _query.CreateOrderRub();
+                return Ok();
             }
             catch (BadRequestExeption ex)
             {
@@ -60,8 +60,8 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                var result = await _query.CreateOrderJ();
-                return Ok(result);
+                await _query.CreateOrderJ();
+                return Ok();
             }
             catch (BadRequestExeption ex)
             {
