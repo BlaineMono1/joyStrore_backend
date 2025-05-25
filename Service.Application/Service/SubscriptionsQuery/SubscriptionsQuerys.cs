@@ -97,7 +97,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             if (Percent < 0) throw new BadRequestExeption("Invalid Percent value");
 
             var markUp = await _priceStiingSubRepository.GetById(Id) 
-                ?? throw new NotFoundException(nameof(PriceSettingSubscription), $"Subscription mark up with Guid not found");
+                ?? throw new NotFoundException(nameof(PriceSettingSubscription), $"Subscription mark up with Guid {Id} not found");
 
             markUp.Percent = Percent;
 
