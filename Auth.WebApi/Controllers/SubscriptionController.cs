@@ -26,17 +26,26 @@ namespace Auth.WebApi.Controllers
         }
 
         /// <summary>
-        /// Вывод списка подписок для обновления цены в админ панели
+        /// Список подписок для обновления процентов
         /// </summary>
-        /// 
         [Authorize(Roles = "Admin")]
-        [HttpGet("GetPriceSubList")]
-        public async Task<ActionResult<List<PriceSubDto>>> GetPricesSubList()
+        [HttpGet("get-mark-up-subscriptions-list")]
+        public async Task<ActionResult<List<MarkUpSubDto>>> GetMarkUpList()
         {
             try
             {
-                var result = await _query.GetPriceSubList();
+                var result = await _query.GetMarkUpList();
                 return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (BadRequestExeption ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(400, ex.Message);
             }
             catch (Exception ex)
             {
@@ -44,19 +53,17 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
-        /// Обновление цены подписки в админ панели
+        /// Список подписок для обновления процентов
         /// </summary>
-        /// <param name="SubId"></param>
-        /// <param name="Price"></param>
-        /// <param name="Region"></param>
         [Authorize(Roles = "Admin")]
-        [HttpPut("update-sub-price")]
-        public async Task<ActionResult> UpdatePriceSub(Guid SubId, decimal Price, string Region)
+        [HttpPut("update-mark-up-subscriptions")]
+        public async Task<ActionResult<List<MarkUpSubDto>>> UpdatePercent(Guid Id, decimal Percent)
         {
             try
             {
-               await _query.UpdateSubPrice(SubId, Price, Region);
+                await _query.UpdatePercent(Id, Percent);
                 return Ok();
             }
             catch (NotFoundException ex)
@@ -75,54 +82,6 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        /// <summary>
-        /// Список подписок для обновления процентов в админ панели
-        /// </summary>
-        [Authorize(Roles = "Admin")]
-        [HttpGet("get-discound-sub-list")]
-        public async Task<ActionResult<List<DiscountSubDto>>> GetDiscountsSubList()
-        {
-            try
-            {
-                var result = await _query.GetDiscountSubList();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                return StatusCode(500, ex.Message);
-            }
-        }
 
-        /// <summary>
-        /// Обновление скидки подписки в админ панели
-        /// </summary>
-        /// <param name="SubId"></param>
-        /// <param name="Percent"></param>
-        //[Authorize(Roles = "Admin")]
-        //[HttpPut("UpdateDiscountSub")]
-        //public async Task<ActionResult> UpdateDiscountsSub(Guid SubId, string Percent)
-        //{
-        //    try
-        //    {
-        //        await _query.UpdateSubDiscount(SubId, Percent);
-        //        return Ok();
-        //    }
-        //    catch (NotFoundException ex)
-        //    {
-        //        _logger.LogError(ex.Message);
-        //        return StatusCode(404, ex.Message);
-        //    }
-        //    catch (BadRequestExeption ex)
-        //    {
-        //        _logger.LogError(ex.Message);
-        //        return StatusCode(400, ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex.Message);
-        //        return StatusCode(500, ex.Message);
-        //    }
-        //}
     }
 }

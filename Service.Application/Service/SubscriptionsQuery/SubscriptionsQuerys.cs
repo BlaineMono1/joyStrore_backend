@@ -1,4 +1,5 @@
-﻿using Business.Data.Iterfaces.Store;
+﻿using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ namespace Service.Application.Service.SubscriptionsQuery
     {
         private readonly IProductRepository<Product> _productRepository;
         private readonly ISubscriptionRepository<Subscription> _subscriptionRepository;
+        private readonly IRepository<PriceSettingSubscription> _priceStiingSubRepository;
         private readonly ICalculationService _calculatePrice;
         private readonly ILogger<SubscriptionsQuerys> _logger;
         private readonly IDataFromCookie _dataFromCookie;
@@ -21,7 +23,8 @@ namespace Service.Application.Service.SubscriptionsQuery
             ILogger<SubscriptionsQuerys> logger,
             IProductRepository<Product> productRepository,
             ISubscriptionRepository<Subscription> subscriptionRepository,
-            IDataFromCookie dataFromCookie)
+            IDataFromCookie dataFromCookie,
+            IRepository<PriceSettingSubscription> priceStiingSubRepository)
         {
             _calculatePrice = calculatePrice;
             _logger = logger;
@@ -29,6 +32,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             _productRepository = productRepository;
             _subscriptionRepository = subscriptionRepository;
             _dataFromCookie = dataFromCookie;
+            _priceStiingSubRepository = priceStiingSubRepository;
         }
 
         /// <summary>
@@ -68,83 +72,39 @@ namespace Service.Application.Service.SubscriptionsQuery
 
         }
 
-
-        public async Task<List<PriceSubDto>> GetPriceSubList()
+        public async Task<List<MarkUpSubDto>> GetMarkUpList()
         {
-            var result = new List<PriceSubDto>();
+            var result = new List<MarkUpSubDto>();
 
-            var settings = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
-
-            result.AddRange(settings.Select(item => new PriceSubDto
-            {
-                Id = item.Guid,
-                PriceUAH = item.Product.PriceUa,
-                PriceTRY = item.Product.PriceTr,
-                SectionName = item.SectionName,
-                Duration = item.Duration
-            }
-            ));
-
-            return result;
-        }
-
-        public async Task UpdateSubPrice(Guid SubId, decimal Price, string Region)
-        {
-            if (Price < 0) throw new BadRequestExeption("Price can't be lower then 0");
-
-            var product = await _productRepository.GetEntityType(SubId);
-
-            if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
-
-            switch (Region)
-            {
-                case "UAH":
-                    product.PriceUa = Price;
-                    break;
-                case "TRY":
-                    product.PriceTr = Price;
-                    break;
-
-            }
-
-            await _productRepository.Update(product);
-        }
-
-        public async Task<List<DiscountSubDto>> GetDiscountSubList()
-        {
             var region = _dataFromCookie.GetUserRegion();
-            var result = new List<DiscountSubDto>();
 
-            var settings = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
 
-            result.AddRange(settings.Select(item => new DiscountSubDto
+            var markUp = (await _priceStiingSubRepository.GetListQuery()).Include(m => m.Subscription).Where(m => m.Region == region).ToList();
+
+            result.AddRange(markUp.Select(item => new MarkUpSubDto
             {
                 Id = item.Guid,
-                Percent = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr),
-                SectionName = item.SectionName,
-                Duration = item.Duration
+                Name = item.Subscription.Name,
+                Percent = item.Percent
             }
             ));
 
             return result;
         }
 
-    //    public async Task UpdateSubDiscount(Guid SubId, string Percent)
-    //    {
-    //        if (decimal.Parse(Percent) < 0) throw new BadRequestExeption("Price can't be lower then 0");
-    //        if (decimal.Parse(Percent) > 100) throw new BadRequestExeption("Price can't be greater then 100");
+        public async Task UpdatePercent(Guid Id, decimal Percent)
+        {
+            if (Percent < 0) throw new BadRequestExeption("Invalid Percent value");
 
-    //        var product = await _productRepository.GetEntityType(SubId);
+            var markUp = await _priceStiingSubRepository.GetById(Id) 
+                ?? throw new NotFoundException(nameof(PriceSettingSubscription), $"Subscription mark up with Guid {Id} not found");
 
-    //        if (product == null) throw new NotFoundException(nameof(Subscription), SubId);
+            markUp.Percent = Percent;
 
-    //        product.DiscountPercent = Percent;
+            await _priceStiingSubRepository.Update(markUp);
 
-    //        if (decimal.Parse(Percent) > 0) product.DiscountDate = DateTime.MaxValue;
-    //        else if (decimal.Parse(Percent) == 0) product.DiscountDate = null;
-
-    //        await _productRepository.Update(product);
-    //    }
+        }
+        
 
     }
 }
