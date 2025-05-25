@@ -42,32 +42,27 @@ namespace Service.Application.Service.SubscriptionsQuery
 
             _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
 
-            var tasks = subscriptions.Select(async sub =>
+            var result = new List<SubscriptionsListDto>();
+
+            foreach (var sub in subscriptions)
             {
-
                 var product = await _productRepository.GetById(sub.ProductId)
-                        ?? throw new NotFoundException(nameof(Product), sub.ProductId);
+                                ?? throw new NotFoundException(nameof(Product), sub.ProductId);
 
-                var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type);
+                var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, product.Guid);
                 var jPrice = await _calculatePrice.CalcJprice(price);
 
-                return new SubscriptionsListDto
+                result.Add(new SubscriptionsListDto
                 {
-                    ProductId = (await _productRepository.GetEntityType(sub.Guid)).Guid,
+                    ProductId = product.Guid,
                     Name = sub.Name,
                     ImagePath = sub.Image,
                     Dicount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr),
                     Price = price,
                     Jprice = jPrice,
                     SectionName = sub.SectionName
-
-                };
-
-
-            });
-
-            var result = (await Task.WhenAll(tasks)).Where(t => t != null).ToList();
-            _logger.LogInformation("Successfully processed {Count} subscriptions.", result.Count);
+                });
+            }
 
             return result;
 
