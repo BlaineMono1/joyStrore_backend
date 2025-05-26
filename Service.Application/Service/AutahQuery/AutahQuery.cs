@@ -52,7 +52,7 @@ namespace Service.Application.Service.AutahQuery
                     _logger.LogError($"Token {Token} with adminId {adminId} is bad!!!");
                     return Guid.Empty;
                 }
-                return admin.Role.Guid;
+                return admin.Guid;
             }
 
             return Guid.Empty;
