@@ -60,7 +60,7 @@ namespace Service.Application.Service.ProductQuery
             if (product is null) throw new NotFoundException(nameof(Product), ProductId);
             result.ProductId = ProductId;
             result.ProductType = product.Type;
-            result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, (product.Type == "Subscription" ? product.Guid : null));
+            result.Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, ProductId);
             result.JPrice = await _calculatePrice.CalcJprice(result.Price);
             result.JPlus = await _calculatePrice.CalcJplus(result.JPrice);
             result.Discount = (region == "UAH" ? product.DiscountDateUa : product.DiscountDateTr);
@@ -246,7 +246,7 @@ namespace Service.Application.Service.ProductQuery
                 t.ProductId = item.Guid;
                 t.ImageFilepath = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Image : (await _addOnRepository.GetById(item.TypeId)).Image;
                 t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Name : (await _addOnRepository.GetById(item.TypeId)).Name;
-                t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type);
+                t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type, item.Guid);
                 t.Jprice = await _calculatePrice.CalcJprice(t.Price);
                 t.Discount = (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr);
                 result.Add(t);

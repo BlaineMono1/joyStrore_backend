@@ -43,9 +43,9 @@ namespace Service.Application.Service.CartQuery
 
             var region = _regionFromCookie.GetUserRegion();
             var tgId = _regionFromCookie.GetUserTgID();
-            _logger.LogInformation("Fetching user cart for TG ID: {TgId}", tgId);
-
-            var user = (await _userRepository.GetListQuery()).Include(u => u.Cart).ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
+           
+            var user = (await _userRepository.GetListQuery()).Include(u => u.Cart)
+                .ThenInclude(c => c.CartItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
             if (user == null)
             {
                 throw new NotFoundException(nameof(User), tgId);
@@ -56,7 +56,7 @@ namespace Service.Application.Service.CartQuery
 
             foreach (var item in userCartItems)
             {
-                var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
+                var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, item.ProductId);
                 var jPrice = await _calculatePrice.CalcJprice(price);
                 var tmp = new CartItemDto();
 

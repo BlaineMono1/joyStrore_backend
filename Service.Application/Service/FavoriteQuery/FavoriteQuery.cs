@@ -47,7 +47,8 @@ namespace Service.Application.Service.FavoriteQuery
             var tgId = _regionFromCookie.GetUserTgID();
             _logger.LogInformation("Fetching user favorite items for ID: {TgId}", tgId);
 
-            var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite).ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
+            var user = (await _userRepository.GetListQuery()).Include(u => u.Favorite)
+                .ThenInclude(c => c.FavoriteItems).ThenInclude(i => i.Product).FirstOrDefault(u => u.TgUserId == tgId);
             if (user == null)
             {
                 throw new NotFoundException(nameof(User), tgId);
@@ -58,7 +59,7 @@ namespace Service.Application.Service.FavoriteQuery
             var result = new List<FavoriteDto>();
             foreach (var item in favoriteItems)
             {
-                var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type);
+                var price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type, item.ProductId);
                 var jPrice = await _calculatePrice.CalcJprice(price);
                 var tmp = new FavoriteDto();
                 switch (item.Product.Type)
