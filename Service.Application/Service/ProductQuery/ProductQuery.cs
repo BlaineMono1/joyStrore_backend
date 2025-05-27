@@ -187,7 +187,11 @@ namespace Service.Application.Service.ProductQuery
 
             if (FilterGeners != null && FilterGeners.Any())
             {
-                filteredByGener = filteredByName.Where(p => p.Edition.EditionGeners.Any(g => FilterGeners.Contains(g.Geners.Name)));
+                filteredByGener = filteredByName
+                                    .Where(p =>
+                                        FilterGeners.All(filterGenre =>
+                                            p.Edition.EditionGeners
+                                                .Any(g => g != null && g.Geners.Name == filterGenre)));
 
             }
 

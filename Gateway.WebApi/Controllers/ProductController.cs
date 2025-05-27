@@ -52,7 +52,6 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                _logger.LogInformation("Filtering games");
                 var games = await _productQuery.FilterProducts(name, filterName, platform, byDesc, byDiscount, geners, MinPrice, MaxPrice);
 
                 var result = await _productQuery.MapProducts(new PaginatedList<Product>(games, Page).Entities);
