@@ -53,7 +53,7 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
         {
             object? result = (await GetListQuery()).FirstOrDefault(e => e.TypeId == id);
             return result == null
-                ? throw new KeyNotFoundException($"Produnct with type id: {id} not found")
+                ? throw new KeyNotFoundException($"Product with type id: {id} not found")
                 : result as T ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");
             
         }        

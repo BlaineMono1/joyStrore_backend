@@ -2,7 +2,9 @@
 {
     public class AddOnsListDto
     {
-        public Guid ProductId { get; set; }
+        public Guid GroupAddOnId { get; set; }
         public string ImagePath { get; set; }
+
+        public string GroupName { get; set; }
     }
 }
