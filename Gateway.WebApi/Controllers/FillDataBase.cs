@@ -87,5 +87,20 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
+
+        [HttpGet]
+        public async Task<ActionResult> CreateAddOns()
+        {
+            try
+            {
+                await _parse.Create_addOn();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

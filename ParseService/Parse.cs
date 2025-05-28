@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 using Npgsql.Internal.Postgres;
+using System.Reflection.Metadata;
 
 namespace Services.ParseService
 {
@@ -32,6 +33,7 @@ namespace Services.ParseService
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<Section> _sectionRepository;
         private readonly IRepository<Subscription> _subscriptionRepository;
+        private readonly IRepository<AddOn> _addOnRepository;
         public Parse(ILogger<Parse> logger, IRepository<Game> gameRepository,
         IRepository<Edition> editionRepository,
         IRepository<Product> productRepository,
@@ -42,7 +44,8 @@ namespace Services.ParseService
         IRepository<PriceSettingSubscription> priceSettingSubscription,
         IRepository<User> userRepo,
         IRepository<Section> sectionRepository,
-        IRepository<Subscription> subscriptionRepository
+        IRepository<Subscription> subscriptionRepository,
+        IRepository<AddOn> addOnRepository
         )
         {
             _logger = logger;
@@ -58,6 +61,7 @@ namespace Services.ParseService
             _userRepo = userRepo;
             _sectionRepository = sectionRepository;
             _subscriptionRepository = subscriptionRepository;
+            _addOnRepository = addOnRepository;
         }
 
         private class GameInfo
@@ -175,14 +179,14 @@ namespace Services.ParseService
             {
                 Region = "UAH",
                 Percent = 0,
-                SubscriptionId = PsSub.Guid
+                SubscriptionId = GtaSub.Guid
             };
 
             var gtaPriceTr = new PriceSettingSubscription
             {
                 Region = "TRY",
                 Percent = 0,
-                SubscriptionId = PsSub.Guid
+                SubscriptionId = GtaSub.Guid
             };
 
             await _productRepository.Add(productGtaPlus);
@@ -190,6 +194,67 @@ namespace Services.ParseService
 
             await _priceSettingSubscription.Add(gtaPriceUa);
             await _priceSettingSubscription.Add(gtaPriceTr);
+
+        }
+
+        public async Task Create_addOn()
+        {
+            var product1 = new Product();
+
+            var product2 = new Product();
+            _logger.LogInformation(Guid.Parse("41c339a6-a6ca-4eed-ad94-0f4b245d9a37").ToString());
+            var game = await _gameRepository.GetById(Guid.Parse("41c339a6-a6ca-4eed-ad94-0f4b245d9a37"));
+            var add_on1 = new AddOn
+            {
+                CusaCodeUa = "CusaCodeUa",
+                CusaCodeTr = "CusaCodeTr",
+                TypeName = "AddOn",
+                Name = "Red Dead Online - 150 Gold Bars",
+                Type = "AddOn",
+                Image = "https://image.api.playstation.com/cdn/EP1004/CUSA08519_00/jqNN0VH6CM4bKbwVGtqp85Mk4ZKU35w9.png",
+                Platform = "PS4",
+                GameId = game.Guid,
+                ProductId = product1.Guid
+            };
+
+            var add_on2 = new AddOn
+            {
+                CusaCodeUa = "CusaCodeUa",
+                CusaCodeTr = "CusaCodeTr",
+                TypeName = "AddOn",
+                Name = "Red Dead Online - 55 Gold Bars",
+                Type = "AddOn",
+                Image = "https://image.api.playstation.com/cdn/EP1004/CUSA08519_00/jqNN0VH6CM4bKbwVGtqp85Mk4ZKU35w9.png",
+                Platform = "PS4",
+                GameId = game.Guid,
+                ProductId = product2.Guid
+            };
+
+            product1.TypeId = add_on1.Guid;
+            product1.Type = "AddOn";
+            product1.PriceUa = 2307;
+            product1.PriceTr = 2168;
+            product1.DiscountPercentUa = "0";
+            product1.DiscountPercentTr = "0";
+            product1.DiscountDateUa = null;
+            product1.DiscountDateTr = null;
+
+
+            product2.TypeId = add_on2.Guid;
+            product2.Type = "AddOn";
+            product2.PriceUa = 1154;
+            product2.PriceTr = 1134;
+            product2.DiscountPercentUa = "0";
+            product2.DiscountPercentTr = "0";
+            product2.DiscountDateUa = null;
+            product2.DiscountDateTr = null;
+
+
+            await _productRepository.Add(product1);
+            await _productRepository.Add(product2);
+
+            await _addOnRepository.Add(add_on1);
+            await _addOnRepository.Add(add_on2);
 
         }
 

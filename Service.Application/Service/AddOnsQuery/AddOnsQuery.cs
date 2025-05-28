@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Iterfaces;
 using Service.Application.Service.AddOnsQuery.Dto;
+using System.Xml.Linq;
+using static Service.Application.Exceptions.NotFoundExeption;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace Service.Application.Service.AddOnsQuery
@@ -41,17 +44,21 @@ namespace Service.Application.Service.AddOnsQuery
         {
             var result = new List<AddOnsListDto>();
 
-            _logger.LogInformation("Fetching all addons.");
-            var addOns = await _groupAddOnRepository.GetAllList();
 
-            var dtoTasks = addOns.Select(async a => new AddOnsListDto
+            var addOnsGroup = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ToList();
+
+            foreach (var group in addOnsGroup)
             {
-                ProductId = (await _productRepository.GetEntityType(a.Guid)).Guid,
-                ImagePath = a.FilePathImage
-            });
+                var t = new AddOnsListDto
+                {
+                    ImagePath = group.FilePathImage,
+                    GroupName = group.Name,
+                    GroupAddOnId = group.Guid
+                };
 
-            var dtoResults = await Task.WhenAll(dtoTasks);
-            result.AddRange(dtoResults);
+                result.Add(t);
+            }
+
 
             return result;
         }
@@ -60,20 +67,28 @@ namespace Service.Application.Service.AddOnsQuery
         {
             var region = _regionFromCookie.GetUserRegion();
             var result = new List<GroupAddOnsDto>();
-            var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).ThenInclude(a => a.Product).FirstOrDefault(g => g.Guid == GroupAddOnId);
-            if (groupAddOns is null) _logger.LogError("group add on with guid: {guid} is null", GroupAddOnId);
-            else if (groupAddOns.AddOns is null) _logger.LogWarning("add ons in group add on with guid: {guid} is null", GroupAddOnId);
-            var tasks = groupAddOns.AddOns.Select(async item => new GroupAddOnsDto
-            {
-                ProductId = item.Product.Guid,
-                Image = item.Image,
-                Name = item.Name,
-                Price = await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type),
-                JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(item.Product.PriceUa, item.Product.PriceTr, item.Product.Type)),
-                Discount = (region == "UAH" ? item.Product.DiscountPercentUa : item.Product.DiscountPercentTr)
-            });
+            var groupAddOns = (await _groupAddOnRepository.GetListQuery()).Include(a => a.AddOns).FirstOrDefault(g => g.Guid == GroupAddOnId);
+            if (groupAddOns is null) throw new NotFoundException(nameof(GroupAddOn), GroupAddOnId);
 
-            result.AddRange(await Task.WhenAll(tasks));
+
+            foreach (var item in groupAddOns.AddOns)
+            {
+                var product = (await _productRepository.GetEntityType(item.Guid));
+                var t = new GroupAddOnsDto
+                {
+
+                    ProductId = product.Guid,
+                    Image = item.Image,
+                    Name = item.Name,
+                    Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
+                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type)),
+                    Discount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr)
+                };
+
+                result.Add(t);
+            }
+
+
 
             return result;
         }
