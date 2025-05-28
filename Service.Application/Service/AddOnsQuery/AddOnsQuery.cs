@@ -102,20 +102,27 @@ namespace Service.Application.Service.AddOnsQuery
             var product = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).ThenInclude(g => g.AddOns)
                 .FirstOrDefault(p => p.Guid == ProductId);
 
-            result.AddRange(await Task.WhenAll(
-                product.Edition.Game.AddOns.Select(async item =>
-                new GameAddOnListDto
+            if (product is null) throw new NotFoundException(nameof(Product), ProductId);
+
+            foreach (var item in product.Edition.Game.AddOns)
+            {
+               
+                var t = new GameAddOnListDto
                 {
+
                     ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid,
                     AddOnName = item.Name,
                     GameName = product.Edition.Game.Name,
                     Image = item.Image,
                     Platform = item.Platform,
-                    Price = await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type),
-                    JPrice = await _calculatePrice.CalcJprice(await _calculatePrice.CalcPrice((await _productRepository.GetEntityType(item.Guid)).PriceUa, (await _productRepository.GetEntityType(item.Guid)).PriceTr, (await _productRepository.GetEntityType(item.Guid)).Type)),
-                    DiscountPercent = (region == "UAH" ? (await _productRepository.GetEntityType(item.Guid)).DiscountPercentUa : (await _productRepository.GetEntityType(item.Guid)).DiscountPercentTr)
-                }
-                )));
+                    Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
+                    DiscountPercent = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr) ?? "0"
+                };
+
+                t.JPrice = await _calculatePrice.CalcJprice(t.Price);
+
+                result.Add(t);
+            }
 
             return result;
 

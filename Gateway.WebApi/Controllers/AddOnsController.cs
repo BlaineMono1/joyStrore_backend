@@ -45,15 +45,15 @@ namespace Gateway.WebApi.Controllers
         }
 
         /// <summary>
-        /// Вывод списка Донатов
+        /// Вывод списка Донатов в разделе с донатами
         /// </summary>
         /// <returns></returns>
-        [HttpGet("by-game")]
-        public async Task<ActionResult<List<GroupAddOnsDto>>> GetAddOnsList(Guid id)
+        [HttpGet("by-group")]
+        public async Task<ActionResult<List<GroupAddOnsDto>>> GetAddOnsList(Guid GroupAddOnId)
         {
             try
             {
-                var addOns = await _addOnsQuery.AddOnsList(id);
+                var addOns = await _addOnsQuery.AddOnsList(GroupAddOnId);
                 return Ok(addOns);
             }
             catch (NotFoundException ex)
@@ -68,7 +68,29 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Вывод списка Донатов для продукта
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("by-product")]
+        public async Task<ActionResult<List<GroupAddOnsDto>>> GetGameAddOnList(Guid PrdocutId)
+        {
+            try
+            {
+                var addOns = await _addOnsQuery.GetGameAddOnList(PrdocutId);
+                return Ok(addOns);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
 
     }
 }
