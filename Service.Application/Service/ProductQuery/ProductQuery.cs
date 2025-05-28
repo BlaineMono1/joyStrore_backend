@@ -252,7 +252,7 @@ namespace Service.Application.Service.ProductQuery
                 t.Name = item.Type == "Game" ? (await _editonRepository.GetById(item.TypeId)).Name : (await _addOnRepository.GetById(item.TypeId)).Name;
                 t.Price = await _calculatePrice.CalcPrice(item.PriceUa, item.PriceTr, item.Type, item.Guid);
                 t.Jprice = await _calculatePrice.CalcJprice(t.Price);
-                t.Discount = (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr);
+                t.Discount = (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr) ?? "0";
                 result.Add(t);
             }
             
