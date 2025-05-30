@@ -114,7 +114,7 @@ namespace Auth.WebApi.Controllers
         /// <summary>
         /// Получение секции по id в админ панели
         /// </summary>
-         /// <param name="SectionId"></param>
+        /// <param name="SectionId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("get-section")]
 
@@ -225,6 +225,175 @@ namespace Auth.WebApi.Controllers
             try
             {
                 await _query.UpdateProduct(ProductId, Name, url);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
+        /// <summary>
+        /// Получение списка донатов в админ панели
+        /// </summary>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpGet("get-addon-list")]
+        public async Task<ActionResult<List<AddOnSectionList>>> GetAddOnsGroups()
+        {
+
+            try
+            {
+                var result = await _query.GetAddOnsGroups();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Добавление групы с донатом
+        /// </summary>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpGet("add-addon-group")]
+        public async Task<ActionResult<List<AddOnSectionList>>> CreateAddOnGroup(string Name, string Url)
+        {
+
+            try
+            {
+               await _query.CreateAddOnGroup(Name, Url);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Изменение имени списка донатов в админ панели
+        /// </summary>
+        /// <param name="GroupdId"></param>
+        /// <param name="Name"></param>
+        /// /// <param name="Url"></param>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpPut("update-addon-group")]
+        public async Task<ActionResult> UpdateGroupAddOn(Guid GroupdId, string Name, string Url)
+        {
+            try
+            {
+                await _query.UpdateAddOnGroup(GroupdId, Name, Url);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+        /// <summary>
+        /// Удаление списка донатов в админ панели
+        /// </summary>
+        /// <param name="GroupdId"></param>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpDelete("delete-group")]
+        public async Task<ActionResult> DeleteAddOnGroup(Guid GroupdId)
+        {
+            try
+            {
+                await _query.DeleteAddOnGroup(GroupdId);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// cписок донатов в группе
+        /// </summary>
+        /// <param name="GroupdId"></param>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpGet("add-on-in-group")]
+        public async Task<ActionResult<List<AddOnsLst>>> AddOnsInGroup(Guid GroupdId)
+        {
+            try
+            {
+                var result = await _query.AddOnsInGroup(GroupdId);
+                return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// cписок донатов в группе
+        /// </summary>
+        /// <param name="GroupdId"></param>
+        /// <param name="AddOnId"></param>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpGet("add-addon-in-group")]
+        public async Task<ActionResult> AddAddOnInGroup(Guid AddOnId, Guid GroupdId)
+        {
+            try
+            {
+                await _query.AddAddOnInGroup(AddOnId, GroupdId);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// cписок донатов в группе
+        /// </summary>
+        /// <param name="GroupdId"></param>
+        /// <param name="AddOnId"></param>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpDelete("delete-addon-in-group")]
+        public async Task<ActionResult> DeleteAddOnFromGroup(Guid AddOnId, Guid GroupdId)
+        {
+            try
+            {
+                await _query.DeleteAddOnFromGroup(AddOnId, GroupdId);
                 return Ok();
             }
             catch (NotFoundException ex)
