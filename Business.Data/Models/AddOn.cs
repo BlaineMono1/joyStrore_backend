@@ -37,6 +37,11 @@ namespace Business.Data.Models
         /// Платформа игры PS4 | PS5
         /// </summary>
         public string? Platform { get; set; }
+
+        /// <summary>
+        /// Группа с аддонами
+        /// </summary>
+        public Guid? GroupAddOnId { get; set; }
       
         #endregion
 
