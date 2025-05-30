@@ -1,8 +1,10 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Service.Application.Exceptions;
 using Service.Application.Service.SectionQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
 
@@ -17,9 +19,11 @@ namespace Service.Application.Service.SectionQuery
         private readonly IRepository<Edition> _editionRepository;
         private readonly IRepository<SectionsProducts> _sectionsEditionsRepository;
         private readonly IRepository<AddOn> _addOnRepository;
+        private readonly IRepository<GroupAddOn> _groupAddOnRepository;
 
         public SectionQuery(ILogger<SectionQuery> logger, IRepository<Section> sectionRepository, IProductRepository<Product> productRepository, 
-            IRepository<SectionsProducts> sectionsEditionsRepository, IRepository<Edition> editionRepository, IRepository<AddOn> addOnRepository)
+            IRepository<SectionsProducts> sectionsEditionsRepository, IRepository<Edition> editionRepository, IRepository<AddOn> addOnRepository,
+            IRepository<GroupAddOn> groupAddOnRepository)
         {
             _logger = logger;
             _sectionRepository = sectionRepository;
@@ -27,6 +31,7 @@ namespace Service.Application.Service.SectionQuery
             _sectionsEditionsRepository = sectionsEditionsRepository;
             _editionRepository = editionRepository;
             _addOnRepository = addOnRepository;
+            _groupAddOnRepository = groupAddOnRepository;
         }
 
 
@@ -207,6 +212,93 @@ namespace Service.Application.Service.SectionQuery
             {
                 throw new NotFoundException(nameof(product.Type), product.TypeId);
             }
+        }
+
+        public async Task<List<AddOnSectionList>> GetAddOnsGroups()
+        {
+            var lst = await _groupAddOnRepository.GetAllList(); 
+
+            var result = new List<AddOnSectionList>();
+
+            result.AddRange(lst.Select(item => new AddOnSectionList
+            {
+                GroupId = item.Guid,
+                Name = item.Name
+            }));
+
+            return result;
+        }
+
+        public async Task CreateAddOnGroup(string Name, string Url)
+        {
+            var g = new GroupAddOn
+            {
+                Name = Name,
+                FilePathImage = Url,
+                AddOns = new List<AddOn>()
+            };
+
+            await _groupAddOnRepository.Add(g);
+        }
+
+        public async Task DeleteAddOnGroup(Guid GroupId)
+        {
+            var g = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId)
+                    ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
+
+            await _groupAddOnRepository.HardDelete(GroupId);
+        }
+
+        public async Task UpdateAddOnGroup(Guid GroupId, string Name, string Url)
+        {
+            var g = await _groupAddOnRepository.GetById(GroupId) ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
+
+            g.Name = Name;
+            g.FilePathImage = Url;
+
+            await _groupAddOnRepository.Update(g);
+        }
+
+        public async Task<List<AddOnsLst>> AddOnsInGroup(Guid GroupId)
+        {
+            var g = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId) 
+                ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
+
+            var result = new List<AddOnsLst>();
+
+            result.AddRange(g.AddOns.Select(item => new AddOnsLst
+            {
+                AddOnId = item.Guid,
+                Name = item.Name
+            }));
+
+            return result;
+        }
+
+        public async Task DeleteAddOnFromGroup(Guid AddOnId, Guid GroupId)
+        {
+            var group = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId)
+               ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
+
+            var addOn = await _addOnRepository.GetById(AddOnId) ?? throw new NotFoundException(nameof(AddOn), AddOnId);
+
+            if (addOn.GroupAddOnId != null && addOn.GroupAddOnId != GroupId) throw new BadRequestExeption("Add on not in this group");
+
+            addOn.GroupAddOnId = null;
+
+            await _addOnRepository.Update(addOn);
+        }
+
+        public async Task AddAddOnInGroup(Guid AddOnId, Guid GroupId)
+        {
+            var g = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId)
+              ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
+
+            var addOn = await _addOnRepository.GetById(AddOnId) ?? throw new NotFoundException(nameof(AddOn), AddOnId);
+
+            addOn.GroupAddOnId = GroupId;
+
+            await _addOnRepository.Update(addOn);
         }
     }
 }
