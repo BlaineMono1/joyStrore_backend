@@ -357,7 +357,7 @@ namespace Auth.WebApi.Controllers
         }
 
         /// <summary>
-        /// cписок донатов в группе
+        /// добавить донат в группу
         /// </summary>
         /// <param name="GroupdId"></param>
         /// <param name="AddOnId"></param>
@@ -383,7 +383,7 @@ namespace Auth.WebApi.Controllers
         }
 
         /// <summary>
-        /// cписок донатов в группе
+        /// удалить донат из группы
         /// </summary>
         /// <param name="GroupdId"></param>
         /// <param name="AddOnId"></param>
