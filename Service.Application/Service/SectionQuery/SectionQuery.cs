@@ -275,12 +275,14 @@ namespace Service.Application.Service.SectionQuery
             return result;
         }
 
-        public async Task DeleteAddOnFromGroup(Guid AddOnId, Guid GroupId)
+        public async Task DeleteAddOnFromGroup(Guid ProductId, Guid GroupId)
         {
             var group = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId)
                ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
 
-            var addOn = await _addOnRepository.GetById(AddOnId) ?? throw new NotFoundException(nameof(AddOn), AddOnId);
+            var product = await _productRepository.GetById(ProductId) ?? throw new NotFoundException(nameof(Product), ProductId); ;
+
+            var addOn = await _addOnRepository.GetById(product.TypeId) ?? throw new NotFoundException(nameof(AddOn), product.TypeId);
 
             if (addOn.GroupAddOnId != null && addOn.GroupAddOnId != GroupId) throw new BadRequestExeption("Add on not in this group");
 
@@ -289,12 +291,16 @@ namespace Service.Application.Service.SectionQuery
             await _addOnRepository.Update(addOn);
         }
 
-        public async Task AddAddOnInGroup(Guid AddOnId, Guid GroupId)
+        public async Task AddAddOnInGroup(Guid ProductId, Guid GroupId)
         {
             var g = (await _groupAddOnRepository.GetListQuery()).Include(gr => gr.AddOns).FirstOrDefault(gr => gr.Guid == GroupId)
               ?? throw new NotFoundException(nameof(GroupAddOn), GroupId);
 
-            var addOn = await _addOnRepository.GetById(AddOnId) ?? throw new NotFoundException(nameof(AddOn), AddOnId);
+            var product = await _productRepository.GetById(ProductId) ?? throw new NotFoundException(nameof(Product), ProductId); ;
+
+            var addOn = await _addOnRepository.GetById(product.TypeId) ?? throw new NotFoundException(nameof(AddOn), product.TypeId);
+
+            if (addOn.GroupAddOnId != null) throw new BadRequestExeption($"Addon alredy in group {addOn.GroupAddOnId}");
 
             addOn.GroupAddOnId = GroupId;
 

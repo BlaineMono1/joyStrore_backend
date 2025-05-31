@@ -360,14 +360,14 @@ namespace Auth.WebApi.Controllers
         /// добавить донат в группу
         /// </summary>
         /// <param name="GroupdId"></param>
-        /// <param name="AddOnId"></param>
+        /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("add-addon-in-group")]
-        public async Task<ActionResult> AddAddOnInGroup(Guid AddOnId, Guid GroupdId)
+        public async Task<ActionResult> AddAddOnInGroup(Guid ProductId, Guid GroupdId)
         {
             try
             {
-                await _query.AddAddOnInGroup(AddOnId, GroupdId);
+                await _query.AddAddOnInGroup(ProductId, GroupdId);
                 return Ok();
             }
             catch (NotFoundException ex)
@@ -386,14 +386,14 @@ namespace Auth.WebApi.Controllers
         /// удалить донат из группы
         /// </summary>
         /// <param name="GroupdId"></param>
-        /// <param name="AddOnId"></param>
+        /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpDelete("delete-addon-in-group")]
-        public async Task<ActionResult> DeleteAddOnFromGroup(Guid AddOnId, Guid GroupdId)
+        public async Task<ActionResult> DeleteAddOnFromGroup(Guid ProductId, Guid GroupdId)
         {
             try
             {
-                await _query.DeleteAddOnFromGroup(AddOnId, GroupdId);
+                await _query.DeleteAddOnFromGroup(ProductId, GroupdId);
                 return Ok();
             }
             catch (NotFoundException ex)
