@@ -120,7 +120,7 @@ namespace Service.Application.Service.ProductQuery
             switch (product.Type)
             {
                 case "Game":
-                    var edition = await _editonRepository.GetById(product.TypeId);
+                    var edition = await _editonRepository.GetById(product.TypeId) ?? throw new NotFoundException(nameof(Edition), product.TypeId);
                     var editions = (await _gameRepository.GetListQuery()).Include(g => g.Editions).FirstOrDefault(g => g.Editions.Contains(edition)).Editions;
 
                     result.AddRange(await Task.WhenAll(
@@ -135,10 +135,12 @@ namespace Service.Application.Service.ProductQuery
                     break;
                 case "AddOn":
 
-                    var addOn = (await _addOnRepository.GetListQuery()).Include(a => a.Game).ThenInclude(g => g.AddOns).FirstOrDefault(a => a.Guid == product.TypeId);
+                    var addOn = await _addOnRepository.GetById(product.TypeId) ?? throw new NotFoundException(nameof(AddOn), product.TypeId);
+                    var game = (await _gameRepository.GetListQuery()).Include(g => g.AddOns).FirstOrDefault(g => g.Guid == addOn.GameId)
+                        ?? throw new NotFoundException(nameof(Game), addOn.GameId);
 
                     result.AddRange(await Task.WhenAll(
-                        addOn.Game.AddOns.Where(a => a.Guid != product.TypeId).Select(
+                        game.AddOns.Where(a => a.Guid != product.TypeId).Select(
                             async item =>
                             new DropDownListDto
                             {
@@ -150,7 +152,8 @@ namespace Service.Application.Service.ProductQuery
 
                 case "Subscription":
 
-                    var sub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(s => s.Guid == product.TypeId); //текущая подписка
+                    var sub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(s => s.Guid == product.TypeId)
+                        ?? throw new NotFoundException(nameof(Subscription), product.TypeId); //текущая подписка
                     var groupSubs = (await _subscriptionRepository.GetListQuery()).Where(s => s.Name == sub.Name && s.Guid != sub.Guid).ToList();
 
                     result.AddRange(await Task.WhenAll(
