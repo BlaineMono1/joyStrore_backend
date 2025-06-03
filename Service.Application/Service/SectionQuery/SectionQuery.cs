@@ -266,11 +266,11 @@ namespace Service.Application.Service.SectionQuery
 
             var result = new List<AddOnsLst>();
 
-            result.AddRange(g.AddOns.Select(item => new AddOnsLst
+            result.AddRange(await Task.WhenAll(g.AddOns.Select(async item => new AddOnsLst
             {
-                AddOnId = item.Guid,
+                ProductId = (await _productRepository.GetEntityType(item.Guid)).Guid,
                 Name = item.Name
-            }));
+            })));
 
             return result;
         }

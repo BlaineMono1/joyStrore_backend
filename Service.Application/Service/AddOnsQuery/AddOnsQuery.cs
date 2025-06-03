@@ -1,6 +1,7 @@
 ﻿using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,6 @@ using Service.Application.Iterfaces;
 using Service.Application.Service.AddOnsQuery.Dto;
 using System.Xml.Linq;
 using static Service.Application.Exceptions.NotFoundExeption;
-using static System.Net.Mime.MediaTypeNames;
 
 
 namespace Service.Application.Service.AddOnsQuery
@@ -17,7 +17,8 @@ namespace Service.Application.Service.AddOnsQuery
     {
         private readonly IRepository<GroupAddOn> _groupAddOnRepository;
         private readonly IProductRepository<Product> _productRepository;
-
+        private readonly IRepository<Game> _gameRepository;
+        private readonly IRepository<AddOn> _addOnRepository;
 
         private readonly ICalculationService _calculatePrice;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -29,7 +30,9 @@ namespace Service.Application.Service.AddOnsQuery
             IDataFromCookie regionFromCookie,
             ILogger<AddOnsQuery> logger,
             IRepository<GroupAddOn> groupAddOnRepository,
-            IProductRepository<Product> productRepository
+            IProductRepository<Product> productRepository,
+            IRepository<Game> gameRepository,
+            IRepository<AddOn> addOnRepository
             )
         {
             _calculatePrice = calculatePrice;
@@ -39,6 +42,8 @@ namespace Service.Application.Service.AddOnsQuery
 
             _groupAddOnRepository = groupAddOnRepository;
             _productRepository = productRepository;
+            _gameRepository = gameRepository;
+            _addOnRepository = addOnRepository;
         }
         public async Task<List<AddOnsListDto>> GroupAddOnsList()
         {
@@ -127,6 +132,45 @@ namespace Service.Application.Service.AddOnsQuery
             return result;
 
 
+        }
+
+        public async Task CreateAddOn(string CusaCodeUa, string CusaCodeTr, string TypeName, string Name, string Type, string Image, string Platform, Guid GroupAddOnId, 
+            Guid GameId, decimal PriceUa, decimal PriceTr, decimal DiscountPercentUa, decimal DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        {
+            var addon = new AddOn();
+            var product = new Product();
+            var game = await _gameRepository.GetById(GameId) ?? throw new NotFoundException(nameof(Game), GameId);
+
+            product.PriceUa = PriceUa;
+            product.PriceTr = PriceTr;
+            product.DiscountPercentUa = DiscountPercentUa.ToString();
+            product.DiscountPercentTr = DiscountPercentTr.ToString();
+            product.DiscountDateUa = DiscountDateUa;
+            product.DiscountDateTr = DiscountDateTr;
+            product.Type = Type;
+            product.TypeId = addon.Guid;
+
+            addon.CusaCodeUa = CusaCodeUa;
+            addon.CusaCodeTr = CusaCodeTr;
+            addon.TypeName = TypeName;
+            addon.Name = Name;
+            addon.Type = Type;
+            addon.Image = Image;
+            addon.Platform = Platform;
+            addon.ProductId = product.Guid;
+            addon.GameId = GameId;
+
+
+            await _productRepository.Add(product);
+            await _addOnRepository.Add(addon);
+        }
+
+        public async Task DeleteAddOn(Guid AddOnId)
+        {
+            var product = await _productRepository.GetEntityType(AddOnId);
+
+            await _productRepository.HardDelete(product.Guid);
+            await _addOnRepository.HardDelete(AddOnId);
         }
     }
 }
