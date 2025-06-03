@@ -1,9 +1,11 @@
 ﻿using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Service.Application.Exceptions;
 using Service.Application.Service.MarkUpQuery.Dto;
+using System.Text.Json;
 using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.MarkUpQuery
@@ -12,13 +14,14 @@ namespace Service.Application.Service.MarkUpQuery
     {
         private readonly IRepository<SettingPrice> _setingPriceRepository;
         private readonly IRepository<PriceSettingSubscription> _subSettingPrice;
-
+        private readonly IRedisRepository _redis;
         private readonly ILogger<MarkUpQUery> _logger;
 
-        public MarkUpQUery(IRepository<SettingPrice> setingPriceRepository, IRepository<PriceSettingSubscription> subSettingPrice, ILogger<MarkUpQUery> logger)
+        public MarkUpQUery(IRepository<SettingPrice> setingPriceRepository, IRepository<PriceSettingSubscription> subSettingPrice, ILogger<MarkUpQUery> logger, IRedisRepository redis)
         {
             _setingPriceRepository = setingPriceRepository;
             _subSettingPrice = subSettingPrice;
+            _redis = redis;
             _logger = logger;
         }
 
@@ -52,12 +55,12 @@ namespace Service.Application.Service.MarkUpQuery
             {
                 throw new BadRequestExeption("Percent can't be lower then 0");
             }
-            if(Percent > 100)
-            {
-                throw new BadRequestExeption("Percent can't be greater then 100");
-            }
 
             current.Percent = Percent;
+            var jsonData = JsonSerializer.Serialize(current.Percent);
+            var key = $"MarkUpGame-{current.Price}";
+
+            await _redis.SetAsync(key, jsonData, null);
 
             await _setingPriceRepository.Update(current);
         }
@@ -92,10 +95,6 @@ namespace Service.Application.Service.MarkUpQuery
             if (Percent < 0)
             {
                 throw new BadRequestExeption("Percent can't be lower then 0");
-            }
-            if (Percent > 100)
-            {
-                throw new BadRequestExeption("Percent can't be greater then 100");
             }
 
             current.Percent = Percent;
