@@ -62,8 +62,10 @@ namespace Services.CalculationService
                 {
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("UAH");
+                   
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
                 }
+                if (cachedData.Contains(',')) cachedData = cachedData.Replace(',', '.');
                 if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
@@ -86,6 +88,7 @@ namespace Services.CalculationService
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
 
                 }
+                if (cachedData.Contains(',')) cachedData = cachedData.Replace(',', '.');
                 if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
                 {
                     exchangeRate = (decimal)parsedDecimal;
@@ -132,7 +135,7 @@ namespace Services.CalculationService
                 decimal p = 0M;
                 foreach (var t in prices.l) 
                 {
-                    if(t > price)
+                    if(t > rubPrice)
                     {
                         break;
                     }
