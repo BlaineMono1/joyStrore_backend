@@ -158,10 +158,10 @@ namespace Services.CalculationService
                 switch (type)
                 {
                     case "Game":
-                        priceWithMarkup = rubPrice * markupGame.Value + rubPrice;
+                        priceWithMarkup = rubPrice * (markupGame.Value / 100) + rubPrice;
                         break;
                     case "AddOn":
-                        priceWithMarkup = rubPrice * markupGame.Value + rubPrice;
+                        priceWithMarkup = rubPrice * (markupGame.Value / 100) + rubPrice;
                         break;
 
                     case "Subscription":
@@ -171,7 +171,7 @@ namespace Services.CalculationService
                         var sub = await _productRepository.GetTypeEntity<Subscription>(product);
                         var markupSub = (await _priceSettingSubscription.GetListQuery()).Where(p => p.SubscriptionId == sub.Guid).FirstOrDefault(p => p.Region == region);
                         if (markupSub is null) throw new Exception($"markup for Sub with Guid {sub.Guid} not found");
-                        priceWithMarkup = rubPrice * markupSub.Percent + rubPrice;
+                        priceWithMarkup = rubPrice * (markupSub.Percent / 100) + rubPrice;
                         break;
 
                     default:
