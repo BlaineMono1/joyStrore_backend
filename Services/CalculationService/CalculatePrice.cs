@@ -212,7 +212,7 @@ namespace Services.CalculationService
                     throw new KeyNotFoundException("Loyalty setting not found");
                 }
 
-                decimal jPrice = price.Value - price.Value * loyality.DiscountPercent;
+                decimal jPrice = price.Value - price.Value * (loyality.DiscountPercent / 100);
                 _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
                 return jPrice;
             }

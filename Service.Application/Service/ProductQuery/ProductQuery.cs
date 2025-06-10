@@ -177,6 +177,14 @@ namespace Service.Application.Service.ProductQuery
         public async Task<IQueryable<Product>> FilterProducts(string? name, string? filterName, string? platform, bool byDesc, bool byDiscount, List<string>? FilterGeners, decimal MinPrice, decimal MaxPrice)
         {
             var region = _regionFromCookie.GetUserRegion();
+            string? cachedData = await _redis.GetAsync(region);
+            if (cachedData is null)
+            {
+                await _cacheService.UpdateExchangeRates();
+                cachedData = await _redis.GetAsync(region);
+            }
+
+            decimal coff = decimal.Parse(cachedData);
             var products = (await _productRepository.GetListQuery()).Where(p => p.Type == "Game");
 
             var filteredByName = products;
@@ -202,7 +210,11 @@ namespace Service.Application.Service.ProductQuery
 
             var set = games.Select(p => p.Edition.Game.Guid).ToHashSet();
 
-            var result = (await _productRepository.GetListQuery()).Include(p => p.Edition).ThenInclude(e => e.Game).Include(p => p.AddOn).ThenInclude(a => a.Game).Where(p => (p.Type == "Game" && set.Contains(p.Edition.Game.Guid)) || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid)));
+            var result = (await _productRepository.GetListQuery())
+                .Include(p => p.Edition).ThenInclude(e => e.Game)
+                .Include(p => p.AddOn).ThenInclude(a => a.Game)
+                .Where(p => (p.Type == "Game" && set.Contains(p.Edition.Game.Guid)) || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid)))
+                .OrderBy(p => p.Type == "AddOn").AsQueryable(); 
 
             if (!string.IsNullOrEmpty(filterName))
             {
@@ -212,7 +224,7 @@ namespace Service.Application.Service.ProductQuery
                         result = byDesc ? result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Release : DateTime.MaxValue) : result.OrderBy(p => p.Type == "Game" ? p.Edition.Release : DateTime.MinValue);
                         break;
                     case "Price":
-                        result = byDesc ? result.OrderByDescending(p => p.PriceUa) : result.OrderBy(p => p.PriceUa);
+                        result = byDesc ? result.OrderByDescending(p => region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff)  : result.OrderBy(p => region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff);
                         break;
                     default:
                         result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
@@ -225,18 +237,9 @@ namespace Service.Application.Service.ProductQuery
 
             if (byDiscount)
             {
-                result = result.OrderByDescending(p => (region == "UAH" ? p.DiscountPercentUa : p.DiscountPercentTr) ?? "0");
-            }
-
-            
-            string? cachedData = await _redis.GetAsync(region);
-            if (cachedData is null)
-            {
-                await _cacheService.UpdateExchangeRates();
-                cachedData = await _redis.GetAsync(region);
-            }
-
-            decimal coff = decimal.Parse(cachedData);
+                result = result.OrderByDescending(p => (region == "UAH" ? p.DiscountPercentUa ?? "0" : p.DiscountPercentTr ?? "0"));
+            }         
+           
 
             result = result.Where(p => region == "UAH" ? p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
 
