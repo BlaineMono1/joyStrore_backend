@@ -204,7 +204,7 @@ namespace Services.CalculationService
 
                 _logger.LogInformation("Calculating JPrice for price {Price} and region {Region}.", price, region);
 
-                var loyality = (await _loyaltySettingRepository.GetListQuery()).FirstOrDefault(l => l.PriceValue >= price.Value);
+                var loyality = (await _loyaltySettingRepository.GetListQuery()).OrderBy(l => l.PriceValue).FirstOrDefault(l => l.PriceValue >= price.Value);
                
                 if (loyality == null)
                 {
@@ -214,7 +214,7 @@ namespace Services.CalculationService
 
                 decimal jPrice = price.Value - price.Value * (loyality.DiscountPercent / 100);
                 _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
-                return jPrice;
+                return Math.Round(jPrice, MidpointRounding.AwayFromZero); ;
             }
             catch (Exception ex)
             {
