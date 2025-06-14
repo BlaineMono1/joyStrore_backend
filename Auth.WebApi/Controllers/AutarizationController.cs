@@ -26,7 +26,7 @@ namespace Auth.WebApi.Controllers
         /// </summary>
         /// <param name="Login"></param>
         /// <param name="Password"></param>
-        [HttpGet("log-in")]
+        [HttpPost("log-in")]
         public async Task<ActionResult<string>> LogIn(string Login, string Password)
         {
             try
@@ -46,7 +46,7 @@ namespace Auth.WebApi.Controllers
         /// Роль по токену
         /// </summary>
         [SetRoute("get-me")]
-        [HttpGet]
+        [HttpPost]
         public async Task<ActionResult> getMe(string? Token = null)
         {
             try
