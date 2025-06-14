@@ -27,10 +27,11 @@ namespace Service.Application.Service.OrderQuery
         private readonly IDataFromCookie _regionFromCookie;
         private readonly ILogger<OrderQuery> _logger;
         private readonly IRepository<Admin> _adminRepository;
+        private readonly IRepository<LoyaltyOrder> _loyalityOrderRepository;
         public OrderQuery(IUserRepository<User> userRepository, ICalculationService calculatePrice, IDataFromCookie regionFromCookie, 
                          IRepository<Cart> cartRepository, IProductRepository<Product> productRepository, IRepository<Order> orderRepository, 
                          IRepository<CartItem> cartItemRepository, IRepository<Setting> settingRepository, ILogger<OrderQuery> logger, IRepository<LoyaltyCurrency> loyalitiRepository,
-                         IRepository<Admin> adminRepository)
+                         IRepository<Admin> adminRepository, IRepository<LoyaltyOrder> loyalityOrderRepository)
         {
             _userRepository = userRepository;
             _calculatePrice = calculatePrice;
@@ -43,6 +44,7 @@ namespace Service.Application.Service.OrderQuery
             _logger = logger;
             _loyalitiRepository = loyalitiRepository;
             _adminRepository = adminRepository;
+            _loyalityOrderRepository = loyalityOrderRepository;
         }
 
         public async Task CreateOrderRub()
@@ -466,6 +468,29 @@ namespace Service.Application.Service.OrderQuery
             order.TotalJoyPlus = totalJPlus;
 
             return (order, totalJPlus);
+        }
+
+
+        public async Task<List<TransactionsHistoryDto>> TransacionHistoryParams(string ChatId, string CodeOrder)
+        {
+            var history = await _loyalityOrderRepository.GetListQuery();
+
+            if (!string.IsNullOrEmpty(ChatId)) history = history.Where(h => h.TgUserId == ChatId);
+
+            if (!string.IsNullOrEmpty(CodeOrder)) history = history.Where(h => h.CodeOrder == CodeOrder);
+
+
+            var result = new List<TransactionsHistoryDto>();
+
+            result.AddRange(history.Select(item => new TransactionsHistoryDto
+            {
+                TgId = item.TgUserId,
+                OrderCode = item.CodeOrder,
+                JoyAmount = item.CountProductJoy,
+                DateCreate = item.DateCreate,
+            }));
+
+            return result;
         }
         private static string GenerateCode(Guid guid)
         {

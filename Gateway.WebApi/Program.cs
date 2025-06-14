@@ -20,6 +20,7 @@ using Service.Application.Service.CartQuery;
 using Service.Application.Service.FavoriteQuery;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.AddOnsQuery;
+using Service.Application.Service.TransactionQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,7 @@ builder.Services.AddTransient(typeof(IGenersRepository<>), typeof(GenersReposito
 builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();
+builder.Services.AddScoped<IAuthService, Services.Autarization.Auth>();
 
 builder.Services.AddScoped<FavoriteQuery>();
 builder.Services.AddScoped<CartQuery>();
@@ -69,6 +71,7 @@ builder.Services.AddScoped<NewsQuery>();
 builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<OrderQuery>();
 builder.Services.AddScoped<AddOnsQuery>();
+builder.Services.AddScoped<TransactionQuery>();
 
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

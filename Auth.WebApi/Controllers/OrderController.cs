@@ -1,11 +1,9 @@
 ﻿using Auth.WebApi.Attributes;
-using Business.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Exceptions;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.OrderQuery.Dto;
-using StackExchange.Redis;
 using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Auth.WebApi.Controllers
@@ -193,7 +191,7 @@ namespace Auth.WebApi.Controllers
         /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("all-orders-list")]
-        public async Task<ActionResult<List<OrderListDto>>> GetAllOrdersList()
+        public async Task<ActionResult<List<AllOrdersDto>>> GetAllOrdersList()
         {
             try
             {
@@ -214,6 +212,26 @@ namespace Auth.WebApi.Controllers
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Список поплнения joy
+        /// </summary>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin,Worker")]
+        [HttpGet("all-transactions-list")]
+        public async Task<ActionResult<List<TransactionsHistoryDto>>> GetAllTransactions(string ChatId = "", string OrderCode = "")
+        {
+            try
+            {
+                var result = await _query.TransacionHistoryParams(ChatId, OrderCode);
+                return Ok(result);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, "Server error");
             }
         }
 

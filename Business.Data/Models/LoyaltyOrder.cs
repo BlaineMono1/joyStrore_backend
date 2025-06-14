@@ -18,27 +18,19 @@ namespace Business.Data.Models
         /// </summary>
         public decimal CountProductJoy {  get; set; }
         /// <summary>
-        /// Кол-во оплаты в рублях
+        /// Кол-во оплаты 
         /// </summary>
-        public decimal? AmountByRub {  get; set; }
-        /// <summary>
-        /// Кол-во оплаты в JouPlus
-        /// </summary>
-        public decimal? AmountByJoyPlus { get; set; }
+        public decimal? AmountPayment {  get; set; }
         /// <summary>
         /// Номер заказа 
         /// </summary>
         public string CodeOrder {  get; set; }
 
-        #endregion
-
-        #region связи 
         /// <summary>
-        /// История покупок Joy пользователя 
+        /// Чем оплачено 
         /// </summary>
-        public Guid LoyaltyTransactionHistoryId {  get; set; }
-        [ForeignKey("LoyaltyTransactionHistoryId")]
-        public LoyaltyTransactionHistory LoyaltyTransactionHistory { get; set; }
+        public bool ByJoyPlus { get; set; }
+
         #endregion
     }
 }
