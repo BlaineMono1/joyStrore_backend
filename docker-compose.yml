@@ -3,6 +3,7 @@ services:
   gateway:
     container_name: gateway
     image: gateway
+    restart: always
     build:
       context: .
       dockerfile: Gateway.WebApi/Dockerfile
@@ -16,6 +17,7 @@ services:
   panel:
     container_name: panel
     image: panel
+    restart: always
     build:
       context: .
       dockerfile: Auth.WebApi/Dockerfile
