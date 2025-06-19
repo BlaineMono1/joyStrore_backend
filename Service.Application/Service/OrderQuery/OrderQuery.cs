@@ -95,7 +95,8 @@ namespace Service.Application.Service.OrderQuery
            
             var result = new List<OrderListDto>();
 
-            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == WorkerId).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).ToList();
+            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == WorkerId && o.Status != OrderStatus.Completed && o.Status != OrderStatus.Cancelled)
+                .Include(o => o.OrderProductItems).ThenInclude(i => i.Product).ToList();
             
             foreach (var order in orders)
             {
@@ -145,7 +146,7 @@ namespace Service.Application.Service.OrderQuery
         {
             var result = new List<OrderListDto>();
 
-            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == null).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
+            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
 
             foreach (var order in orders)
             {
