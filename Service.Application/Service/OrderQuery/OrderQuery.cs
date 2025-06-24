@@ -79,14 +79,18 @@ namespace Service.Application.Service.OrderQuery
             if (loyality.BalanceJoy < order.Price)
                 throw new BadRequestExeption("Your balance is not sufficient for payment, top it up.");
 
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+
+            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+
             loyality.BalanceJoy -= order.Price;
             loyality.BalanceJoyPlus += totalJPlus;
 
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
 
-            foreach (var item in order.OrderProductItems)
-                await _cartItemRepository.HardDelete(item.ProductId);
+            foreach (var item in cart.CartItems)
+                await _cartItemRepository.HardDelete(item.Guid);
 
         }
 
