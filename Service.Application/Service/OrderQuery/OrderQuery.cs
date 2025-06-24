@@ -463,6 +463,13 @@ namespace Service.Application.Service.OrderQuery
                 .FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
             if (userSettings is null) throw new NotFoundException(nameof(Setting), userTgId);
 
+            if (string.IsNullOrWhiteSpace(userSettings.EmailPsStore))
+                throw new BadRequestExeption("User login empty");
+            if (string.IsNullOrWhiteSpace(userSettings.PasswordPsStore))
+                throw new BadRequestExeption("User password empty");
+            if (string.IsNullOrWhiteSpace(userSettings.Code))
+                throw new BadRequestExeption("User code empty");
+
             order.PsLogin = userSettings.EmailPsStore;
             order.PsPass = userSettings.PasswordPsStore;
             order.Code = userSettings.Code;
