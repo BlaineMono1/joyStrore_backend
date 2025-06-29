@@ -47,12 +47,12 @@ namespace Service.Application.Service.OrderQuery
             _loyalityOrderRepository = loyalityOrderRepository;
         }
 
-        public async Task CreateOrderRub()
+        public async Task CreateOrderRub(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
         {
-            var (order, totalJPlus) = await ProcessOrder("RUB");
+            var (order, totalJPlus) = await ProcessOrder("RUB", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
 
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery())
+            var loyality = (await _loyalitiRepository.GetListQuery()).AsNoTracking()
                 .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
@@ -67,9 +67,9 @@ namespace Service.Application.Service.OrderQuery
 
         }
 
-        public async Task CreateOrderJ()
+        public async Task CreateOrderJ(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
         {
-            var (order, totalJPlus) = await ProcessOrder("J");
+            var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery())
@@ -79,7 +79,7 @@ namespace Service.Application.Service.OrderQuery
             if (loyality.BalanceJoy < order.Price)
                 throw new BadRequestExeption("Your balance is not sufficient for payment, top it up.");
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            var cart = (await _cartRepository.GetListQuery()).AsNoTracking().Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
 
             if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
@@ -383,7 +383,7 @@ namespace Service.Application.Service.OrderQuery
 
         }
 
-        private async Task<(Order order, decimal totalJPlus)> ProcessOrder(string paymentType)
+        private async Task<(Order order, decimal totalJPlus)> ProcessOrder(string paymentType, string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
         {
             var region = _regionFromCookie.GetUserRegion();
             var userTgId = _regionFromCookie.GetUserTgID();
@@ -466,17 +466,21 @@ namespace Service.Application.Service.OrderQuery
             var userSettings = (await _settingRepository.GetListQuery())
                 .FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
             if (userSettings is null) throw new NotFoundException(nameof(Setting), userTgId);
+                       
+            if(isSave)
+            {
+                userSettings.EmailPsStore = PsEmail;
+                userSettings.PasswordPsStore = PsPass;
+                userSettings.Code = PsCode;
+                user.Email = ReciptEmail;
+                await _settingRepository.Update(userSettings);
+                await _userRepository.Update(user);
+            }
 
-            if (string.IsNullOrWhiteSpace(userSettings.EmailPsStore))
-                throw new BadRequestExeption("User login empty");
-            if (string.IsNullOrWhiteSpace(userSettings.PasswordPsStore))
-                throw new BadRequestExeption("User password empty");
-            if (string.IsNullOrWhiteSpace(userSettings.Code))
-                throw new BadRequestExeption("User code empty");
 
-            order.PsLogin = userSettings.EmailPsStore;
-            order.PsPass = userSettings.PasswordPsStore;
-            order.Code = userSettings.Code;
+            order.PsLogin = PsEmail;
+            order.PsPass = PsPass;
+            order.Code = PsCode;
             order.TotalJoyPlus = totalJPlus;
 
             return (order, totalJPlus);
