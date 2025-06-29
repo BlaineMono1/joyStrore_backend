@@ -25,12 +25,12 @@ namespace Gateway.WebApi.Controllers
         /// Создание ордера при оплате за рубли
         /// </summary>
         /// <returns></returns>
-        [HttpGet("create-order-rub")]
-        public async Task<ActionResult<OrdersDto>> CreateOrderRub()
+        [HttpPost("create-order-rub")]
+        public async Task<ActionResult<OrdersDto>> CreateOrderRub(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
         {
             try
             {
-                await _query.CreateOrderRub();
+                await _query.CreateOrderRub(PsEmail, PsPass, PsCode, ReciptEmail, isSave);
                 return Ok();
             }
             catch (BadRequestExeption ex)
@@ -55,12 +55,12 @@ namespace Gateway.WebApi.Controllers
         /// Создание ордера при оплате за joy
         /// </summary>
         /// <returns></returns>
-        [HttpGet("create-order-joy")]
-        public async Task<ActionResult<OrdersDto>> CreateOrderJ()
+        [HttpPost("create-order-joy")]
+        public async Task<ActionResult<OrdersDto>> CreateOrderJ(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
         {
             try
             {
-                await _query.CreateOrderJ();
+                await _query.CreateOrderJ(PsEmail, PsPass, PsCode, ReciptEmail, isSave);
                 return Ok();
             }
             catch (BadRequestExeption ex)
