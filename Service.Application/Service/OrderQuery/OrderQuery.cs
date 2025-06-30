@@ -72,7 +72,7 @@ namespace Service.Application.Service.OrderQuery
             var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery())
+            var loyality = (await _loyalitiRepository.GetListQuery()).AsNoTracking()
                 .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
