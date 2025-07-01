@@ -52,7 +52,7 @@ namespace Service.Application.Service.OrderQuery
             var (order, totalJPlus) = await ProcessOrder("RUB", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
 
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery()).AsNoTracking()
+            var loyality = (await _loyalitiRepository.GetListQuery())
                 .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
@@ -61,9 +61,12 @@ namespace Service.Application.Service.OrderQuery
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
 
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+
             // Очистка корзины
-            foreach (var item in order.OrderProductItems)
-                await _cartItemRepository.HardDelete(item.ProductId);
+            foreach (var item in cart.CartItems)
+                await _cartItemRepository.HardDelete(item.Guid);
 
         }
 
@@ -72,14 +75,14 @@ namespace Service.Application.Service.OrderQuery
             var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery()).AsNoTracking()
+            var loyality = (await _loyalitiRepository.GetListQuery())
                 .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
             if (loyality.BalanceJoy < order.Price)
                 throw new BadRequestExeption("Your balance is not sufficient for payment, top it up.");
 
-            var cart = (await _cartRepository.GetListQuery()).AsNoTracking().Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
 
             if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
@@ -398,7 +401,6 @@ namespace Service.Application.Service.OrderQuery
             };
 
             var user = (await _userRepository.GetListQuery())
-                .Include(u => u.LoyaltyCurrency)
                 .Include(u => u.Cart).ThenInclude(c => c.CartItems)
                 .FirstOrDefault(u => u.TgUserId == userTgId);
 
