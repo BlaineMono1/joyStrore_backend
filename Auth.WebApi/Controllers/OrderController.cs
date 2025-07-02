@@ -1,7 +1,10 @@
 ﻿using Auth.WebApi.Attributes;
+using Business.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Service.Application.Exceptions;
+using Service.Application.Extension.Pagination;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.OrderQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
@@ -191,12 +194,12 @@ namespace Auth.WebApi.Controllers
         /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("all-orders-list")]
-        public async Task<ActionResult<List<AllOrdersDto>>> GetAllOrdersList()
+        public async Task<ActionResult<List<AllOrdersDto>>> GetAllOrdersList(int Page = 0)
         {
             try
             {
-                var result =  await _query.GetAllOrdersList();
-                return Ok(result);
+                var result =  (await _query.GetAllOrdersList()).AsQueryable();
+                return Ok(new PaginatedList<AllOrdersDto>(result, Page).Entities);
             }
             catch (NotFoundException ex)
             {

@@ -401,16 +401,16 @@ namespace Service.Application.Service.OrderQuery
             };
 
             var user = (await _userRepository.GetListQuery())
-                .Include(u => u.Cart).ThenInclude(c => c.CartItems)
                 .FirstOrDefault(u => u.TgUserId == userTgId);
 
             if (user is null) throw new NotFoundException(nameof(User), userTgId);
-            if (user.Cart?.CartItems == null || !user.Cart.CartItems.Any())
-                throw new BadRequestExeption("Cart is empty");
+
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.Guid == user.CartId);
+            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             decimal totalPrice = 0, totalJPlus = 0;
 
-            foreach (var item in user.Cart.CartItems)
+            foreach (var item in cart.CartItems)
             {
                 var product = await _productRepository.GetById(item.ProductId);
                 if (product is null)

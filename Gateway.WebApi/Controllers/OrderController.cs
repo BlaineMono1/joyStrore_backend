@@ -1,7 +1,9 @@
 ﻿using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Service.Application.Exceptions;
+using Service.Application.Extension.Pagination;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.OrderQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
@@ -85,12 +87,12 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("get-orders-list")]
-        public async Task<ActionResult<List<UserOrdersListDto>>> GetOrdersList()
+        public async Task<ActionResult<List<UserOrdersListDto>>> GetOrdersList(int Page = 0)
         {
             try
             {
-                var result = await _query.GetUserOrldersList();
-                return Ok(result);
+                var result = (await _query.GetUserOrldersList()).AsQueryable();
+                return Ok(new PaginatedList<UserOrdersListDto>(result, Page).Entities);
             }
             catch(Exception ex)
             {
