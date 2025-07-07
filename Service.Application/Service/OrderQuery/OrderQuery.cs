@@ -53,7 +53,7 @@ namespace Service.Application.Service.OrderQuery
 
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery())
-                .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
+                .FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
             loyality.BalanceJoyPlus += totalJPlus;
@@ -61,7 +61,7 @@ namespace Service.Application.Service.OrderQuery
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
             if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             // Очистка корзины
@@ -76,13 +76,13 @@ namespace Service.Application.Service.OrderQuery
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery())
-                .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == userTgId);
+                .FirstOrDefault(l => l.User.TgUserId == userTgId);
             if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
             if (loyality.BalanceJoy < order.Price)
                 throw new BadRequestExeption("Your balance is not sufficient for payment, top it up.");
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.User).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
 
             if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
@@ -327,7 +327,7 @@ namespace Service.Application.Service.OrderQuery
             var result = new List<UserOrdersListDto>();
             var userTgId = _regionFromCookie.GetUserTgID();
 
-            var userOrders = (await _orderRepository.GetListQuery()).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).Where(o => o.TgUserId == userTgId).ToList();
+            var userOrders = (await _orderRepository.GetListQuery()).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).Where(o => o.TgUserId == userTgId).OrderByDescending(o => o.DateCreate).ToList();
 
             foreach (var o in userOrders)
             {
