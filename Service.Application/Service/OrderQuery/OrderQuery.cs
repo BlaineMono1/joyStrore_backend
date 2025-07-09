@@ -422,7 +422,7 @@ namespace Service.Application.Service.OrderQuery
                 var orderItem = new OrderProductItem
                 {
                     Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
-                    Discount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr),
+                    Discount = (region == "UAH" ? product.DiscountPercentUa ?? "" : product.DiscountPercentTr ?? ""),
                     OrderId = order.Guid,
                     ProductId = product.Guid
                 };
