@@ -110,11 +110,8 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                var options = new CookieOptions
-                {
-                    Expires = DateTime.UtcNow.AddDays(1)
-                };
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region, options);
+               
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("region", region);
                 return Ok();
             }
             catch(Exception ex)
