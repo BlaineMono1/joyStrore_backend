@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using DataBaseToAccess;
 using Business.Data.Models;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
-using Npgsql.Internal.Postgres;
-using System.Reflection.Metadata;
+using System;
+using System.Net.Http.Json;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.SignalR;
+using System.Text;
+
 
 namespace Services.ParseService
 {
@@ -34,6 +30,13 @@ namespace Services.ParseService
         private readonly IRepository<Section> _sectionRepository;
         private readonly IRepository<Subscription> _subscriptionRepository;
         private readonly IRepository<AddOn> _addOnRepository;
+
+        private readonly HttpClient _httpClient;
+        private readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public Parse(ILogger<Parse> logger, IRepository<Game> gameRepository,
         IRepository<Edition> editionRepository,
         IRepository<Product> productRepository,
@@ -62,6 +65,11 @@ namespace Services.ParseService
             _sectionRepository = sectionRepository;
             _subscriptionRepository = subscriptionRepository;
             _addOnRepository = addOnRepository;
+
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri("http://static.41.188.179.185.ip.webhost1.net:8080/")
+            };
         }
 
         private class GameInfo
@@ -118,7 +126,7 @@ namespace Services.ParseService
                 Platform = "PS4|PS5",
                 Duration = "1 Месяц",
                 SectionName = "PlayStation Plus",
-                ProductId = productPsPlus.Guid                
+                ProductId = productPsPlus.Guid
             };
 
             productPsPlus.TypeId = PsSub.Guid;
@@ -262,7 +270,7 @@ namespace Services.ParseService
         {
             var l = new List<int> { 0, 100, 500, 1000, 1500, 2000, 4000, 6000, 10000 };
 
-            foreach(var price in l)
+            foreach (var price in l)
             {
                 var markup = new SettingPrice
                 {
@@ -281,7 +289,7 @@ namespace Services.ParseService
 
             //int knt = 0;
 
-           
+
             //int start = 0;
             //for(int i = 1; i < 3; ++i)
             //{
@@ -335,7 +343,7 @@ namespace Services.ParseService
                 {
                     User = user
                 };
-              
+
                 user.Cart = cart;
                 user.CartId = cart.Guid;
                 user.Favorite = fav;
@@ -344,7 +352,7 @@ namespace Services.ParseService
                 user.ProductTransactionHistory = p;
                 await _userRepo.Add(user);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 throw;
             }
@@ -414,7 +422,7 @@ namespace Services.ParseService
                         {
                             gameDto.Languages = "Не переведен на русский";
                         }
-                        
+
                         if (game.Editions != null) // Проверка на null
                         {
                             foreach (var edition in game.Editions)
@@ -423,9 +431,9 @@ namespace Services.ParseService
                                 if (edition == null) continue; // Пропуск, если edition равен null
                                 var eg = edition.Geners.Split('|');
                                 var geners = (await _genersRepository.GetListQuery()).AsTracking().Where(g => eg.Contains(g.Name));
-                                
+
                                 var productDto = new Product();
-                               
+
                                 var editionDto = new Edition
                                 {
                                     CusaCodeUa = edition.CusaCodeUA,
@@ -444,14 +452,14 @@ namespace Services.ParseService
                                     EditionGeners = new List<GenersToEdition>()
                                 };
 
-                               
-                                
-                                
+
+
+
                                 productDto.TypeId = editionDto.Guid;
                                 productDto.Type = edition.Type;
                                 productDto.PriceUa = edition.Product.PriceUa;
                                 productDto.PriceTr = edition.Product.PriceTr;
-                               // productDto.DiscountPercent = edition.Product.DiscountPercent;
+                                // productDto.DiscountPercent = edition.Product.DiscountPercent;
                                 //productDto.DiscountDate = edition.Product.DiscountDate is null ? null : DateTime.SpecifyKind((global::System.DateTime)edition.Product.DiscountDate, DateTimeKind.Utc);
 
                                 editionDto.Product = productDto;
@@ -464,18 +472,18 @@ namespace Services.ParseService
 
                                 gameDto.Editions.Add(editionDto);
 
-                                
+
                                 foreach (var g in geners)
                                 {
 
                                     if (!editionDto.EditionGeners.Any(e => e.GenerId == g.Guid))
                                     {
-                                        editionDto.EditionGeners.Add(new GenersToEdition { GenerId = g.Guid, Geners = g, EdtitonId = editionDto.Guid, Edition = editionDto});
+                                        editionDto.EditionGeners.Add(new GenersToEdition { GenerId = g.Guid, Geners = g, EdtitonId = editionDto.Guid, Edition = editionDto });
                                     }
                                 }
 
                                 await _editionRepository.Add(editionDto);
-                                
+
                             }
 
                         }
@@ -496,7 +504,7 @@ namespace Services.ParseService
 
                     await _settingPriceRepository.Add(price);
 
-                   
+
                 }
                 else
                 {
@@ -534,6 +542,124 @@ namespace Services.ParseService
                 Console.WriteLine($"Ошибка при разборе JSON: {ex.Message}");
                 return default;
             }
+        }
+
+        public async Task<string> ParseAddOns(int startPage, int endPage)
+        {
+            string requestUri = $"addon-full?startPage={startPage}&endPage={endPage}";
+
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public class ProductDto
+        {
+            public string Type { get; set; }
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+            public decimal? PriceUa { get; set; }
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+            public decimal? PriceTr { get; set; }
+            public string DiscountPercent { get; set; }
+            public DateTime? DiscountDate { get; set; }
+            public string DiscountPercentTr { get; set; }
+            public DateTime? DiscountDateTr { get; set; }
+        }
+
+        public class ResponceDto
+        {
+            public string ConceptId { get; set; }
+            public string CusaCodeUA { get; set; }
+            public string CusaCodeTR { get; set; }
+            public string Name { get; set; }
+            public ProductDto ProductDto { get; set; }
+        }
+        public async Task UpdateProductsPrice()
+        {
+
+            var cusacodes = (await _subscriptionRepository.GetListQuery()).Select(sub => sub.CusaCodeUa).ToList();
+
+            //cusacodes.AddRange((await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
+
+            cusacodes.AddRange((await _addOnRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
+
+            const int BatchSize = 100;
+            var allCodes = cusacodes;
+            var data = new List<ResponceDto>();
+            int updated = 0;
+
+            foreach (var batch in allCodes
+                       .Select((code, i) => new { code, i })
+                       .GroupBy(x => x.i / BatchSize, x => x.code))
+            {
+                var content = new StringContent(
+                    JsonSerializer.Serialize(batch),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+                var resp = await _httpClient.PostAsync("current-price", content);
+                resp.EnsureSuccessStatusCode();
+                var part = await resp.Content
+                                    .ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions) ?? new List<ResponceDto>();
+                updated += part.Count;
+                _logger.LogInformation($"Updated {updated} of {cusacodes.Count}");
+                data.AddRange(part);
+            }
+
+
+            if (data == null)
+                throw new InvalidOperationException("Сервер вернул пустой ответ.");
+
+
+            foreach (var item in data)
+            {
+                var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
+                var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
+                var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
+
+                if (currentsub != null)
+                {
+                    await UpdateProduct(item.ProductDto, currentsub.ProductId);
+
+                    currentsub.Name = item.Name;
+                    await _subscriptionRepository.Update(currentsub);
+                }
+                else if (currented != null)
+                {
+                    await UpdateProduct(item.ProductDto, currented.ProductId);
+
+                    currented.Name = item.Name;
+                    await _editionRepository.Update(currented);
+                }
+                else if (currentadd != null)
+                {
+                    await UpdateProduct(item.ProductDto, currentadd.ProductId);
+
+                    currentadd.Name = item.Name;
+                    await _addOnRepository.Update(currentadd);
+                }
+                else
+                {
+                    _logger.LogError($"No product with CUSACODE UA {item.CusaCodeUA}");
+                }
+
+            }
+
+
+        }
+
+        private async Task UpdateProduct(ProductDto ProductInfo, Guid ProductId)
+        {
+            var product = await _productRepository.GetById(ProductId);
+
+            product.PriceUa = ProductInfo.PriceUa;
+            product.PriceTr = ProductInfo.PriceTr;
+            product.DiscountPercentUa = ProductInfo.DiscountPercent;
+            product.DiscountPercentTr = ProductInfo.DiscountPercentTr;
+
+            await _productRepository.Update(product);
         }
 
     }
