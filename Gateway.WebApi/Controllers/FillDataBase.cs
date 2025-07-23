@@ -102,5 +102,33 @@ namespace Gateway.WebApi.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<ActionResult<string>> ParseAddOns(int startPage = 1, int endPage = 2)
+        {
+            try
+            {
+                var result = await _parse.ParseAddOns(startPage, endPage);
+                return Ok(result);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> UpdateProductsPrice()
+        {
+            try
+            {
+                await _parse.UpdateProductsPrice();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }
