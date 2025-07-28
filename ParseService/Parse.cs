@@ -10,6 +10,10 @@ using System.Net.Http.Json;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.SignalR;
 using System.Text;
+using System.Globalization;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
 
 
 namespace Services.ParseService
@@ -20,6 +24,7 @@ namespace Services.ParseService
 
         private readonly IRepository<Game> _gameRepository;
         private readonly IRepository<Edition> _editionRepository;
+        private readonly IRepository<GenersToEdition> _edRepository;
         private readonly IRepository<Product> _productRepository;
         private readonly IGenersRepository<Geners> _genersRepository;
         private readonly IRepository<SettingPrice> _settingPriceRepository;
@@ -48,7 +53,7 @@ namespace Services.ParseService
         IRepository<User> userRepo,
         IRepository<Section> sectionRepository,
         IRepository<Subscription> subscriptionRepository,
-        IRepository<AddOn> addOnRepository
+        IRepository<AddOn> addOnRepository, IRepository<GenersToEdition> edRopository
         )
         {
             _logger = logger;
@@ -65,484 +70,304 @@ namespace Services.ParseService
             _sectionRepository = sectionRepository;
             _subscriptionRepository = subscriptionRepository;
             _addOnRepository = addOnRepository;
+            _edRepository = edRopository;
 
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri("http://static.41.188.179.185.ip.webhost1.net:8080/")
             };
+            _httpClient.Timeout = TimeSpan.FromMinutes(50); // 50 mins, may be lower idk
         }
 
-        private class GameInfo
+        public class AddOnInfo
         {
+            [JsonPropertyName("conceptId")]
             public string ConceptId { get; set; }
-            public string Name { get; set; }
-            public string LanguagesVoice { get; set; }
-            public string LanguagesInterface { get; set; }
-            public int StarCount { get; set; }
-            public List<EditionInfo>? Editions { get; set; }
-        }
 
-        private class EditionInfo
-        {
+            [JsonPropertyName("cusaCodeUA")]
             public string CusaCodeUA { get; set; }
+
+            [JsonPropertyName("cusaCodeTR")]
             public string? CusaCodeTR { get; set; }
-            public string Type { get; set; }
-            public string EditionType { get; set; }
-            public string EditionName { get; set; }
-            public string Geners { get; set; }
-            public string Image { get; set; }
-            public string Platform { get; set; }
-            public string? Subscription { get; set; }
-            public string Features { get; set; }
-            public string CodeRegion { get; set; }
-            public string OrderType { get; set; }
-            public DateTime Release { get; set; }
+
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
+
+
+            [JsonPropertyName("product")]
             public ProductInfo Product { get; set; }
         }
 
-        private class ProductInfo
+
+        public class GameInfo
         {
+            [JsonPropertyName("conceptId")]
+            public string ConceptId { get; set; }
+
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
+
+            [JsonPropertyName("languagesVoice")]
+            public string LanguagesVoice { get; set; }
+
+            [JsonPropertyName("languagesInterface")]
+            public string LanguagesInterface { get; set; }
+
+            [JsonPropertyName("starCount")]
+            public int StarCount { get; set; }
+
+            [JsonPropertyName("editions")]
+            public List<EditionInfo>? Editions { get; set; }
+        }
+
+        public class EditionInfo
+        {
+            [JsonPropertyName("cusaCodeUA")]
+            public string CusaCodeUA { get; set; }
+
+            [JsonPropertyName("cusaCodeTR")]
+            public string? CusaCodeTR { get; set; }
+
+            [JsonPropertyName("type")]
             public string Type { get; set; }
+
+            [JsonPropertyName("editionType")]
+            public string EditionType { get; set; }
+
+            [JsonPropertyName("editionName")]
+            public string EditionName { get; set; }
+
+            [JsonPropertyName("geners")]
+            public string Geners { get; set; }
+
+            [JsonPropertyName("image")]
+            public string Image { get; set; }
+
+            [JsonPropertyName("platform")]
+            public string Platform { get; set; }
+
+            [JsonPropertyName("subscription")]
+            public string? Subscription { get; set; }
+
+            [JsonPropertyName("features")]
+            public string Features { get; set; }
+
+            [JsonPropertyName("codeRegion")]
+            public string CodeRegion { get; set; }
+
+            [JsonPropertyName("orderType")]
+            public string OrderType { get; set; }
+
+            [JsonPropertyName("release")]            
+            public string Release { get; set; }
+
+            [JsonPropertyName("product")]
+            public ProductInfo Product { get; set; }
+        }
+
+        public class ProductInfo
+        {
+            [JsonPropertyName("type")]
+            public string Type { get; set; }
+
+            [JsonPropertyName("priceUa")]
             public decimal? PriceUa { get; set; }
+
+            [JsonPropertyName("priceTr")]
             public decimal? PriceTr { get; set; }
+
+            [JsonPropertyName("discountPercent")]
             public string DiscountPercent { get; set; }
+
+            [JsonPropertyName("discountDate")]
             public DateTime? DiscountDate { get; set; }
         }
 
-        public async Task CreatuSub()
+
+        public async Task PasrceAddOns(int startPage, int endPage)
         {
-            var imageUrlPsPlus = "https://image.api.playstation.com/vulcan/ap/rnd/202204/0810/803Pm8uJoZ2Cl9fJPvTaXHqG.png";
-            var imageUrlGtaPlus = "https://image.api.playstation.com/vulcan/ap/rnd/202310/1615/3d064be55673552147bde9d990e3b1251375b0f56a7dcfe3.png";
+            string requestUri = $"addon-full?startPage={startPage}&endPage={endPage}";
 
-            var productPsPlus = new Product();
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
 
-            var PsSub = new Subscription
+            response.EnsureSuccessStatusCode();
+
+            string rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Raw JSON from API: {json}", rawJson);
+
+            var addons = JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
+           ?? new List<AddOnInfo>();
+
+            foreach (var addon in addons)
             {
-                CusaCodeTr = "CusacodeTr",
-                CusaCodeUa = "CusacodeUa",
-                Name = "PlayStation Plus",
-                Type = "Subscription",
-                Image = imageUrlPsPlus,
-                Platform = "PS4|PS5",
-                Duration = "1 Месяц",
-                SectionName = "PlayStation Plus",
-                ProductId = productPsPlus.Guid
-            };
+                var game = (await _gameRepository.GetListQuery()).FirstOrDefault(g => g.ConceptId == addon.ConceptId);
 
-            productPsPlus.TypeId = PsSub.Guid;
-            productPsPlus.Type = PsSub.Type;
-            productPsPlus.PriceUa = 416;
-            productPsPlus.PriceTr = 388;
-            productPsPlus.DiscountPercentUa = "";
-            productPsPlus.DiscountPercentTr = "";
-            productPsPlus.DiscountDateUa = null;
-            productPsPlus.DiscountDateTr = null;
-
-            var psPriceUa = new PriceSettingSubscription
-            {
-                Region = "UAH",
-                Percent = 0,
-                SubscriptionId = PsSub.Guid
-            };
-
-            var psPriceTr = new PriceSettingSubscription
-            {
-                Region = "TRY",
-                Percent = 0,
-                SubscriptionId = PsSub.Guid
-            };
-
-            await _productRepository.Add(productPsPlus);
-            await _subscriptionRepository.Add(PsSub);
-
-            await _priceSettingSubscription.Add(psPriceUa);
-            await _priceSettingSubscription.Add(psPriceTr);
-
-
-            var productGtaPlus = new Product();
-
-            var GtaSub = new Subscription
-            {
-                CusaCodeTr = "CusacodeTr",
-                CusaCodeUa = "CusacodeUa",
-                Name = "Gta Plus",
-                Type = "Subscription",
-                Image = imageUrlGtaPlus,
-                Platform = "PS4|PS5",
-                Duration = "1 Месяц",
-                SectionName = "Gta Plus",
-                ProductId = productGtaPlus.Guid
-            };
-
-            productGtaPlus.TypeId = PsSub.Guid;
-            productGtaPlus.Type = PsSub.Type;
-            productGtaPlus.PriceUa = 416;
-            productGtaPlus.PriceTr = 388;
-            productGtaPlus.DiscountPercentUa = "";
-            productGtaPlus.DiscountPercentTr = "";
-            productGtaPlus.DiscountDateUa = null;
-            productGtaPlus.DiscountDateTr = null;
-
-            var gtaPriceUa = new PriceSettingSubscription
-            {
-                Region = "UAH",
-                Percent = 0,
-                SubscriptionId = GtaSub.Guid
-            };
-
-            var gtaPriceTr = new PriceSettingSubscription
-            {
-                Region = "TRY",
-                Percent = 0,
-                SubscriptionId = GtaSub.Guid
-            };
-
-            await _productRepository.Add(productGtaPlus);
-            await _subscriptionRepository.Add(GtaSub);
-
-            await _priceSettingSubscription.Add(gtaPriceUa);
-            await _priceSettingSubscription.Add(gtaPriceTr);
-
-        }
-
-        public async Task Create_addOn()
-        {
-            var product1 = new Product();
-
-            var product2 = new Product();
-            _logger.LogInformation(Guid.Parse("41c339a6-a6ca-4eed-ad94-0f4b245d9a37").ToString());
-            var game = await _gameRepository.GetById(Guid.Parse("41c339a6-a6ca-4eed-ad94-0f4b245d9a37"));
-            var add_on1 = new AddOn
-            {
-                CusaCodeUa = "CusaCodeUa",
-                CusaCodeTr = "CusaCodeTr",
-                TypeName = "AddOn",
-                Name = "Red Dead Online - 150 Gold Bars",
-                Type = "AddOn",
-                Image = "https://image.api.playstation.com/cdn/EP1004/CUSA08519_00/jqNN0VH6CM4bKbwVGtqp85Mk4ZKU35w9.png",
-                Platform = "PS4",
-                GameId = game.Guid,
-                ProductId = product1.Guid
-            };
-
-            var add_on2 = new AddOn
-            {
-                CusaCodeUa = "CusaCodeUa",
-                CusaCodeTr = "CusaCodeTr",
-                TypeName = "AddOn",
-                Name = "Red Dead Online - 55 Gold Bars",
-                Type = "AddOn",
-                Image = "https://image.api.playstation.com/cdn/EP1004/CUSA08519_00/jqNN0VH6CM4bKbwVGtqp85Mk4ZKU35w9.png",
-                Platform = "PS4",
-                GameId = game.Guid,
-                ProductId = product2.Guid
-            };
-
-            product1.TypeId = add_on1.Guid;
-            product1.Type = "AddOn";
-            product1.PriceUa = 2307;
-            product1.PriceTr = 2168;
-            product1.DiscountPercentUa = "0";
-            product1.DiscountPercentTr = "0";
-            product1.DiscountDateUa = null;
-            product1.DiscountDateTr = null;
-
-
-            product2.TypeId = add_on2.Guid;
-            product2.Type = "AddOn";
-            product2.PriceUa = 1154;
-            product2.PriceTr = 1134;
-            product2.DiscountPercentUa = "0";
-            product2.DiscountPercentTr = "0";
-            product2.DiscountDateUa = null;
-            product2.DiscountDateTr = null;
-
-
-            await _productRepository.Add(product1);
-            await _productRepository.Add(product2);
-
-            await _addOnRepository.Add(add_on1);
-            await _addOnRepository.Add(add_on2);
-
-        }
-
-        public async Task CreateGameMarcup()
-        {
-            var l = new List<int> { 0, 100, 500, 1000, 1500, 2000, 4000, 6000, 10000 };
-
-            foreach (var price in l)
-            {
-                var markup = new SettingPrice
+                if(game == null)
                 {
-                    Price = price,
-                    Percent = 0
+                    _logger.LogError($"No game for concept id {addon.ConceptId}");
+                    continue;
+                }
+
+                var edition = game.Editions[0];
+
+                var newAddOn = new AddOn
+                {
+                    CusaCodeTr = addon.CusaCodeTR,
+                    CusaCodeUa = addon.CusaCodeUA,
+                    TypeName = "Add-on",
+                    Name = addon.Name,
+
+
                 };
 
-                await _settingPriceRepository.Add(markup);
+
             }
+
         }
-
-
-        public async Task CreateSections()
+        public async Task ParseGames(int startPage, int endPage)
         {
-            //var edititons = (await _editionRepository.GetListQuery()).ToList();
+            Dictionary<string, List<Guid>> keyValuePairs = new Dictionary<string, List<Guid>>();
 
-            //int knt = 0;
+            string requestUri = $"game-full?startPage={startPage}&endPage={endPage}";
 
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
 
-            //int start = 0;
-            //for(int i = 1; i < 3; ++i)
-            //{
+            response.EnsureSuccessStatusCode();
 
-            //    var section = new Section
-            //    {
-            //        Name = $"section_{i}",
-            //        FilePathImage = "IMAGEPATH",
-            //        Editions = new List<Edition>()
-            //    };
+            string rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Raw JSON from API: {json}", rawJson);
 
-            //    await _sectionRepository.Add(section);
-            //    for (int j = start; j < edititons.Count(); ++j)
-            //    {
-            //        section.Editions.Add(edititons[j]);
-            //        start++;
-            //        if (start % 3 == 0)
-            //        {
-            //            start++;
-            //            break;
-            //        }
-            //    }
-            //    await _sectionRepository.SaveDb();
+            var games = JsonSerializer.Deserialize<List<GameInfo>>(rawJson, _jsonOptions)
+           ?? new List<GameInfo>();
 
-            //}
-        }
-        public async Task RegUser()
-        {
-            try
+            if (games != null)
             {
-                var user = new User()
+                foreach (var game in games)
                 {
-                    TgUserId = "1",
-                    Platform = "PS5"
-                };
-                var fav = new Favorite()
-                {
-                    UserId = user.Guid,
-                    User = user
-                };
-                var cart = new Cart()
-                {
-                    User = user,
-                    UserId = user.Guid
-                };
-                var l = new LoyaltyCurrency()
-                {
-                    User = user
-                };
-                var p = new ProductTransactionHistory()
-                {
-                    User = user
-                };
-
-                user.Cart = cart;
-                user.CartId = cart.Guid;
-                user.Favorite = fav;
-                user.FavoriteId = fav.Guid;
-                user.LoyaltyCurrency = l;
-                user.ProductTransactionHistory = p;
-                await _userRepo.Add(user);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-        public async Task StartParse()
-        {
-            try
-            {
-                Dictionary<string, List<Guid>> keyValuePairs = new Dictionary<string, List<Guid>>();
-
-                string filePath = "C:\\Users\\Danila\\Downloads\\Telegram Desktop\\cusacode.json"; // Укажите правильный путь
-                List<GameInfo>? games = await ParseJsonFileAsync<List<GameInfo>>(filePath);
-
-                if (games != null)
-                {
-                    foreach (var game in games)
+                    foreach (var edition in game.Editions)
                     {
-                        foreach (var edition in game.Editions)
+                        var g = edition.Geners.Split('|');
+                        foreach (var e in g)
                         {
-                            var g = edition.Geners.Split('|');
-                            foreach (var e in g)
+                            if (!keyValuePairs.ContainsKey(e))
                             {
-                                if (!keyValuePairs.ContainsKey(e))
-                                {
-                                    keyValuePairs.Add(e, new List<Guid>());
-                                }
-
+                                keyValuePairs.Add(e, new List<Guid>());
                             }
+
                         }
                     }
+                }
 
-                    foreach (var ket in keyValuePairs.Keys)
+                foreach (var key in keyValuePairs.Keys)
+                {
+                    var gener = (await _genersRepository.GetListQuery()).FirstOrDefault(g => g.Name == key);
+
+                    if (gener is null)
                     {
-                        var g = new Geners
+                        var add = new Geners
                         {
-                            Name = ket,
+                            Name = key,
                             Editions = new List<GenersToEdition>()
                         };
-                        await _genersRepository.Add(g);
+
+                        await _genersRepository.Add(add);
                     }
+                }
 
-                    _logger.LogInformation($"Всего игр загружено: {games.Count}");
+                _logger.LogInformation($"Всего игр загружено: {games.Count}");
 
-                    foreach (var game in games)
+                foreach (var game in games)
+                {
+                    var gameDto = new Game
                     {
-                        var gameDto = new Game();
-
-
-                        gameDto.Name = game.Name;
-                        gameDto.ConceptId = game.ConceptId;
-                        gameDto.Popular = game.StarCount.ToString();
-                        bool rusTxt = game.LanguagesInterface.Contains("Русский");
-                        bool rusVoice = game.LanguagesVoice.Contains("Русский");
-                        if (rusTxt && rusVoice)
-                        {
-                            gameDto.Languages = "Полностью на русском";
-                        }
-                        else if (rusTxt)
-                        {
-                            gameDto.Languages = "Русский интерфейс";
-                        }
-                        else if (rusVoice)
-                        {
-                            gameDto.Languages = "Русская озвучка";
-                        }
-                        else
-                        {
-                            gameDto.Languages = "Не переведен на русский";
-                        }
-
-                        if (game.Editions != null) // Проверка на null
-                        {
-                            foreach (var edition in game.Editions)
-                            {
-
-                                if (edition == null) continue; // Пропуск, если edition равен null
-                                var eg = edition.Geners.Split('|');
-                                var geners = (await _genersRepository.GetListQuery()).AsTracking().Where(g => eg.Contains(g.Name));
-
-                                var productDto = new Product();
-
-                                var editionDto = new Edition
-                                {
-                                    CusaCodeUa = edition.CusaCodeUA,
-                                    CusaCodeTr = edition.CusaCodeTR is null ? "" : edition.CusaCodeTR,
-                                    Type = edition.Type,
-                                    EditionType = edition.EditionType,
-                                    Name = edition.EditionName,
-                                    Image = edition.Image,
-                                    Platform = edition.Platform,
-                                    Subscription = edition.Subscription,
-                                    Region = edition.CodeRegion,
-                                    Release = DateTime.SpecifyKind(edition.Release, DateTimeKind.Utc),
-                                    Game = gameDto,
-                                    GameId = gameDto.Guid,
-                                    ProductId = productDto.Guid,
-                                    EditionGeners = new List<GenersToEdition>()
-                                };
-
-
-
-
-                                productDto.TypeId = editionDto.Guid;
-                                productDto.Type = edition.Type;
-                                productDto.PriceUa = edition.Product.PriceUa;
-                                productDto.PriceTr = edition.Product.PriceTr;
-                                // productDto.DiscountPercent = edition.Product.DiscountPercent;
-                                //productDto.DiscountDate = edition.Product.DiscountDate is null ? null : DateTime.SpecifyKind((global::System.DateTime)edition.Product.DiscountDate, DateTimeKind.Utc);
-
-                                editionDto.Product = productDto;
-
-
-                                if (gameDto.Editions == null)
-                                {
-                                    gameDto.Editions = new List<Edition>();
-                                }
-
-                                gameDto.Editions.Add(editionDto);
-
-
-                                foreach (var g in geners)
-                                {
-
-                                    if (!editionDto.EditionGeners.Any(e => e.GenerId == g.Guid))
-                                    {
-                                        editionDto.EditionGeners.Add(new GenersToEdition { GenerId = g.Guid, Geners = g, EdtitonId = editionDto.Guid, Edition = editionDto });
-                                    }
-                                }
-
-                                await _editionRepository.Add(editionDto);
-
-                            }
-
-                        }
-                        else
-                        {
-                            _logger.LogWarning($"Editions is null for game: {game.Name}");
-                        }
-
-                    }
-
-
-
-                    var price = new SettingPrice
-                    {
-                        Price = 111111110M,
-                        Percent = 0M
+                        Name = game.Name,
+                        ConceptId = game.ConceptId,
+                        Popular = game.StarCount.ToString(),
+                        Languages = DetermineLanguage(game.LanguagesInterface, game.LanguagesVoice)
                     };
 
-                    await _settingPriceRepository.Add(price);
+                    if (game.Editions != null)
+                    {
+                        foreach (var edition in game.Editions.Where(e => e != null))
+                        {
+                                                     
+                            var productDto = new Product
+                            {
+                                Type = "Game",
+                                PriceUa = edition.Product.PriceUa ?? 0,
+                                PriceTr = edition.Product.PriceTr ?? 0,
+                                DiscountPercentUa = edition.Product.DiscountPercent,
+                                DiscountPercentTr = edition.Product.DiscountPercent,
+                                DiscountDateTr = edition.Product.DiscountDate,
+                                DiscountDateUa= edition.Product.DiscountDate
+                            };
+
+                            
+                            var editionDto = new Edition
+                            {
+                                CusaCodeUa = edition.CusaCodeUA,
+                                CusaCodeTr = edition.CusaCodeTR ?? string.Empty,
+                                Type = edition.Type,
+                                EditionType = edition.EditionType,
+                                Name = edition.EditionName,
+                                Image = edition.Image,
+                                Platform = edition.Platform,
+                                Subscription = edition.Subscription,
+                                Region = edition.CodeRegion,
+                                Release  = DateTime.SpecifyKind(
+                                        DateTime.ParseExact(edition.Release, "d.M.yyyy", CultureInfo.InvariantCulture),
+                                        DateTimeKind.Utc),
+                                Game = gameDto,
+                                GameId = gameDto.Guid,
+                                Product = productDto,
+                                ProductId = productDto.Guid,
+                                EditionGeners = new List<GenersToEdition>()
+                            };
+
+                            var eg = edition.Geners.Split('|');
+                            var geners = (await _genersRepository.GetListQuery()).AsTracking().Where(g => eg.Contains(g.Name));
+
+                            foreach (var g in geners)
+                            {
+
+                                if (!editionDto.EditionGeners.Any(e => e.GenerId == g.Guid))
+                                {
+                                    editionDto.EditionGeners.Add(new GenersToEdition { GenerId = g.Guid, Geners = g, EdtitonId = editionDto.Guid, Edition = editionDto });
+                                }
+                            }
+
+                            await _editionRepository.Add(editionDto);
 
 
+                            productDto.TypeId = editionDto.Guid;
+
+                            
+                            gameDto.Editions ??= new List<Edition>();
+                            gameDto.Editions.Add(editionDto);
+                            
+                        }
+
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Editions is null for game: {game.Name}");
+                    }
                 }
-                else
-                {
-                    _logger.LogWarning("Загружено 0 игр");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An Error occurred while parsing json");
-                throw;
+
             }
         }
 
-        public static async Task<T?> ParseJsonFileAsync<T>(string filePath)
+        // Вспомогательный метод для определения строки локализации
+        private string DetermineLanguage(string iface, string voice)
         {
-            if (!File.Exists(filePath))
-            {
-                Console.WriteLine("Файл не найден.");
-                return default;
-            }
-
-            try
-            {
-                string json = await File.ReadAllTextAsync(filePath);
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,  // Учитываем регистр полей
-                    Converters = { new JsonStringEnumConverter() }, // Конвертация enum, если нужно
-                    AllowTrailingCommas = true, // Разрешаем запятые в JSON
-                };
-                return JsonSerializer.Deserialize<T>(json, options);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при разборе JSON: {ex.Message}");
-                return default;
-            }
+            bool rusTxt = iface.Contains("Русский");
+            bool rusVoice = voice.Contains("Русский");
+            return rusTxt && rusVoice ? "Полностью на русском"
+                 : rusTxt ? "Русский интерфейс"
+                 : rusVoice ? "Русская озвучка"
+                 : "Не переведен на русский";
         }
+        
 
         public async Task<string> ParseAddOns(int startPage, int endPage)
         {
@@ -552,7 +377,27 @@ namespace Services.ParseService
 
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStringAsync();
+            string rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Raw JSON from API: {json}", rawJson);
+
+            var addons = JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
+           ?? new List<AddOnInfo>();
+
+
+            foreach (var addon in addons)
+            {
+                var addOndto = new AddOn { };
+                var product = new Product
+                {
+                    Type = "Add=on",
+                    PriceUa = addon.Product.PriceUa ?? 0,
+                    PriceTr = addon.Product.PriceTr ?? 0,
+                    DiscountPercentUa = addon.Product.DiscountPercent,
+                    DiscountPercentTr = addon.Product.DiscountPercent,
+                    DiscountDateTr = addon.Product.DiscountDate,
+                    DiscountDateUa = addon.Product.DiscountDate
+                };
+            }
         }
 
         public class ProductDto
