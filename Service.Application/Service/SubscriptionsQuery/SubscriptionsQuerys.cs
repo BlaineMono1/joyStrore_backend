@@ -19,12 +19,14 @@ namespace Service.Application.Service.SubscriptionsQuery
         private readonly ILogger<SubscriptionsQuerys> _logger;
         private readonly IDataFromCookie _dataFromCookie;
 
-        public SubscriptionsQuerys(ICalculationService calculatePrice,
+        public SubscriptionsQuerys(
+            ICalculationService calculatePrice,
             ILogger<SubscriptionsQuerys> logger,
             IProductRepository<Product> productRepository,
             ISubscriptionRepository<Subscription> subscriptionRepository,
             IDataFromCookie dataFromCookie,
-            IRepository<PriceSettingSubscription> priceStiingSubRepository)
+            IRepository<PriceSettingSubscription> priceStiingSubRepository
+        )
         {
             _calculatePrice = calculatePrice;
             _logger = logger;
@@ -40,9 +42,10 @@ namespace Service.Application.Service.SubscriptionsQuery
         /// </summary>
         public async Task<List<SubscriptionsListDto>> GetSubscriptionsList()
         {
-
             var region = _dataFromCookie.GetUserRegion();
-            var subscriptions = (await _subscriptionRepository.GetListQuery()).Include(s => s.Product).ToList();
+            var subscriptions = (await _subscriptionRepository.GetListQuery())
+                .Include(s => s.Product)
+                .ToList();
 
             _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
 
@@ -50,26 +53,35 @@ namespace Service.Application.Service.SubscriptionsQuery
 
             foreach (var sub in subscriptions)
             {
-                var product = await _productRepository.GetById(sub.ProductId)
-                                ?? throw new NotFoundException(nameof(Product), sub.ProductId);
+                var product =
+                    await _productRepository.GetById(sub.ProductId)
+                    ?? throw new NotFoundException(nameof(Product), sub.ProductId);
 
-                var price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type, product.Guid);
+                var price = await _calculatePrice.CalcPrice(
+                    product.PriceUa,
+                    product.PriceTr,
+                    product.Type,
+                    product.Guid
+                );
                 var jPrice = await _calculatePrice.CalcJprice(price);
 
-                result.Add(new SubscriptionsListDto
-                {
-                    ProductId = product.Guid,
-                    Name = sub.Name,
-                    ImagePath = sub.Image,
-                    Dicount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr),
-                    Price = price,
-                    Jprice = jPrice,
-                    SectionName = sub.SectionName
-                });
+                result.Add(
+                    new SubscriptionsListDto
+                    {
+                        ProductId = product.Guid,
+                        Name = sub.Name,
+                        ImagePath = sub.Image,
+                        Dicount = (
+                            region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr
+                        ),
+                        Price = price,
+                        Jprice = jPrice,
+                        SectionName = sub.SectionName,
+                    }
+                );
             }
 
             return result;
-
         }
 
         public async Task<List<MarkUpSubDto>> GetMarkUpList()
@@ -78,33 +90,38 @@ namespace Service.Application.Service.SubscriptionsQuery
 
             var region = _dataFromCookie.GetUserRegion();
 
+            var markUp = (await _priceStiingSubRepository.GetListQuery())
+                .Include(m => m.Subscription)
+                .Where(m => m.Region == region)
+                .ToList();
 
-            var markUp = (await _priceStiingSubRepository.GetListQuery()).Include(m => m.Subscription).Where(m => m.Region == region).ToList();
-
-            result.AddRange(markUp.Select(item => new MarkUpSubDto
-            {
-                Id = item.Guid,
-                Name = item.Subscription.Name,
-                Percent = item.Percent
-            }
-            ));
+            result.AddRange(
+                markUp.Select(item => new MarkUpSubDto
+                {
+                    Id = item.Guid,
+                    Name = item.Subscription.Name,
+                    Percent = item.Percent,
+                })
+            );
 
             return result;
         }
 
         public async Task UpdatePercent(Guid Id, decimal Percent)
         {
-            if (Percent < 0) throw new BadRequestExeption("Invalid Percent value");
+            if (Percent < 0)
+                throw new BadRequestExeption("Invalid Percent value");
 
-            var markUp = await _priceStiingSubRepository.GetById(Id) 
-                ?? throw new NotFoundException(nameof(PriceSettingSubscription), $"Subscription mark up with Guid {Id} not found");
+            var markUp =
+                await _priceStiingSubRepository.GetById(Id)
+                ?? throw new NotFoundException(
+                    nameof(PriceSettingSubscription),
+                    $"Subscription mark up with Guid {Id} not found"
+                );
 
             markUp.Percent = Percent;
 
             await _priceStiingSubRepository.Update(markUp);
-
         }
-        
-
     }
 }
