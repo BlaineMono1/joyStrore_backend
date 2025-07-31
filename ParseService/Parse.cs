@@ -448,7 +448,7 @@ namespace Services.ParseService
                 .ToList();
 
             cusacodes.AddRange(
-                (await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa)
+                (await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa).ToList()
             );
 
             cusacodes.AddRange((await _addOnRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
