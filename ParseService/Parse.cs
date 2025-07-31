@@ -371,36 +371,36 @@ namespace Services.ParseService
                 : "Не переведен на русский";
         }
 
-        public async Task<string> ParseAddOns(int startPage, int endPage)
-        {
-            string requestUri = $"addon-full?startPage={startPage}&endPage={endPage}";
+        // public async Task<string> ParseAddOns(int startPage, int endPage)
+        // {
+        //     string requestUri = $"addon-full?startPage={startPage}&endPage={endPage}";
 
-            HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
+        //     HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
 
-            response.EnsureSuccessStatusCode();
+        //     response.EnsureSuccessStatusCode();
 
-            string rawJson = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("Raw JSON from API: {json}", rawJson);
+        //     string rawJson = await response.Content.ReadAsStringAsync();
+        //     _logger.LogInformation("Raw JSON from API: {json}", rawJson);
 
-            var addons =
-                JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
-                ?? new List<AddOnInfo>();
+        //     var addons =
+        //         JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
+        //         ?? new List<AddOnInfo>();
 
-            foreach (var addon in addons)
-            {
-                var addOndto = new AddOn { };
-                var product = new Product
-                {
-                    Type = "Add=on",
-                    PriceUa = addon.Product.PriceUa ?? 0,
-                    PriceTr = addon.Product.PriceTr ?? 0,
-                    DiscountPercentUa = addon.Product.DiscountPercent,
-                    DiscountPercentTr = addon.Product.DiscountPercent,
-                    DiscountDateTr = addon.Product.DiscountDate,
-                    DiscountDateUa = addon.Product.DiscountDate,
-                };
-            }
-        }
+        //     foreach (var addon in addons)
+        //     {
+        //         var addOndto = new AddOn { };
+        //         var product = new Product
+        //         {
+        //             Type = "Add=on",
+        //             PriceUa = addon.Product.PriceUa ?? 0,
+        //             PriceTr = addon.Product.PriceTr ?? 0,
+        //             DiscountPercentUa = addon.Product.DiscountPercent,
+        //             DiscountPercentTr = addon.Product.DiscountPercent,
+        //             DiscountDateTr = addon.Product.DiscountDate,
+        //             DiscountDateUa = addon.Product.DiscountDate,
+        //         };
+        //     }
+        // }
 
         public class ProductDto
         {
