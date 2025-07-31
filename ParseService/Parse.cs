@@ -293,8 +293,8 @@ namespace Services.ParseService
                                 PriceTr = edition.Product.PriceTr ?? 0,
                                 DiscountPercentUa = edition.Product.DiscountPercent,
                                 DiscountPercentTr = edition.Product.DiscountPercent,
-                                DiscountDateTr = edition.Product.DiscountDate,
-                                DiscountDateUa = edition.Product.DiscountDate,
+                                DiscountDateTr = edition.Product.DiscountDate ?? null,
+                                DiscountDateUa = edition.Product.DiscountDate ?? null,
                             };
 
                             var editionDto = new Edition
@@ -311,7 +311,7 @@ namespace Services.ParseService
                                 Region = edition.CodeRegion,
                                 Release = DateTime.SpecifyKind(
                                     DateTime.ParseExact(
-                                        edition.Release,
+                                        edition.Release ?? null,
                                         "d.M.yyyy",
                                         CultureInfo.InvariantCulture
                                     ),

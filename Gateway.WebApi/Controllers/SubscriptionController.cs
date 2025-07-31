@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.SubscriptionsQuery;
 using Service.Application.Service.SubscriptionsQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
+
 namespace Gateway.WebApi.Controllers
 {
     [SetRoute("")]
@@ -11,7 +12,11 @@ namespace Gateway.WebApi.Controllers
     {
         private readonly SubscriptionsQuerys _subscriptoinsQuerys;
         private readonly ILogger<SubscriptionController> _logger;
-        public SubscriptionController(SubscriptionsQuerys subscriptoinsQuerys, ILogger<SubscriptionController> logger)
+
+        public SubscriptionController(
+            SubscriptionsQuerys subscriptoinsQuerys,
+            ILogger<SubscriptionController> logger
+        )
         {
             _logger = logger;
             _subscriptoinsQuerys = subscriptoinsQuerys;
@@ -21,14 +26,13 @@ namespace Gateway.WebApi.Controllers
         /// Получение списка подписок на главной странице
         /// </summary>
         /// <returns></returns>
-
         [HttpGet("layout")]
         public async Task<ActionResult<List<SubscriptionsListDto>>> GetSubscriptionList()
         {
             try
             {
                 _logger.LogInformation("Fetching subscription list");
-                var subsList = await _subscriptoinsQuerys.GetSubscriptionsList(); ;
+                var subsList = await _subscriptoinsQuerys.GetSubscriptionsList();
                 return Ok(subsList);
             }
             catch (NotFoundException ex)
@@ -41,7 +45,6 @@ namespace Gateway.WebApi.Controllers
                 _logger.LogError(ex, ex.Message);
                 return StatusCode(500, ex.Message);
             }
-            
         }
     }
 }
