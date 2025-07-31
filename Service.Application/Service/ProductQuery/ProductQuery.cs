@@ -208,7 +208,7 @@ namespace Service.Application.Service.ProductQuery
 
             var games = filteredByGener.Include(p => p.Edition).ThenInclude(e => e.Game);
 
-            var set = games.Select(p => p.Edition.Game.Guid).ToHashSet();
+            var set = games.Where(p => p.Edition != null && p.Edition.Game != null).Select(p => p.Edition.Game.Guid).ToHashSet();
 
             var result = (await _productRepository.GetListQuery())
                 .Include(p => p.Edition).ThenInclude(e => e.Game)
