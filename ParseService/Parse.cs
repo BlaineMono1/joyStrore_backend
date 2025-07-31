@@ -1,20 +1,19 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Globalization;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using Business.Data.Models;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
-using System;
-using System.Net.Http.Json;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.SignalR;
-using System.Text;
-using System.Globalization;
-using StackExchange.Redis;
+using Business.Data.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc.DataAnnotations;
-
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 namespace Services.ParseService
 {
@@ -39,21 +38,24 @@ namespace Services.ParseService
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
         };
 
-        public Parse(ILogger<Parse> logger, IRepository<Game> gameRepository,
-        IRepository<Edition> editionRepository,
-        IRepository<Product> productRepository,
-        IGenersRepository<Geners> genersRepository,
-        IRepository<SettingPrice> settingPriceRepository,
-        IRepository<LoyaltySetting> loyaltySettingRepository,
-        IRepository<LoyaltyCashback> cahsbackRepository,
-        IRepository<PriceSettingSubscription> priceSettingSubscription,
-        IRepository<User> userRepo,
-        IRepository<Section> sectionRepository,
-        IRepository<Subscription> subscriptionRepository,
-        IRepository<AddOn> addOnRepository, IRepository<GenersToEdition> edRopository
+        public Parse(
+            ILogger<Parse> logger,
+            IRepository<Game> gameRepository,
+            IRepository<Edition> editionRepository,
+            IRepository<Product> productRepository,
+            IGenersRepository<Geners> genersRepository,
+            IRepository<SettingPrice> settingPriceRepository,
+            IRepository<LoyaltySetting> loyaltySettingRepository,
+            IRepository<LoyaltyCashback> cahsbackRepository,
+            IRepository<PriceSettingSubscription> priceSettingSubscription,
+            IRepository<User> userRepo,
+            IRepository<Section> sectionRepository,
+            IRepository<Subscription> subscriptionRepository,
+            IRepository<AddOn> addOnRepository,
+            IRepository<GenersToEdition> edRopository
         )
         {
             _logger = logger;
@@ -74,7 +76,7 @@ namespace Services.ParseService
 
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("http://static.41.188.179.185.ip.webhost1.net:8080/")
+                BaseAddress = new Uri("http://static.41.188.179.185.ip.webhost1.net:8080/"),
             };
             _httpClient.Timeout = TimeSpan.FromMinutes(50); // 50 mins, may be lower idk
         }
@@ -93,11 +95,9 @@ namespace Services.ParseService
             [JsonPropertyName("name")]
             public string Name { get; set; }
 
-
             [JsonPropertyName("product")]
             public ProductInfo Product { get; set; }
         }
-
 
         public class GameInfo
         {
@@ -158,7 +158,7 @@ namespace Services.ParseService
             [JsonPropertyName("orderType")]
             public string OrderType { get; set; }
 
-            [JsonPropertyName("release")]            
+            [JsonPropertyName("release")]
             public string Release { get; set; }
 
             [JsonPropertyName("product")]
@@ -183,7 +183,6 @@ namespace Services.ParseService
             public DateTime? DiscountDate { get; set; }
         }
 
-
         public async Task PasrceAddOns(int startPage, int endPage)
         {
             string requestUri = $"addon-full?startPage={startPage}&endPage={endPage}";
@@ -195,14 +194,17 @@ namespace Services.ParseService
             string rawJson = await response.Content.ReadAsStringAsync();
             _logger.LogInformation("Raw JSON from API: {json}", rawJson);
 
-            var addons = JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
-           ?? new List<AddOnInfo>();
+            var addons =
+                JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
+                ?? new List<AddOnInfo>();
 
             foreach (var addon in addons)
             {
-                var game = (await _gameRepository.GetListQuery()).FirstOrDefault(g => g.ConceptId == addon.ConceptId);
+                var game = (await _gameRepository.GetListQuery()).FirstOrDefault(g =>
+                    g.ConceptId == addon.ConceptId
+                );
 
-                if(game == null)
+                if (game == null)
                 {
                     _logger.LogError($"No game for concept id {addon.ConceptId}");
                     continue;
@@ -216,14 +218,10 @@ namespace Services.ParseService
                     CusaCodeUa = addon.CusaCodeUA,
                     TypeName = "Add-on",
                     Name = addon.Name,
-
-
                 };
-
-
             }
-
         }
+
         public async Task ParseGames(int startPage, int endPage)
         {
             Dictionary<string, List<Guid>> keyValuePairs = new Dictionary<string, List<Guid>>();
@@ -237,8 +235,9 @@ namespace Services.ParseService
             string rawJson = await response.Content.ReadAsStringAsync();
             _logger.LogInformation("Raw JSON from API: {json}", rawJson);
 
-            var games = JsonSerializer.Deserialize<List<GameInfo>>(rawJson, _jsonOptions)
-           ?? new List<GameInfo>();
+            var games =
+                JsonSerializer.Deserialize<List<GameInfo>>(rawJson, _jsonOptions)
+                ?? new List<GameInfo>();
 
             if (games != null)
             {
@@ -253,22 +252,19 @@ namespace Services.ParseService
                             {
                                 keyValuePairs.Add(e, new List<Guid>());
                             }
-
                         }
                     }
                 }
 
                 foreach (var key in keyValuePairs.Keys)
                 {
-                    var gener = (await _genersRepository.GetListQuery()).FirstOrDefault(g => g.Name == key);
+                    var gener = (await _genersRepository.GetListQuery()).FirstOrDefault(g =>
+                        g.Name == key
+                    );
 
                     if (gener is null)
                     {
-                        var add = new Geners
-                        {
-                            Name = key,
-                            Editions = new List<GenersToEdition>()
-                        };
+                        var add = new Geners { Name = key, Editions = new List<GenersToEdition>() };
 
                         await _genersRepository.Add(add);
                     }
@@ -283,14 +279,13 @@ namespace Services.ParseService
                         Name = game.Name,
                         ConceptId = game.ConceptId,
                         Popular = game.StarCount.ToString(),
-                        Languages = DetermineLanguage(game.LanguagesInterface, game.LanguagesVoice)
+                        Languages = DetermineLanguage(game.LanguagesInterface, game.LanguagesVoice),
                     };
 
                     if (game.Editions != null)
                     {
                         foreach (var edition in game.Editions.Where(e => e != null))
                         {
-                                                     
                             var productDto = new Product
                             {
                                 Type = "Game",
@@ -299,10 +294,9 @@ namespace Services.ParseService
                                 DiscountPercentUa = edition.Product.DiscountPercent,
                                 DiscountPercentTr = edition.Product.DiscountPercent,
                                 DiscountDateTr = edition.Product.DiscountDate,
-                                DiscountDateUa= edition.Product.DiscountDate
+                                DiscountDateUa = edition.Product.DiscountDate,
                             };
 
-                            
                             var editionDto = new Edition
                             {
                                 CusaCodeUa = edition.CusaCodeUA,
@@ -314,46 +308,55 @@ namespace Services.ParseService
                                 Platform = edition.Platform,
                                 Subscription = edition.Subscription,
                                 Region = edition.CodeRegion,
-                                Release  = DateTime.SpecifyKind(
-                                        DateTime.ParseExact(edition.Release, "d.M.yyyy", CultureInfo.InvariantCulture),
-                                        DateTimeKind.Utc),
+                                Release = DateTime.SpecifyKind(
+                                    DateTime.ParseExact(
+                                        edition.Release,
+                                        "d.M.yyyy",
+                                        CultureInfo.InvariantCulture
+                                    ),
+                                    DateTimeKind.Utc
+                                ),
                                 Game = gameDto,
                                 GameId = gameDto.Guid,
                                 Product = productDto,
                                 ProductId = productDto.Guid,
-                                EditionGeners = new List<GenersToEdition>()
+                                EditionGeners = new List<GenersToEdition>(),
                             };
 
                             var eg = edition.Geners.Split('|');
-                            var geners = (await _genersRepository.GetListQuery()).AsTracking().Where(g => eg.Contains(g.Name));
+                            var geners = (await _genersRepository.GetListQuery())
+                                .AsTracking()
+                                .Where(g => eg.Contains(g.Name));
 
                             foreach (var g in geners)
                             {
-
                                 if (!editionDto.EditionGeners.Any(e => e.GenerId == g.Guid))
                                 {
-                                    editionDto.EditionGeners.Add(new GenersToEdition { GenerId = g.Guid, Geners = g, EdtitonId = editionDto.Guid, Edition = editionDto });
+                                    editionDto.EditionGeners.Add(
+                                        new GenersToEdition
+                                        {
+                                            GenerId = g.Guid,
+                                            Geners = g,
+                                            EdtitonId = editionDto.Guid,
+                                            Edition = editionDto,
+                                        }
+                                    );
                                 }
                             }
 
                             await _editionRepository.Add(editionDto);
 
-
                             productDto.TypeId = editionDto.Guid;
 
-                            
                             gameDto.Editions ??= new List<Edition>();
                             gameDto.Editions.Add(editionDto);
-                            
                         }
-
                     }
                     else
                     {
                         _logger.LogWarning($"Editions is null for game: {game.Name}");
                     }
                 }
-
             }
         }
 
@@ -363,11 +366,10 @@ namespace Services.ParseService
             bool rusTxt = iface.Contains("Русский");
             bool rusVoice = voice.Contains("Русский");
             return rusTxt && rusVoice ? "Полностью на русском"
-                 : rusTxt ? "Русский интерфейс"
-                 : rusVoice ? "Русская озвучка"
-                 : "Не переведен на русский";
+                : rusTxt ? "Русский интерфейс"
+                : rusVoice ? "Русская озвучка"
+                : "Не переведен на русский";
         }
-        
 
         public async Task<string> ParseAddOns(int startPage, int endPage)
         {
@@ -380,9 +382,9 @@ namespace Services.ParseService
             string rawJson = await response.Content.ReadAsStringAsync();
             _logger.LogInformation("Raw JSON from API: {json}", rawJson);
 
-            var addons = JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
-           ?? new List<AddOnInfo>();
-
+            var addons =
+                JsonSerializer.Deserialize<List<AddOnInfo>>(rawJson, _jsonOptions)
+                ?? new List<AddOnInfo>();
 
             foreach (var addon in addons)
             {
@@ -395,7 +397,7 @@ namespace Services.ParseService
                     DiscountPercentUa = addon.Product.DiscountPercent,
                     DiscountPercentTr = addon.Product.DiscountPercent,
                     DiscountDateTr = addon.Product.DiscountDate,
-                    DiscountDateUa = addon.Product.DiscountDate
+                    DiscountDateUa = addon.Product.DiscountDate,
                 };
             }
         }
@@ -403,8 +405,10 @@ namespace Services.ParseService
         public class ProductDto
         {
             public string Type { get; set; }
+
             [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
             public decimal? PriceUa { get; set; }
+
             [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
             public decimal? PriceTr { get; set; }
             public string DiscountPercent { get; set; }
@@ -421,10 +425,12 @@ namespace Services.ParseService
             public string Name { get; set; }
             public ProductDto ProductDto { get; set; }
         }
+
         public async Task UpdateProductsPrice()
         {
-
-            var cusacodes = (await _subscriptionRepository.GetListQuery()).Select(sub => sub.CusaCodeUa).ToList();
+            var cusacodes = (await _subscriptionRepository.GetListQuery())
+                .Select(sub => sub.CusaCodeUa)
+                .ToList();
 
             //cusacodes.AddRange((await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
 
@@ -435,9 +441,11 @@ namespace Services.ParseService
             var data = new List<ResponceDto>();
             int updated = 0;
 
-            foreach (var batch in allCodes
-                       .Select((code, i) => new { code, i })
-                       .GroupBy(x => x.i / BatchSize, x => x.code))
+            foreach (
+                var batch in allCodes
+                    .Select((code, i) => new { code, i })
+                    .GroupBy(x => x.i / BatchSize, x => x.code)
+            )
             {
                 var content = new StringContent(
                     JsonSerializer.Serialize(batch),
@@ -446,23 +454,28 @@ namespace Services.ParseService
                 );
                 var resp = await _httpClient.PostAsync("current-price", content);
                 resp.EnsureSuccessStatusCode();
-                var part = await resp.Content
-                                    .ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions) ?? new List<ResponceDto>();
+                var part =
+                    await resp.Content.ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions)
+                    ?? new List<ResponceDto>();
                 updated += part.Count;
                 _logger.LogInformation($"Updated {updated} of {cusacodes.Count}");
                 data.AddRange(part);
             }
 
-
             if (data == null)
                 throw new InvalidOperationException("Сервер вернул пустой ответ.");
 
-
             foreach (var item in data)
             {
-                var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
-                var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
-                var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
+                var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(
+                    sub => sub.CusaCodeUa == item.CusaCodeUA
+                );
+                var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub =>
+                    sub.CusaCodeUa == item.CusaCodeUA
+                );
+                var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub =>
+                    sub.CusaCodeUa == item.CusaCodeUA
+                );
 
                 if (currentsub != null)
                 {
@@ -489,10 +502,7 @@ namespace Services.ParseService
                 {
                     _logger.LogError($"No product with CUSACODE UA {item.CusaCodeUA}");
                 }
-
             }
-
-
         }
 
         private async Task UpdateProduct(ProductDto ProductInfo, Guid ProductId)
@@ -506,6 +516,5 @@ namespace Services.ParseService
 
             await _productRepository.Update(product);
         }
-
     }
 }

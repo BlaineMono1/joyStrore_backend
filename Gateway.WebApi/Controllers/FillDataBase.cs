@@ -25,7 +25,7 @@ namespace Gateway.WebApi.Controllers
                 return Ok();
             }
             catch (Exception ex)
-            {                
+            {
                 return StatusCode(500, ex.Message);
             }
         }
@@ -38,7 +38,7 @@ namespace Gateway.WebApi.Controllers
                 var result = await _parse.ParseAddOns(startPage, endPage);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
@@ -57,6 +57,5 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
     }
 }
