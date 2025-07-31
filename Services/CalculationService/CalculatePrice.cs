@@ -1,12 +1,11 @@
-﻿using Business.Data.Models;
-using Service.Application.Iterfaces;
-using Microsoft.Extensions.Logging;
+﻿using System.Globalization;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
-using System.Globalization;
+using Business.Data.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Service.Application.Iterfaces;
 using Services.CalculationService.Dto;
-
 
 namespace Services.CalculationService
 {
@@ -19,7 +18,7 @@ namespace Services.CalculationService
         private readonly IProductRepository<Product> _productRepository;
         private readonly IRedisRepository _redis; // redis
         private readonly ILogger<CalculatePrice> _logger;
-        
+
         private readonly IDataFromCookie _regionFromCookie;
 
         public CalculatePrice(
@@ -31,14 +30,15 @@ namespace Services.CalculationService
             IHttpContextAccessor httpContextAccessor,
             IDataFromCookie regionFromCookie,
             ICacheService cacheService,
-            IProductRepository<Product> productRepository)
+            IProductRepository<Product> productRepository
+        )
         {
             _settingPriceRepository = settingPriceRepository;
             _priceSettingSubscription = priceSettingSubscription;
             _loyaltySettingRepository = loyaltySettingRepository;
             _redis = redis;
             _logger = logger;
-           
+
             _regionFromCookie = regionFromCookie;
             _cacheService = cacheService;
             _productRepository = productRepository;
@@ -53,31 +53,38 @@ namespace Services.CalculationService
             }
             _logger.LogInformation($"Calculating price for {region} - {price.Value}");
             decimal exchangeRate = 0;
-           
+
             if (region == "UAH")
             {
                 string? cachedData = await _redis.GetAsync("UAH");
                 _logger.LogInformation($"Data from redis - {cachedData}");
-                if(cachedData is null)
+                if (cachedData is null)
                 {
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("UAH");
-                   
+
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
                 }
-                if (cachedData.Contains(',')) cachedData = cachedData.Replace(',', '.');
-                if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
+                if (cachedData.Contains(','))
+                    cachedData = cachedData.Replace(',', '.');
+                if (
+                    float.TryParse(
+                        cachedData,
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out float parsedDecimal
+                    )
+                )
                 {
                     exchangeRate = (decimal)parsedDecimal;
                     _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
                 }
                 else
                 {
-                    _logger.LogError($"Can not parse data from redis {cachedData}"); 
+                    _logger.LogError($"Can not parse data from redis {cachedData}");
                 }
-
             }
-            else if(region == "TRY")
+            else if (region == "TRY")
             {
                 string? cachedData = await _redis.GetAsync("TRY");
                 _logger.LogInformation($"Data from redis - {cachedData}");
@@ -86,10 +93,17 @@ namespace Services.CalculationService
                     await UpdateCahce();
                     cachedData = await _redis.GetAsync("TRY");
                     _logger.LogInformation($"Data from redis after update - {cachedData}");
-
                 }
-                if (cachedData.Contains(',')) cachedData = cachedData.Replace(',', '.');
-                if (float.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedDecimal))
+                if (cachedData.Contains(','))
+                    cachedData = cachedData.Replace(',', '.');
+                if (
+                    float.TryParse(
+                        cachedData,
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out float parsedDecimal
+                    )
+                )
                 {
                     exchangeRate = (decimal)parsedDecimal;
                     _logger.LogInformation($"Fetched data drom redis {region} - {exchangeRate}");
@@ -107,18 +121,27 @@ namespace Services.CalculationService
             return price.Value * exchangeRate;
         }
 
-        public async Task<decimal> CalcPrice(decimal? priceua, decimal? pricetr, string type, Guid? id = null)
+        public async Task<decimal> CalcPrice(
+            decimal? priceua,
+            decimal? pricetr,
+            string type,
+            Guid? id = null
+        )
         {
             var region = _regionFromCookie.GetUserRegion();
             try
-            {                
-                _logger.LogInformation("Calculating price for region {Region}, type {Type}.", region, type);
+            {
+                _logger.LogInformation(
+                    "Calculating price for region {Region}, type {Type}.",
+                    region,
+                    type
+                );
 
                 var price = region switch
                 {
                     "UAH" => priceua,
                     "TRY" => pricetr,
-                    _ => throw new Exception("No region found")
+                    _ => throw new Exception("No region found"),
                 };
 
                 if (price == null)
@@ -130,19 +153,19 @@ namespace Services.CalculationService
                 var rubPrice = await GetPrice(region, price);
 
                 decimal priceWithMarkup = 0;
-                
+
                 var prices = new PricesDto();
                 decimal p = 0M;
-                foreach (var t in prices.l) 
+                foreach (var t in prices.l)
                 {
-                    if(t > rubPrice)
+                    if (t > rubPrice)
                     {
                         break;
                     }
                     p = t;
                 }
                 string? cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
-                if(cachedData is null)
+                if (cachedData is null)
                 {
                     await _cacheService.UpdateMarkUp();
                     cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
@@ -151,7 +174,10 @@ namespace Services.CalculationService
                 markupGame = decimal.Parse(cachedData);
                 if (markupGame == null)
                 {
-                    _logger.LogError("Markup data not found for the given price: {Price}.", rubPrice);
+                    _logger.LogError(
+                        "Markup data not found for the given price: {Price}.",
+                        rubPrice
+                    );
                     throw new Exception("Markup data not found.");
                 }
 
@@ -165,12 +191,17 @@ namespace Services.CalculationService
                         break;
 
                     case "Subscription":
-                        if (id is null) throw new Exception("Null sub Guid");
+                        if (id is null)
+                            throw new Exception("Null sub Guid");
                         var product = await _productRepository.GetById(id.Value);
-                        if (product is null) throw new Exception($"product with Guid {id} not found");
+                        if (product is null)
+                            throw new Exception($"product with Guid {id} not found");
                         var sub = await _productRepository.GetTypeEntity<Subscription>(product);
-                        var markupSub = (await _priceSettingSubscription.GetListQuery()).Where(p => p.SubscriptionId == sub.Guid).FirstOrDefault(p => p.Region == region);
-                        if (markupSub is null) throw new Exception($"markup for Sub with Guid {sub.Guid} not found");
+                        var markupSub = (await _priceSettingSubscription.GetListQuery())
+                            .Where(p => p.SubscriptionId == sub.Guid)
+                            .FirstOrDefault(p => p.Region == region);
+                        if (markupSub is null)
+                            throw new Exception($"markup for Sub with Guid {sub.Guid} not found");
                         priceWithMarkup = rubPrice * (markupSub.Percent / 100) + rubPrice;
                         break;
 
@@ -180,12 +211,20 @@ namespace Services.CalculationService
                         break;
                 }
 
-                _logger.LogInformation("Calculated price with markup: {PriceWithMarkup}", priceWithMarkup);
+                _logger.LogInformation(
+                    "Calculated price with markup: {PriceWithMarkup}",
+                    priceWithMarkup
+                );
                 return Math.Round(priceWithMarkup, MidpointRounding.AwayFromZero);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating price for region {Region}, type {Type}.", region, type);
+                _logger.LogError(
+                    ex,
+                    "Error calculating price for region {Region}, type {Type}.",
+                    region,
+                    type
+                );
                 throw;
             }
         }
@@ -195,17 +234,22 @@ namespace Services.CalculationService
             var region = _regionFromCookie.GetUserRegion();
             try
             {
-
                 if (price == null)
                 {
                     _logger.LogWarning("Price is null for region {Region}. Returning 0.", region);
                     return 0;
                 }
 
-                _logger.LogInformation("Calculating JPrice for price {Price} and region {Region}.", price, region);
+                _logger.LogInformation(
+                    "Calculating JPrice for price {Price} and region {Region}.",
+                    price,
+                    region
+                );
 
-                var loyality = (await _loyaltySettingRepository.GetListQuery()).OrderBy(l => l.PriceValue).FirstOrDefault(l => l.PriceValue >= price.Value);
-               
+                var loyality = (await _loyaltySettingRepository.GetListQuery())
+                    .OrderBy(l => l.PriceValue)
+                    .FirstOrDefault(l => l.PriceValue >= price.Value);
+
                 if (loyality == null)
                 {
                     _logger.LogError("No loyalty data found for price {Price}.", price);
@@ -214,11 +258,17 @@ namespace Services.CalculationService
 
                 decimal jPrice = price.Value - price.Value * (loyality.DiscountPercent / 100);
                 _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
-                return Math.Round(jPrice, MidpointRounding.AwayFromZero); ;
+                return Math.Round(jPrice, MidpointRounding.AwayFromZero);
+                ;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating JPrice for price {Price} and region {Region}.", price, region);
+                _logger.LogError(
+                    ex,
+                    "Error calculating JPrice for price {Price} and region {Region}.",
+                    price,
+                    region
+                );
                 throw;
             }
         }
@@ -233,14 +283,21 @@ namespace Services.CalculationService
                 _logger.LogInformation($"Data from redis for cashback - {cachedData}");
                 decimal cashback = 0;
 
-                if(cachedData is null)
+                if (cachedData is null)
                 {
-                   await _cacheService.UpdateCashBack();
-                   cachedData = await _redis.GetAsync("cashback");
+                    await _cacheService.UpdateCashBack();
+                    cachedData = await _redis.GetAsync("cashback");
                     _logger.LogInformation($"Data from redis for cashback - {cachedData}");
                 }
 
-                if (decimal.TryParse(cachedData, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedDecimal))
+                if (
+                    decimal.TryParse(
+                        cachedData,
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out decimal parsedDecimal
+                    )
+                )
                 {
                     cashback = parsedDecimal;
                     _logger.LogInformation($"Fetched data for cashback - {cashback}");

@@ -432,7 +432,9 @@ namespace Services.ParseService
                 .Select(sub => sub.CusaCodeUa)
                 .ToList();
 
-            //cusacodes.AddRange((await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
+            cusacodes.AddRange(
+                (await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa)
+            );
 
             cusacodes.AddRange((await _addOnRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
 

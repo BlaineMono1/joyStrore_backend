@@ -16,7 +16,12 @@ namespace CacheService
         private readonly IRepository<SettingPrice> _priceRepository;
         private static readonly HttpClient httpClient = new();
 
-        public ExchangeRate(IRedisRepository redis, ILogger<ExchangeRate> logger, IRepository<LoyaltyCashback> cashbackRepository, IRepository<SettingPrice> priceRepository)
+        public ExchangeRate(
+            IRedisRepository redis,
+            ILogger<ExchangeRate> logger,
+            IRepository<LoyaltyCashback> cashbackRepository,
+            IRepository<SettingPrice> priceRepository
+        )
         {
             _logger = logger;
             _redis = redis;
@@ -24,21 +29,17 @@ namespace CacheService
             _priceRepository = priceRepository;
         }
 
-              
-
         public async Task UpdateExchangeRates()
         {
-            
             string cacheKeyUa = "UAH";
             string cacheKeyTr = "TRY";
-
 
             string urlUa = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
             string urlTr = "https://min-api.cryptocompare.com/data/price?fsym=TRY&tsyms=RUB";
 
             decimal Ua = await FetchExchangeRate(urlUa);
             decimal Tr = await FetchExchangeRate(urlTr);
-            if(Ua == 0M || Tr == 0M)
+            if (Ua == 0M || Tr == 0M)
             {
                 throw new Exception($"Bad data from api  UAH-RUB = {Ua}, TRY-RUB = {Tr}");
             }
@@ -60,11 +61,11 @@ namespace CacheService
 
             await _redis.SetAsync(cacheKey, jsonData, null);
 
-            _logger.LogInformation($"Закэширована таблица Loyality cashback с процентом кэшбэка {entity.Percent}");
-
-            
+            _logger.LogInformation(
+                $"Закэширована таблица Loyality cashback с процентом кэшбэка {entity.Percent}"
+            );
         }
-        
+
         public async Task UpdateMarkUp()
         {
             var percents = await _priceRepository.GetAllList();
@@ -74,13 +75,14 @@ namespace CacheService
                 var jsonData = JsonSerializer.Serialize(p.Percent);
                 var key = $"MarkUpGame-{p.Price}";
                 await _redis.SetAsync(key, jsonData, null);
-                _logger.LogInformation($"Закэширована запись Setting price с ценой {p.Price} и наценкой {p.Percent}");
+                _logger.LogInformation(
+                    $"Закэширована запись Setting price с ценой {p.Price} и наценкой {p.Percent}"
+                );
             }
         }
 
         private async Task<decimal> FetchExchangeRate(string url)
         {
-
             HttpResponseMessage response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
