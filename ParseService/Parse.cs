@@ -305,6 +305,7 @@ namespace Services.ParseService
                                 EditionType = edition.EditionType,
                                 Name = edition.EditionName,
                                 Image = edition.Image,
+                                Features = edition.Features,
                                 Platform = edition.Platform,
                                 Subscription = edition.Subscription,
                                 Region = edition.CodeRegion,
