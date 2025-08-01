@@ -280,6 +280,14 @@ namespace Services.ParseService
 
                     foreach (var game in games)
                     {
+                        if (
+                            (await _gameRepository.GetListQuery()).Any(e =>
+                                e.ConceptId == game.ConceptId
+                            )
+                        )
+                        {
+                            continue;
+                        }
                         var gameDto = new Game
                         {
                             Name = game.Name,

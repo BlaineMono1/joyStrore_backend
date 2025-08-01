@@ -1,29 +1,29 @@
-﻿using Business.Data.Iterfaces;
+﻿using System.Linq;
+using System.Text.Json;
+using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Text.Json;
-
 
 namespace DataBaseToAccess.Repositiory.RepositoryEntity
 {
-    public class ProductRepository<T> : Repository<Product>, IProductRepository<T> where T : class,IBaseEntity
+    public class ProductRepository<T> : Repository<Product>, IProductRepository<T>
+        where T : class, IBaseEntity
     {
         private readonly Repository<Edition> _editionRepository;
         private readonly Repository<AddOn> _addOnRepository;
         private readonly Repository<Subscription> _subscriptionRepository;
         private readonly BaseDbContext _contex;
-        public ProductRepository(BaseDbContext contex, IRedisRepository redis) : base(contex)
+
+        public ProductRepository(BaseDbContext contex, IRedisRepository redis)
+            : base(contex)
         {
             _redis = redis;
             _contex = contex;
-           
         }
 
-       
-
         private readonly IRedisRepository _redis;
+
         public async Task<T> GetTypeEntity<T>(Product product)
         {
             if (product == null)
@@ -54,12 +54,13 @@ namespace DataBaseToAccess.Repositiory.RepositoryEntity
             object? result = (await GetListQuery()).FirstOrDefault(e => e.TypeId == id);
             return result == null
                 ? throw new KeyNotFoundException($"Product with type id: {id} not found")
-                : result as T ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");
-            
-        }        
+                : result as T
+                    ?? throw new InvalidCastException($"Cannot convert {result} to {typeof(T)}.");
+        }
 
-        public async new Task Update(Product entity)
+        public new async Task Update(Product entity)
         {
+            entity.DateUpdate = DateTime.UtcNow;
             await base.Update(entity);
 
             string cacheKey = $"product-{entity.Guid}";
