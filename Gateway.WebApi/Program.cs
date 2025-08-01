@@ -1,31 +1,34 @@
 using System.Reflection;
-using DataBaseToAccess;
-using Services.CalculationService;
-using Services.GetRegionFromCookie;
-using Microsoft.EntityFrameworkCore;
-using Service.Application.Iterfaces;
 using Business.Data.Iterfaces;
-using DataBaseToAccess.Repositiory;
-using Service.Application.Service.GamesQuery;
-using Services.ParseService;
 using Business.Data.Iterfaces.Store;
-using DataBaseToAccess.Repositiory.RepositoryEntity;
-using Service.Application.Service.UserQuery;
-using Service.Application.Service.GetNewsList;
-using Service.Application.Service.SubscriptionsQuery;
-using StackExchange.Redis;
 using CacheService;
-using Service.Application.Service.ProductQuery;
+using DataBaseToAccess;
+using DataBaseToAccess.Repositiory;
+using DataBaseToAccess.Repositiory.RepositoryEntity;
+using Gateway.WebApi.BackgroundService;
+using Microsoft.EntityFrameworkCore;
+using Quartz;
+using Service.Application.Iterfaces;
+using Service.Application.Service.AddOnsQuery;
 using Service.Application.Service.CartQuery;
 using Service.Application.Service.FavoriteQuery;
+using Service.Application.Service.GamesQuery;
+using Service.Application.Service.GetNewsList;
 using Service.Application.Service.OrderQuery;
-using Service.Application.Service.AddOnsQuery;
+using Service.Application.Service.ProductQuery;
+using Service.Application.Service.SubscriptionsQuery;
 using Service.Application.Service.TransactionQuery;
+using Service.Application.Service.UserQuery;
+using Services.CalculationService;
+using Services.GetRegionFromCookie;
+using Services.ParseService;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
-   options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DataBaseConnection"))
+);
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -73,9 +76,48 @@ builder.Services.AddScoped<OrderQuery>();
 builder.Services.AddScoped<AddOnsQuery>();
 builder.Services.AddScoped<TransactionQuery>();
 
+builder.Services.AddQuartz(q =>
+{
+    // Конфигурация Quartz
+    q.UseMicrosoftDependencyInjectionJobFactory();
+    q.UseSimpleTypeLoader();
+    q.UseInMemoryStore();
+    q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
+
+    // Создаем задание для ParseGames
+    var parseGamesJobKey = new JobKey("ParseGamesJob");
+    q.AddJob<ParseGamesJob>(opts => opts.WithIdentity(parseGamesJobKey));
+
+    // Создаем триггер для ParseGames (каждый день в 4:00)
+    q.AddTrigger(opts =>
+        opts.ForJob(parseGamesJobKey)
+            .WithIdentity("ParseGamesJob-trigger")
+            .WithCronSchedule("0 20 3 * * ?") // секунды минуты часы день месяц день_недели
+    );
+
+    // Создаем задание для UpdateProductsPrice
+    var updatePriceJobKey = new JobKey("UpdateProductsPriceJob");
+    q.AddJob<UpdateProductsPriceJob>(opts => opts.WithIdentity(updatePriceJobKey));
+
+    // Создаем триггер для UpdateProductsPrice (каждый день в 4:05)
+    q.AddTrigger(opts =>
+        opts.ForJob(updatePriceJobKey)
+            .WithIdentity("UpdateProductsPriceJob-trigger")
+            .WithCronSchedule("0 35 3 * * ?") // секунды минуты часы день месяц день_недели
+    );
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
 builder.Services.AddControllers();
-builder.Services.AddControllers().AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+builder
+    .Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft
+            .Json
+            .ReferenceLoopHandling
+            .Ignore
+    );
 
 builder.Services.AddSwaggerGen(config =>
 {
@@ -83,19 +125,20 @@ builder.Services.AddSwaggerGen(config =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     config.IncludeXmlComments(xmlPath);
-}
-);
+});
 
-//To Do: ��������� Cors 
+//To Do: ��������� Cors
 builder.Services.AddCors(options =>
-options.AddPolicy("AllowAll", policy =>
-{
-    policy.AllowAnyHeader();
-    policy.AllowAnyMethod();
-    policy.AllowAnyOrigin();
-
-}));
-
+    options.AddPolicy(
+        "AllowAll",
+        policy =>
+        {
+            policy.AllowAnyHeader();
+            policy.AllowAnyMethod();
+            policy.AllowAnyOrigin();
+        }
+    )
+);
 
 var app = builder.Build();
 
@@ -110,7 +153,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "������ ��� ���������� �������� � ���� ������.");
+        logger.LogError(ex, "������ ��� ���������� �������� � ���� ������.");
     }
 }
 
@@ -121,13 +164,12 @@ app.UseSwaggerUI(options =>
     options.RoutePrefix = string.Empty;
 });
 
-//ToDo: �������� Middleware ��� ��������� ������ 
+//ToDo: �������� Middleware ��� ��������� ������
 app.UseRouting();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.MapControllers();
-
 
 app.Run();
