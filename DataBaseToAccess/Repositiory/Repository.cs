@@ -3,15 +3,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseToAccess.Repositiory
 {
-    public class Repository<T> : IRepository<T> where T : class, IBaseEntity
+    public class Repository<T> : IRepository<T>
+        where T : class, IBaseEntity
     {
         private readonly BaseDbContext _context;
+
         public Repository(BaseDbContext context)
         {
             _context = context;
         }
+
         /// <summary>
-        /// Получить список объектов 
+        /// Получить список объектов
         /// </summary>
         /// <returns></returns>
         public async Task<List<T>> GetAllList()
@@ -20,7 +23,7 @@ namespace DataBaseToAccess.Repositiory
         }
 
         /// <summary>
-        /// Получить объект по id 
+        /// Получить объект по id
         /// </summary>
         /// <returns></returns>
         public async Task<T?> GetById(Guid id)
@@ -29,7 +32,7 @@ namespace DataBaseToAccess.Repositiory
         }
 
         /// <summary>
-        /// Обновить объект 
+        /// Обновить объект
         /// </summary>
         /// <returns></returns>
         public async Task Update(T entity)
@@ -38,10 +41,8 @@ namespace DataBaseToAccess.Repositiory
             await _context.SaveChangesAsync();
         }
 
-
-
         /// <summary>
-        /// Мягко удалить объект 
+        /// Мягко удалить объект
         /// </summary>
         /// <returns></returns>
         public async Task SoftDelete(Guid id)
@@ -52,12 +53,10 @@ namespace DataBaseToAccess.Repositiory
                 entity.IsDelete = true;
                 await Update(entity);
             }
-
         }
 
-
         /// <summary>
-        /// Жестко удалить объект 
+        /// Жестко удалить объект
         /// </summary>
         /// <returns></returns>
         public async Task HardDelete(Guid id)
@@ -68,11 +67,10 @@ namespace DataBaseToAccess.Repositiory
                 _context.Remove(entity);
                 await _context.SaveChangesAsync();
             }
-
         }
 
         /// <summary>
-        /// Добавить объект 
+        /// Добавить объект
         /// </summary>
         /// <returns></returns>
         public async Task Add(T entity)

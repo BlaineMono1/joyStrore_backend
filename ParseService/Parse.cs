@@ -443,15 +443,16 @@ namespace Services.ParseService
 
         public async Task UpdateProductsPrice()
         {
-            var cusacodes = (await _subscriptionRepository.GetListQuery())
+            var allSubscriptions = await _subscriptionRepository.GetAllList();
+            var allEditions = await _editionRepository.GetAllList();
+            var allAddOns = await _addOnRepository.GetAllList();
+
+            var cusacodes = allSubscriptions
                 .Select(sub => sub.CusaCodeUa)
+                .Concat(allEditions.Select(ed => ed.CusaCodeUa))
+                .Concat(allAddOns.Select(ed => ed.CusaCodeUa))
+                .Distinct()
                 .ToList();
-
-            cusacodes.AddRange(
-                (await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa).ToList()
-            );
-
-            cusacodes.AddRange((await _addOnRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
 
             const int BatchSize = 100;
             var allCodes = cusacodes;
@@ -482,38 +483,69 @@ namespace Services.ParseService
             if (data == null)
                 throw new InvalidOperationException("Сервер вернул пустой ответ.");
 
+            var subscriptionDict = allSubscriptions.ToDictionary(s => s.CusaCodeUa, s => s);
+            var editionDict = allEditions.ToDictionary(e => e.CusaCodeUa, e => e);
+            var addOnDict = allAddOns.ToDictionary(a => a.CusaCodeUa, a => a);
+
+            var productIds = new HashSet<Guid>(); // Добавляем этот HashSet
             foreach (var item in data)
             {
-                var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(
-                    sub => sub.CusaCodeUa == item.CusaCodeUA
-                );
-                var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub =>
-                    sub.CusaCodeUa == item.CusaCodeUA
-                );
-                var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub =>
-                    sub.CusaCodeUa == item.CusaCodeUA
-                );
+                if (subscriptionDict.TryGetValue(item.CusaCodeUA, out var sub) && sub != null)
+                    productIds.Add(sub.ProductId);
+                else if (editionDict.TryGetValue(item.CusaCodeUA, out var ed) && ed != null)
+                    productIds.Add(ed.ProductId);
+                else if (addOnDict.TryGetValue(item.CusaCodeUA, out var add) && add != null)
+                    productIds.Add(add.ProductId);
+            }
 
-                if (currentsub != null)
+            var products = await (await _productRepository.GetListQuery())
+                .Where(p => productIds.Contains(p.Guid))
+                .ToListAsync();
+
+            var productDict = products.ToDictionary(p => p.Guid, p => p);
+            foreach (var item in data)
+            {
+                // var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(
+                //     sub => sub.CusaCodeUa == item.CusaCodeUA
+                // );
+                // var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub =>
+                //     sub.CusaCodeUa == item.CusaCodeUA
+                // );
+                // var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub =>
+                //     sub.CusaCodeUa == item.CusaCodeUA
+                // );
+                if (
+                    subscriptionDict.TryGetValue(item.CusaCodeUA, out var currentsub)
+                    && currentsub != null
+                )
                 {
-                    await UpdateProduct(item.ProductDto, currentsub.ProductId);
-
-                    currentsub.Name = item.Name;
-                    await _subscriptionRepository.Update(currentsub);
+                    if (productDict.TryGetValue(currentsub.ProductId, out var product))
+                    {
+                        // Обновляем данные продукта
+                        await UpdateProduct(item.ProductDto, currentsub.ProductId);
+                    }
                 }
-                else if (currented != null)
+                else if (
+                    editionDict.TryGetValue(item.CusaCodeUA, out var currented)
+                    && currented != null
+                )
                 {
-                    await UpdateProduct(item.ProductDto, currented.ProductId);
-
-                    currented.Name = item.Name;
-                    await _editionRepository.Update(currented);
+                    if (productDict.TryGetValue(currented.ProductId, out var product))
+                    {
+                        // Обновляем данные продукта
+                        await UpdateProduct(item.ProductDto, currentsub.ProductId);
+                    }
                 }
-                else if (currentadd != null)
+                else if (
+                    addOnDict.TryGetValue(item.CusaCodeUA, out var currentadd)
+                    && currentadd != null
+                )
                 {
-                    await UpdateProduct(item.ProductDto, currentadd.ProductId);
-
-                    currentadd.Name = item.Name;
-                    await _addOnRepository.Update(currentadd);
+                    if (productDict.TryGetValue(currentadd.ProductId, out var product))
+                    {
+                        // Обновляем данные продукта
+                        await UpdateProduct(item.ProductDto, currentsub.ProductId);
+                    }
                 }
                 else
                 {
