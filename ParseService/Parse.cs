@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Service.Application.Exceptions;
 using StackExchange.Redis;
 
 namespace Services.ParseService
@@ -541,5 +543,149 @@ namespace Services.ParseService
 
             await _productRepository.Update(product);
         }
+
+
+        public async Task<Guid> CreateGame(string ConceptId, string Name, string Languages, string Popular)
+        {
+            var game = new Game
+            {
+                ConceptId = ConceptId,
+                Name = Name,
+                Languages = Languages,
+                Popular = Popular,
+                Editions = new List<Edition>(),
+                AddOns = new List<AddOn>()
+            };
+
+            await _gameRepository.Add(game);
+
+            return game.Guid;
+        }
+
+        public async Task<Guid> CreateEdition(string CusaCodeUa, string CusaCodeTr, string Type, string Name, string EditionType, string Image, string Platform,
+            string? Subscription, string? Features, DateTime Release, string Region, bool IsPreOrderr,
+            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr, Guid GameId, List<string> Geners)
+        {
+            var edition = new Edition
+            {
+                CusaCodeUa = CusaCodeUa,
+                CusaCodeTr = CusaCodeTr,
+                Type = Type,
+                Name = Name,
+                EditionType = EditionType,
+                Image = Image,
+                Platform = Platform,
+                Subscription = Subscription,
+                Features = Features,
+                Release = Release,
+                Region = Region,
+                IsPreOrder = IsPreOrderr,
+                GameId = GameId,
+                EditionGeners = new List<GenersToEdition>()
+            };
+            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "Game", edition.Guid);
+
+            edition.ProductId = prodId;
+
+            foreach(var gener in Geners)
+            {
+                var g = (await _genersRepository.GetListQuery()).FirstOrDefault(g => g.Name == gener) ?? throw new BadRequestExeption($"No gener with name {gener}");
+
+                edition.EditionGeners.Add(new GenersToEdition
+                {
+                    Edition = edition,
+                    EdtitonId = edition.Guid,
+                    Geners = g,
+                    GenerId = g.Guid
+                });
+            }
+
+            await _editionRepository.Add(edition);
+
+            return edition.Guid;
+        }
+
+        public async Task<Guid> CreateAddOn(string CusaCodeUa, string CusaCodeTr, string TypeName, string Name, string Type, string Image, string Platform, Guid GameId,
+            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        {
+            var addOn = new AddOn
+            {
+                CusaCodeUa = CusaCodeUa,
+                CusaCodeTr = CusaCodeTr,
+                TypeName = TypeName,
+                Name = Name,
+                Type = Type,
+                Image = Image,
+                Platform = Platform,
+                GameId = GameId
+
+            };
+
+            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "AddOn", addOn.Guid);
+
+            addOn.ProductId = prodId;
+
+            await _addOnRepository.Add(addOn);
+            return addOn.Guid;
+        }
+
+        public async Task<Guid> CreateSub(string CusaCodeUa, string CusaCodeTr,string Name, string Type, string Image, string Platform, string Duration, string SectionName,
+            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        {
+            var sub = new Subscription
+            {
+                CusaCodeUa = CusaCodeUa,
+                CusaCodeTr = CusaCodeTr,
+                Name = Name,
+                Type = Type,
+                Image = Image,
+                Platform = Platform,
+                Duration = Duration,
+                SectionName = SectionName,
+
+            };
+
+            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "Subscription", sub.Guid);
+
+            sub.ProductId = prodId;
+
+            var pcUa = new PriceSettingSubscription
+            {
+                Percent = 0M,
+                Region = "UAH",
+                SubscriptionId = sub.Guid,
+            };
+            var pcTr = new PriceSettingSubscription
+            {
+                Percent = 0M,
+                Region = "TRY",
+                SubscriptionId = sub.Guid
+            };
+
+            await _subscriptionRepository.Add(sub);
+            await _priceSettingSubscription.Add(pcUa);
+            await _priceSettingSubscription.Add(pcTr);
+
+            return sub.Guid;
+        }
+
+        public async Task<Guid> CreateProduct(decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, 
+            DateTime? DiscountDateTr, string Type, Guid TypeId)
+        {
+            var product = new Product
+            {
+                PriceUa = PriceUa,
+                PriceTr = PriceTr,
+                DiscountPercentUa = DiscountPercentUa,
+                DiscountDateUa = DiscountDateUa,
+                DiscountDateTr = DiscountDateTr,
+                Type = Type,
+                TypeId = TypeId
+            };
+
+            await _productRepository.Add(product);
+            return product.Guid;
+        }
     }
+
 }

@@ -241,9 +241,8 @@ namespace Service.Application.Service.ProductQuery
             }         
            
 
-            result = result.Where(p => region == "UAH" ? p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
+            result = result.Where(p => region == "UAH" ? p.PriceUa * coff > 0 && p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr * coff > 0 && p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
 
-            return result;
         }
 
         public async Task<List<ProductListDto>> MapProducts(IEnumerable<Product> source)
