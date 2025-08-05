@@ -245,7 +245,7 @@ namespace Service.Application.Service.ProductQuery
             }         
            
 
-            result = result.Where(p => region == "UAH" ? p.PriceUa > 0M && p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr > 0M && p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
+            result = result.Where(p => region == "UAH" ? p.PriceUa * coff > 0M && p.PriceUa * coff >= MinPrice && p.PriceUa * coff <= MaxPrice : p.PriceTr * coff > 0M && p.PriceTr * coff >= MinPrice && p.PriceTr * coff <= MaxPrice);
 
             return result;
         }
