@@ -227,10 +227,14 @@ namespace Service.Application.Service.ProductQuery
                         result = byDesc ? result.OrderByDescending(p => region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff)  : result.OrderBy(p => region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff);
                         break;
                     default:
-                        result = result.OrderByDescending(p => p.Type == "Game" ? p.Edition.Game.Popular : p.AddOn.Game.Popular);
+                        result = result.OrderByDescending(p => p.Type == "Game" ? Convert.ToInt32(p.Edition.Game.Popular): Convert.ToInt32(p.AddOn.Game.Popular));
                         break;
                 }
 
+            }
+            else
+            {
+                result = result.OrderByDescending(p => p.Type == "Game" ? Convert.ToInt32(p.Edition.Game.Popular) : Convert.ToInt32(p.AddOn.Game.Popular));
             }
 
             if (!string.IsNullOrEmpty(platform)) result = result.Where(p => p.Type == "Game" ? p.Edition.Platform.Contains(platform) : p.AddOn.Platform.Contains(platform));
