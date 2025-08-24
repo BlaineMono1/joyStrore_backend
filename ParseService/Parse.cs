@@ -544,8 +544,12 @@ namespace Services.ParseService
             await _productRepository.Update(product);
         }
 
-
-        public async Task<Guid> CreateGame(string ConceptId, string Name, string Languages, string Popular)
+        public async Task<Guid> CreateGame(
+            string ConceptId,
+            string Name,
+            string Languages,
+            string Popular
+        )
         {
             var game = new Game
             {
@@ -554,7 +558,7 @@ namespace Services.ParseService
                 Languages = Languages,
                 Popular = Popular,
                 Editions = new List<Edition>(),
-                AddOns = new List<AddOn>()
+                AddOns = new List<AddOn>(),
             };
 
             await _gameRepository.Add(game);
@@ -562,9 +566,28 @@ namespace Services.ParseService
             return game.Guid;
         }
 
-        public async Task<Guid> CreateEdition(string CusaCodeUa, string CusaCodeTr, string Type, string Name, string EditionType, string Image, string Platform,
-            string? Subscription, string? Features, DateTime Release, string Region, bool IsPreOrderr,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr, Guid GameId, List<string> Geners)
+        public async Task<Guid> CreateEdition(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string Type,
+            string Name,
+            string EditionType,
+            string Image,
+            string Platform,
+            string? Subscription,
+            string? Features,
+            DateTime Release,
+            string Region,
+            bool IsPreOrderr,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr,
+            Guid GameId,
+            List<string> Geners
+        )
         {
             var edition = new Edition
             {
@@ -581,23 +604,36 @@ namespace Services.ParseService
                 Region = Region,
                 IsPreOrder = IsPreOrderr,
                 GameId = GameId,
-                EditionGeners = new List<GenersToEdition>()
+                EditionGeners = new List<GenersToEdition>(),
             };
-            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "Game", edition.Guid);
+            var prodId = await CreateProduct(
+                PriceUa,
+                PriceTr,
+                DiscountPercentUa,
+                DiscountPercentTr,
+                DiscountDateUa,
+                DiscountDateTr,
+                "Game",
+                edition.Guid
+            );
 
             edition.ProductId = prodId;
 
-            foreach(var gener in Geners)
+            foreach (var gener in Geners)
             {
-                var g = (await _genersRepository.GetListQuery()).FirstOrDefault(g => g.Name == gener) ?? throw new BadRequestExeption($"No gener with name {gener}");
+                var g =
+                    (await _genersRepository.GetListQuery()).FirstOrDefault(g => g.Name == gener)
+                    ?? throw new BadRequestExeption($"No gener with name {gener}");
 
-                edition.EditionGeners.Add(new GenersToEdition
-                {
-                    Edition = edition,
-                    EdtitonId = edition.Guid,
-                    Geners = g,
-                    GenerId = g.Guid
-                });
+                edition.EditionGeners.Add(
+                    new GenersToEdition
+                    {
+                        Edition = edition,
+                        EdtitonId = edition.Guid,
+                        Geners = g,
+                        GenerId = g.Guid,
+                    }
+                );
             }
 
             await _editionRepository.Add(edition);
@@ -605,8 +641,22 @@ namespace Services.ParseService
             return edition.Guid;
         }
 
-        public async Task<Guid> CreateAddOn(string CusaCodeUa, string CusaCodeTr, string TypeName, string Name, string Type, string Image, string Platform, Guid GameId,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        public async Task<Guid> CreateAddOn(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string TypeName,
+            string Name,
+            string Type,
+            string Image,
+            string Platform,
+            Guid GameId,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr
+        )
         {
             var addOn = new AddOn
             {
@@ -617,11 +667,19 @@ namespace Services.ParseService
                 Type = Type,
                 Image = Image,
                 Platform = Platform,
-                GameId = GameId
-
+                GameId = GameId,
             };
 
-            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "AddOn", addOn.Guid);
+            var prodId = await CreateProduct(
+                PriceUa,
+                PriceTr,
+                DiscountPercentUa,
+                DiscountPercentTr,
+                DiscountDateUa,
+                DiscountDateTr,
+                "AddOn",
+                addOn.Guid
+            );
 
             addOn.ProductId = prodId;
 
@@ -629,8 +687,23 @@ namespace Services.ParseService
             return addOn.Guid;
         }
 
-        public async Task<Guid> CreateSub(string CusaCodeUa, string CusaCodeTr,string Name, string Type, string Image, string Platform, string Duration, string SectionName,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        public async Task<Guid> CreateSub(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string Name,
+            string Type,
+            string Image,
+            string ImageLayout,
+            string Platform,
+            string Duration,
+            string SectionName,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr
+        )
         {
             var sub = new Subscription
             {
@@ -639,13 +712,22 @@ namespace Services.ParseService
                 Name = Name,
                 Type = Type,
                 Image = Image,
+                ImageLayout = ImageLayout,
                 Platform = Platform,
                 Duration = Duration,
                 SectionName = SectionName,
-
             };
 
-            var prodId = await CreateProduct(PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, "Subscription", sub.Guid);
+            var prodId = await CreateProduct(
+                PriceUa,
+                PriceTr,
+                DiscountPercentUa,
+                DiscountPercentTr,
+                DiscountDateUa,
+                DiscountDateTr,
+                "Subscription",
+                sub.Guid
+            );
 
             sub.ProductId = prodId;
 
@@ -659,7 +741,7 @@ namespace Services.ParseService
             {
                 Percent = 0M,
                 Region = "TRY",
-                SubscriptionId = sub.Guid
+                SubscriptionId = sub.Guid,
             };
 
             await _subscriptionRepository.Add(sub);
@@ -669,8 +751,16 @@ namespace Services.ParseService
             return sub.Guid;
         }
 
-        public async Task<Guid> CreateProduct(decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, 
-            DateTime? DiscountDateTr, string Type, Guid TypeId)
+        public async Task<Guid> CreateProduct(
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr,
+            string Type,
+            Guid TypeId
+        )
         {
             var product = new Product
             {
@@ -680,12 +770,11 @@ namespace Services.ParseService
                 DiscountDateUa = DiscountDateUa,
                 DiscountDateTr = DiscountDateTr,
                 Type = Type,
-                TypeId = TypeId
+                TypeId = TypeId,
             };
 
             await _productRepository.Add(product);
             return product.Guid;
         }
     }
-
 }

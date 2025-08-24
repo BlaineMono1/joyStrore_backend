@@ -46,32 +46,75 @@ namespace Gateway.WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> CreateGame(string ConceptId, string Name, string Languages, string Popular)
+        public async Task<ActionResult<Guid>> CreateGame(
+            string ConceptId,
+            string Name,
+            string Languages,
+            string Popular
+        )
         {
             try
             {
                 var result = await _parse.CreateGame(ConceptId, Name, Languages, Popular);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> CreateEdition(string CusaCodeUa, string CusaCodeTr, string Type, string Name, string EditionType, string Image, string Platform,
-            string? Subscription, string? Features, DateTime Release, string Region, bool IsPreOrderr,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr, Guid GameId, List<string> Geners)
+        public async Task<ActionResult<Guid>> CreateEdition(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string Type,
+            string Name,
+            string EditionType,
+            string Image,
+            string Platform,
+            string? Subscription,
+            string? Features,
+            DateTime Release,
+            string Region,
+            bool IsPreOrderr,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr,
+            Guid GameId,
+            List<string> Geners
+        )
         {
             try
             {
-                var result = await _parse.CreateEdition(CusaCodeUa, CusaCodeTr, Type, Name, EditionType, Image, Platform,
-                                                        Subscription, Features, Release, Region, IsPreOrderr,
-                                                        PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr, GameId, Geners);
+                var result = await _parse.CreateEdition(
+                    CusaCodeUa,
+                    CusaCodeTr,
+                    Type,
+                    Name,
+                    EditionType,
+                    Image,
+                    Platform,
+                    Subscription,
+                    Features,
+                    Release,
+                    Region,
+                    IsPreOrderr,
+                    PriceUa,
+                    PriceTr,
+                    DiscountPercentUa,
+                    DiscountPercentTr,
+                    DiscountDateUa,
+                    DiscountDateTr,
+                    GameId,
+                    Geners
+                );
                 return Ok(result);
             }
-            catch(BadRequestExeption ex)
+            catch (BadRequestExeption ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -82,29 +125,87 @@ namespace Gateway.WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> CreateAddOn(string CusaCodeUa, string CusaCodeTr, string TypeName, string Name, string Type, string Image, string Platform, Guid GameId,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        public async Task<ActionResult<Guid>> CreateAddOn(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string TypeName,
+            string Name,
+            string Type,
+            string Image,
+            string Platform,
+            Guid GameId,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr
+        )
         {
             try
             {
-                var result =await  _parse.CreateAddOn(CusaCodeUa,  CusaCodeTr,  TypeName,  Name,  Type,  Image,  Platform,  GameId,
-                                                PriceUa,  PriceTr,  DiscountPercentUa,  DiscountPercentTr, DiscountDateUa, DiscountDateTr);
+                var result = await _parse.CreateAddOn(
+                    CusaCodeUa,
+                    CusaCodeTr,
+                    TypeName,
+                    Name,
+                    Type,
+                    Image,
+                    Platform,
+                    GameId,
+                    PriceUa,
+                    PriceTr,
+                    DiscountPercentUa,
+                    DiscountPercentTr,
+                    DiscountDateUa,
+                    DiscountDateTr
+                );
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> CreateSub(string CusaCodeUa, string CusaCodeTr, string Name, string Type, string Image, string Platform, string Duration, string SectionName,
-            decimal PriceUa, decimal PriceTr, string DiscountPercentUa, string DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr)
+        public async Task<ActionResult<Guid>> CreateSub(
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string Name,
+            string Type,
+            string Image,
+            string ImageLayout,
+            string Platform,
+            string Duration,
+            string SectionName,
+            decimal PriceUa,
+            decimal PriceTr,
+            string DiscountPercentUa,
+            string DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr
+        )
         {
             try
             {
-                var result = await _parse.CreateSub(CusaCodeUa, CusaCodeTr, Name, Type, Image, Platform, Duration, SectionName,
-                                                    PriceUa, PriceTr, DiscountPercentUa, DiscountPercentTr, DiscountDateUa, DiscountDateTr);
+                var result = await _parse.CreateSub(
+                    CusaCodeUa,
+                    CusaCodeTr,
+                    Name,
+                    Type,
+                    Image,
+                    ImageLayout,
+                    Platform,
+                    Duration,
+                    SectionName,
+                    PriceUa,
+                    PriceTr,
+                    DiscountPercentUa,
+                    DiscountPercentTr,
+                    DiscountDateUa,
+                    DiscountDateTr
+                );
                 return Ok(result);
             }
             catch (Exception ex)
