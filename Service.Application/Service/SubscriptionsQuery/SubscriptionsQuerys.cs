@@ -70,7 +70,7 @@ namespace Service.Application.Service.SubscriptionsQuery
                     {
                         ProductId = product.Guid,
                         Name = sub.Name,
-                        ImagePath = sub.Image,
+                        ImagePath = sub.ImageLayout,
                         Dicount = (
                             region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr
                         ),
