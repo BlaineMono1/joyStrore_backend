@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Xml;
 using Business.Data.BaseEntities;
@@ -82,38 +83,62 @@ namespace CacheService
 
         private async Task<decimal> FetchExchangeRate(string value)
         {
-            string url = "https://www.cbr.ru/scripts/XML_daily.asp";
-
-            using (HttpClient client = new HttpClient())
+            try
             {
-                try
+                string url = "https://www.cbr.ru/scripts/XML_daily.asp";
+                byte[] rawBytes = await httpClient.GetByteArrayAsync(url);
+                string xmlContent = Encoding.UTF8.GetString(rawBytes);
+
+                // Логируем содержимое для отладки
+                Console.WriteLine($"XML Content length: {xmlContent.Length}");
+                Console.WriteLine(
+                    $"First 500 chars: {xmlContent.Substring(0, Math.Min(500, xmlContent.Length))}"
+                );
+
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(xmlContent);
+
+                XmlNode node = doc.SelectSingleNode($"//Valute[CharCode='{value}']");
+
+                if (node != null)
                 {
-                    byte[] rawBytes = await client.GetByteArrayAsync(url);
+                    XmlNode vunitRateNode = node["VunitRate"];
+                    XmlNode valueNode = node["Value"];
 
-                    string xmlContent = Encoding.Default.GetString(rawBytes);
+                    Console.WriteLine($"VunitRate node exists: {vunitRateNode != null}");
+                    Console.WriteLine($"Value node exists: {valueNode != null}");
 
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(xmlContent);
-
-                    XmlNode node = doc.SelectSingleNode($"//Valute[CharCode='{value}']");
-
-                    if (node != null)
+                    if (vunitRateNode != null)
                     {
-                        string unitRateStr = node["VunitRate"]?.InnerText;
+                        string unitRateStr = vunitRateNode.InnerText;
+                        Console.WriteLine($"Raw VunitRate value: '{unitRateStr}'");
 
-                        return Convert.ToDecimal(unitRateStr);
-                    }
-                    else
-                    {
-                        throw new Exception($"Валюта {value} не найдена");
+                        string cleanedValue = unitRateStr.Replace(',', '.');
+                        Console.WriteLine($"Cleaned value: '{cleanedValue}'");
+
+                        if (
+                            decimal.TryParse(
+                                cleanedValue,
+                                NumberStyles.Float,
+                                CultureInfo.InvariantCulture,
+                                out decimal result
+                            )
+                        )
+                        {
+                            return result;
+                        }
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    throw new Exception($"Ошибка получения курса валюты {value}: {ex.Message}");
+                    throw new Exception($"Валюта {value} не найдена");
                 }
+                throw new Exception($"Валюта {value} не найдена");
             }
-            throw new Exception($"Не удалось получить курс для валюты {value}");
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка получения курса валюты {value}: {ex.Message}");
+            }
         }
     }
 }
