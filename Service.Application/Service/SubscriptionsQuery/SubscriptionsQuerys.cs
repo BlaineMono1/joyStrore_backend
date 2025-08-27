@@ -40,48 +40,64 @@ namespace Service.Application.Service.SubscriptionsQuery
         /// <summary>
         /// Выдача списка подписок
         /// </summary>
-        public async Task<List<SubscriptionsListDto>> GetSubscriptionsList()
+        public async Task<List<SubscriptionsLayout>> GetSubscriptionsList()
         {
             var region = _dataFromCookie.GetUserRegion();
-            var subscriptions = (await _subscriptionRepository.GetListQuery())
+            //подписки ps plus
+            var subscriptionsPlus = (await _subscriptionRepository.GetListQuery())
                 .Include(s => s.Product)
                 .ToList();
 
-            _logger.LogInformation("Fetched {Count} subscriptions.", subscriptions.Count);
+            var subscriptionsLayoutPlus = new List<SubscriptionsLayout>
+            {
+                new SubscriptionsLayout { Name = "PlayStation Plus" },
+                new SubscriptionsLayout { Name = "EA Play" },
+            };
+
+            _logger.LogInformation("Fetched {Count} subscriptions.", subscriptionsPlus.Count);
 
             var result = new List<SubscriptionsListDto>();
 
-            foreach (var sub in subscriptions)
+            //Добавленеие подписок ps plus
+            foreach (var subLayout in subscriptionsLayoutPlus)
             {
-                var product =
-                    await _productRepository.GetById(sub.ProductId)
-                    ?? throw new NotFoundException(nameof(Product), sub.ProductId);
-
-                var price = await _calculatePrice.CalcPrice(
-                    product.PriceUa,
-                    product.PriceTr,
-                    product.Type,
-                    product.Guid
-                );
-                var jPrice = await _calculatePrice.CalcJprice(price);
-
-                result.Add(
-                    new SubscriptionsListDto
+                foreach (var sub in subscriptionsPlus)
+                {
+                    if (sub.SectionName.Contains(subLayout.Name))
                     {
-                        ProductId = product.Guid,
-                        Name = sub.Name,
-                        ImagePath = sub.ImageLayout,
-                        Dicount = (
-                            region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr
-                        ),
-                        Price = price,
-                        Jprice = jPrice,
-                        SectionName = sub.SectionName,
-                    }
-                );
-            }
+                        var product =
+                            await _productRepository.GetById(sub.ProductId)
+                            ?? throw new NotFoundException(nameof(Product), sub.ProductId);
 
-            return result;
+                        var price = await _calculatePrice.CalcPrice(
+                            product.PriceUa,
+                            product.PriceTr,
+                            product.Type,
+                            product.Guid
+                        );
+                        var jPrice = await _calculatePrice.CalcJprice(price);
+
+                        subLayout.subscriptionsListDtos.Add(
+                            new SubscriptionsListDto
+                            {
+                                ProductId = product.Guid,
+                                Name = sub.Name,
+                                ImagePath = sub.ImageLayout,
+                                Duration = sub.Duration,
+                                Dicount = (
+                                    region == "UAH"
+                                        ? product.DiscountPercentUa
+                                        : product.DiscountPercentTr
+                                ),
+                                Price = price,
+                                Jprice = jPrice,
+                                SectionName = sub.SectionName,
+                            }
+                        );
+                    }
+                }
+            }
+            return subscriptionsLayoutPlus;
         }
 
         public async Task<List<MarkUpSubDto>> GetMarkUpList()

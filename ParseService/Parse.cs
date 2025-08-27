@@ -581,10 +581,6 @@ namespace Services.ParseService
             bool IsPreOrderr,
             decimal PriceUa,
             decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr,
             Guid GameId,
             List<string> Geners
         )
@@ -606,16 +602,7 @@ namespace Services.ParseService
                 GameId = GameId,
                 EditionGeners = new List<GenersToEdition>(),
             };
-            var prodId = await CreateProduct(
-                PriceUa,
-                PriceTr,
-                DiscountPercentUa,
-                DiscountPercentTr,
-                DiscountDateUa,
-                DiscountDateTr,
-                "Game",
-                edition.Guid
-            );
+            var prodId = await CreateProduct(PriceUa, PriceTr, "Game", edition.Guid);
 
             edition.ProductId = prodId;
 
@@ -651,11 +638,7 @@ namespace Services.ParseService
             string Platform,
             Guid GameId,
             decimal PriceUa,
-            decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr
+            decimal PriceTr
         )
         {
             var addOn = new AddOn
@@ -670,16 +653,7 @@ namespace Services.ParseService
                 GameId = GameId,
             };
 
-            var prodId = await CreateProduct(
-                PriceUa,
-                PriceTr,
-                DiscountPercentUa,
-                DiscountPercentTr,
-                DiscountDateUa,
-                DiscountDateTr,
-                "AddOn",
-                addOn.Guid
-            );
+            var prodId = await CreateProduct(PriceUa, PriceTr, "AddOn", addOn.Guid);
 
             addOn.ProductId = prodId;
 
@@ -698,11 +672,7 @@ namespace Services.ParseService
             string Duration,
             string SectionName,
             decimal PriceUa,
-            decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr
+            decimal PriceTr
         )
         {
             var sub = new Subscription
@@ -718,16 +688,7 @@ namespace Services.ParseService
                 SectionName = SectionName,
             };
 
-            var prodId = await CreateProduct(
-                PriceUa,
-                PriceTr,
-                DiscountPercentUa,
-                DiscountPercentTr,
-                DiscountDateUa,
-                DiscountDateTr,
-                "Subscription",
-                sub.Guid
-            );
+            var prodId = await CreateProduct(PriceUa, PriceTr, "Subscription", sub.Guid);
 
             sub.ProductId = prodId;
 
@@ -754,10 +715,6 @@ namespace Services.ParseService
         public async Task<Guid> CreateProduct(
             decimal PriceUa,
             decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr,
             string Type,
             Guid TypeId
         )
@@ -766,9 +723,6 @@ namespace Services.ParseService
             {
                 PriceUa = PriceUa,
                 PriceTr = PriceTr,
-                DiscountPercentUa = DiscountPercentUa,
-                DiscountDateUa = DiscountDateUa,
-                DiscountDateTr = DiscountDateTr,
                 Type = Type,
                 TypeId = TypeId,
             };

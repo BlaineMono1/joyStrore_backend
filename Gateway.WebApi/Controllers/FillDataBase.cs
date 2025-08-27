@@ -80,10 +80,6 @@ namespace Gateway.WebApi.Controllers
             bool IsPreOrderr,
             decimal PriceUa,
             decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr,
             Guid GameId,
             List<string> Geners
         )
@@ -105,10 +101,6 @@ namespace Gateway.WebApi.Controllers
                     IsPreOrderr,
                     PriceUa,
                     PriceTr,
-                    DiscountPercentUa,
-                    DiscountPercentTr,
-                    DiscountDateUa,
-                    DiscountDateTr,
                     GameId,
                     Geners
                 );
@@ -154,11 +146,7 @@ namespace Gateway.WebApi.Controllers
                     Platform,
                     GameId,
                     PriceUa,
-                    PriceTr,
-                    DiscountPercentUa,
-                    DiscountPercentTr,
-                    DiscountDateUa,
-                    DiscountDateTr
+                    PriceTr
                 );
                 return Ok(result);
             }
@@ -180,11 +168,7 @@ namespace Gateway.WebApi.Controllers
             string Duration,
             string SectionName,
             decimal PriceUa,
-            decimal PriceTr,
-            string DiscountPercentUa,
-            string DiscountPercentTr,
-            DateTime? DiscountDateUa,
-            DateTime? DiscountDateTr
+            decimal PriceTr
         )
         {
             try
@@ -200,11 +184,7 @@ namespace Gateway.WebApi.Controllers
                     Duration,
                     SectionName,
                     PriceUa,
-                    PriceTr,
-                    DiscountPercentUa,
-                    DiscountPercentTr,
-                    DiscountDateUa,
-                    DiscountDateTr
+                    PriceTr
                 );
                 return Ok(result);
             }
