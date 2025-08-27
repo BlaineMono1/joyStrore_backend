@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Xml;
 using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
@@ -29,8 +30,13 @@ namespace Gateway.WebApi.Controllers
                 try
                 {
                     byte[] rawBytes = await client.GetByteArrayAsync(url);
+                    string xmlContent = Encoding.UTF8.GetString(rawBytes);
 
-                    string xmlContent = Encoding.Default.GetString(rawBytes);
+                    // Логируем содержимое для отладки
+                    Console.WriteLine($"XML Content length: {xmlContent.Length}");
+                    Console.WriteLine(
+                        $"First 500 chars: {xmlContent.Substring(0, Math.Min(500, xmlContent.Length))}"
+                    );
 
                     XmlDocument doc = new XmlDocument();
                     doc.LoadXml(xmlContent);
@@ -39,10 +45,34 @@ namespace Gateway.WebApi.Controllers
 
                     if (node != null)
                     {
-                        string unitRateStr = node["VunitRate"]?.InnerText;
+                        // Добавляем проверку на наличие нод
+                        XmlNode vunitRateNode = node["VunitRate"];
+                        XmlNode valueNode = node["Value"];
 
-                        var result = Convert.ToDecimal(unitRateStr);
-                        return Ok(result);
+                        Console.WriteLine($"VunitRate node exists: {vunitRateNode != null}");
+                        Console.WriteLine($"Value node exists: {valueNode != null}");
+
+                        if (vunitRateNode != null)
+                        {
+                            string unitRateStr = vunitRateNode.InnerText;
+                            Console.WriteLine($"Raw VunitRate value: '{unitRateStr}'");
+
+                            // Заменяем запятую на точку
+                            string cleanedValue = unitRateStr.Replace(',', '.');
+                            Console.WriteLine($"Cleaned value: '{cleanedValue}'");
+
+                            if (
+                                decimal.TryParse(
+                                    cleanedValue,
+                                    NumberStyles.Float,
+                                    CultureInfo.InvariantCulture,
+                                    out decimal result
+                                )
+                            )
+                            {
+                                return Ok(result);
+                            }
+                        }
                     }
                     else
                     {
