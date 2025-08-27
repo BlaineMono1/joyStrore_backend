@@ -113,7 +113,6 @@ namespace CacheService
                     throw new Exception($"Ошибка получения курса валюты {value}: {ex.Message}");
                 }
             }
-
             throw new Exception($"Не удалось получить курс для валюты {value}");
         }
     }

@@ -1,16 +1,14 @@
-﻿using Business.Data.Iterfaces.Store;
+﻿using Business.Data.Iterfaces;
+using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
-using Business.Data.Iterfaces;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Service.Application.Iterfaces;
 using Microsoft.EntityFrameworkCore;
-using Service.Application.Service.GamesQuery.Dto;
+using Microsoft.Extensions.Logging;
 using Service.Application.Exceptions;
-using static Service.Application.Exceptions.NotFoundExeption;
+using Service.Application.Iterfaces;
 using Service.Application.Service.AddOnsQuery;
-
-
+using Service.Application.Service.GamesQuery.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.GamesQuery
 {
@@ -40,7 +38,7 @@ namespace Service.Application.Service.GamesQuery
             IUserRepository<User> userRepository,
             IRepository<AddOn> addOnRepository,
             IRepository<GenersToEdition> generToEditionsRepository
-            )
+        )
         {
             _calculatePrice = calculatePrice;
             _regionFromCookie = regionFromCookie;
@@ -60,8 +58,10 @@ namespace Service.Application.Service.GamesQuery
             var region = _regionFromCookie.GetUserRegion();
 
             _logger.LogInformation("Fetching all sections.");
-            var sections = (await _sectionRepository.GetListQuery()).Include(s => s.Products).ThenInclude(se => se.Product).ToList();
-
+            var sections = (await _sectionRepository.GetListQuery())
+                .Include(s => s.Products)
+                .ThenInclude(se => se.Product)
+                .ToList();
 
             foreach (var section in sections)
             {
@@ -70,13 +70,9 @@ namespace Service.Application.Service.GamesQuery
                     _logger.LogWarning("Section {SectionName} has no products.", section.Name);
                     continue;
                 }
-                var sectionDto = new SectionDto
-                {
-                    Name = section.Name,
-                };
+                var sectionDto = new SectionDto { Name = section.Name };
                 foreach (var sectionProduct in section.Products)
                 {
-
                     var product = sectionProduct.Product;
 
                     var addOn = (await _addOnRepository.GetById(product.TypeId));
@@ -87,29 +83,52 @@ namespace Service.Application.Service.GamesQuery
                         Name = product.Type == "Game" ? edition.Name : addOn.Name,
                         ImageFilepath = product.Type == "Game" ? edition.Image : addOn.Image,
                         ProductId = product.Guid,
-                        Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
-                        Discount = (region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr)
+                        Price = await _calculatePrice.CalcPrice(
+                            product.PriceUa,
+                            product.PriceTr,
+                            product.Type
+                        ),
+                        Discount = (
+                            region == "UAH" ? product.DiscountPercentUa : product.DiscountPercentTr
+                        ),
                     };
                     dto.Jprice = await _calculatePrice.CalcJprice(dto.Price);
 
                     sectionDto.Editions.Add(dto);
                 }
                 result.Add(sectionDto);
-
             }
-
 
             return result;
         }
 
-
-        public async Task AddEdition(string ConceptId, string Name, string Languages, 
-            string Popular, string NameEdition, string EditionType, string EditionName,  string Image,
-            string Platform, string Subscription, string Features, DateTime? Release, string Region, bool IsPreOrder,
-            decimal PriceUa, decimal PriceTr, decimal DiscountPercentUa, decimal DiscountPercentTr, DateTime? DiscountDateUa, DateTime? DiscountDateTr, List<string> Geners,
-            string CusaCodeUa, string CusaCodeTr, string Type)
+        public async Task AddEdition(
+            string ConceptId,
+            string Name,
+            string Languages,
+            string Popular,
+            string NameEdition,
+            string EditionType,
+            string EditionName,
+            string Image,
+            string Platform,
+            string Subscription,
+            string Features,
+            DateTime? Release,
+            string Region,
+            bool IsPreOrder,
+            decimal PriceUa,
+            decimal PriceTr,
+            decimal DiscountPercentUa,
+            decimal DiscountPercentTr,
+            DateTime? DiscountDateUa,
+            DateTime? DiscountDateTr,
+            List<string> Geners,
+            string CusaCodeUa,
+            string CusaCodeTr,
+            string Type
+        )
         {
-
             var game = new Game();
             var edition = new Edition();
             var product = new Product();
@@ -118,7 +137,7 @@ namespace Service.Application.Service.GamesQuery
             game.Name = Name;
             game.Languages = Languages;
             game.Popular = Popular;
-            
+
             edition.CusaCodeTr = CusaCodeTr;
             edition.CusaCodeUa = CusaCodeUa;
             edition.EditionType = EditionType;
@@ -143,21 +162,17 @@ namespace Service.Application.Service.GamesQuery
             product.Type = Type;
             product.TypeId = edition.Guid;
 
-           
-
             await _productRepository.Add(product);
             await _gameRepository.Add(game);
             await _editionRepository.Add(edition);
 
             foreach (var generName in Geners)
             {
-                var gener = (await _gameRepository.GetListQuery()).FirstOrDefault(x => x.Name == generName) ?? throw new NotFoundException(nameof(Geners), generName);
+                var gener =
+                    (await _gameRepository.GetListQuery()).FirstOrDefault(x => x.Name == generName)
+                    ?? throw new NotFoundException(nameof(Geners), generName);
 
-                var edg = new GenersToEdition
-                {
-                    EdtitonId = edition.Guid,
-                    GenerId = gener.Guid,
-                };
+                var edg = new GenersToEdition { EdtitonId = edition.Guid, GenerId = gener.Guid };
 
                 await _generToEditionsRepository.Add(edg);
             }
@@ -173,7 +188,11 @@ namespace Service.Application.Service.GamesQuery
 
         public async Task DeleteGame(Guid GameId)
         {
-            var game = (await _gameRepository.GetListQuery()).Include(g => g.Editions).Include(g => g.AddOns).FirstOrDefault(g => g.Guid == GameId) 
+            var game =
+                (await _gameRepository.GetListQuery())
+                    .Include(g => g.Editions)
+                    .Include(g => g.AddOns)
+                    .FirstOrDefault(g => g.Guid == GameId)
                 ?? throw new NotFoundException(nameof(Game), GameId);
 
             foreach (var ed in game.Editions ?? [])
@@ -181,17 +200,14 @@ namespace Service.Application.Service.GamesQuery
                 await DeleteEdition(ed.Guid);
             }
 
-            foreach(var ad in game.AddOns ?? [])
+            foreach (var ad in game.AddOns ?? [])
             {
                 var prod = await _productRepository.GetEntityType(ad.Guid);
                 await _productRepository.HardDelete(prod.Guid);
                 await _addOnRepository.HardDelete(ad.Guid);
             }
 
-            await _gameRepository.HardDelete(GameId);            
-
+            await _gameRepository.HardDelete(GameId);
         }
-
-
     }
 }

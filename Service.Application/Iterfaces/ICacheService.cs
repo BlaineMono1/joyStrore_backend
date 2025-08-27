@@ -1,5 +1,4 @@
-﻿
-namespace Service.Application.Iterfaces
+﻿namespace Service.Application.Iterfaces
 {
     public interface ICacheService
     {
