@@ -51,6 +51,11 @@ namespace Business.Data.Models
         /// </summary>
         public string? SectionName { get; set; }
 
+        /// <summary>
+        /// Имя раздела
+        /// </summary>
+        public string? Variety { get; set; }
+
         #endregion
 
         #region связи

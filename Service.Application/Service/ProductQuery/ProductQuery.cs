@@ -192,7 +192,7 @@ namespace Service.Application.Service.ProductQuery
                             s.Guid == product.TypeId
                         ) ?? throw new NotFoundException(nameof(Subscription), product.TypeId); //текущая подписка
                     var groupSubs = (await _subscriptionRepository.GetListQuery())
-                        .Where(s => s.Name == sub.Name && s.Guid != sub.Guid)
+                        .Where(s => s.Variety == sub.Variety && s.Guid != sub.Guid)
                         .ToList();
 
                     result.AddRange(
