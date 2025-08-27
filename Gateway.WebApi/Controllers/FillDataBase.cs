@@ -1,4 +1,6 @@
-﻿using Gateway.WebApi.Attributes;
+﻿using System.Text;
+using System.Xml;
+using Gateway.WebApi.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Exceptions;
 using Service.Application.Service.AddOnsQuery;
@@ -15,6 +17,44 @@ namespace Gateway.WebApi.Controllers
         public FillDataBase(Parse parse)
         {
             _parse = parse;
+        }
+
+        [HttpGet("test")]
+        public async Task<ActionResult> Test(string value)
+        {
+            string url = "https://www.cbr.ru/scripts/XML_daily.asp";
+
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    byte[] rawBytes = await client.GetByteArrayAsync(url);
+
+                    string xmlContent = Encoding.Default.GetString(rawBytes);
+
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(xmlContent);
+
+                    XmlNode node = doc.SelectSingleNode($"//Valute[CharCode='{value}']");
+
+                    if (node != null)
+                    {
+                        string unitRateStr = node["VunitRate"]?.InnerText;
+
+                        var result = Convert.ToDecimal(unitRateStr);
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        throw new Exception($"Валюта {value} не найдена");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Ошибка получения курса валюты {value}: {ex.Message}");
+                }
+            }
+            throw new Exception($"Не удалось получить курс для валюты {value}");
         }
 
         [HttpGet]
