@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
+using System.Xml;
 using Business.Data.BaseEntities;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
@@ -34,11 +36,8 @@ namespace CacheService
             string cacheKeyUa = "UAH";
             string cacheKeyTr = "TRY";
 
-            string urlUa = "https://min-api.cryptocompare.com/data/price?fsym=UAH&tsyms=RUB";
-            string urlTr = "https://min-api.cryptocompare.com/data/price?fsym=TRY&tsyms=RUB";
-
-            decimal Ua = await FetchExchangeRate(urlUa);
-            decimal Tr = await FetchExchangeRate(urlTr);
+            decimal Ua = await FetchExchangeRate(cacheKeyUa);
+            decimal Tr = await FetchExchangeRate(cacheKeyTr);
             if (Ua == 0M || Tr == 0M)
             {
                 throw new Exception($"Bad data from api  UAH-RUB = {Ua}, TRY-RUB = {Tr}");
@@ -81,14 +80,41 @@ namespace CacheService
             }
         }
 
-        private async Task<decimal> FetchExchangeRate(string url)
+        private async Task<decimal> FetchExchangeRate(string value)
         {
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            string url = "https://www.cbr.ru/scripts/XML_daily.asp";
 
-            string jsonResponse = await response.Content.ReadAsStringAsync();
-            var data = JsonSerializer.Deserialize<Dictionary<string, double>>(jsonResponse);
-            return data != null && data.ContainsKey("RUB") ? (decimal)data["RUB"] : 0M;
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    byte[] rawBytes = await client.GetByteArrayAsync(url);
+
+                    string xmlContent = Encoding.Default.GetString(rawBytes);
+
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(xmlContent);
+
+                    XmlNode node = doc.SelectSingleNode($"//Valute[CharCode='{value}']");
+
+                    if (node != null)
+                    {
+                        string unitRateStr = node["VunitRate"]?.InnerText;
+
+                        return Convert.ToDecimal(unitRateStr);
+                    }
+                    else
+                    {
+                        throw new Exception($"Валюта {value} не найдена");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Ошибка получения курса валюты {value}: {ex.Message}");
+                }
+            }
+
+            throw new Exception($"Не удалось получить курс для валюты {value}");
         }
     }
 }
