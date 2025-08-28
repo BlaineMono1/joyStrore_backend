@@ -258,7 +258,7 @@ namespace Service.Application.Service.ProductQuery
 
             var set = games.Where(p => p.Edition != null && p.Edition.Game != null).Select(p => p.Edition.Game.Guid).ToHashSet();
 
-            var result = (await _productRepository.GetListQuery())
+            var baseQuery = (await _productRepository.GetListQuery())
                 .Include(p => p.Edition)
                 .ThenInclude(e => e.Game)
                 .Include(p => p.AddOn)
@@ -266,17 +266,40 @@ namespace Service.Application.Service.ProductQuery
                 .Where(p =>
                     (p.Type == "Game" && set.Contains(p.Edition.Game.Guid))
                     || (p.Type == "AddOn" && set.Contains(p.AddOn.Game.Guid))
-                )
-                .OrderBy(p => p.Type == "AddOn")
-                .AsQueryable();
+                );
 
+            if (!string.IsNullOrEmpty(platform))
+                baseQuery = baseQuery.Where(p =>
+                    p.Type == "Game"
+                        ? p.Edition.Platform.Contains(platform)
+                        : p.AddOn.Platform.Contains(platform)
+                );
+
+            baseQuery = baseQuery.Where(p =>
+                region == "UAH"
+                    ? p.PriceUa * coff > 0M
+                        && p.PriceUa * coff >= MinPrice
+                        && p.PriceUa * coff <= MaxPrice
+                    : p.PriceTr * coff > 0M
+                        && p.PriceTr * coff >= MinPrice
+                        && p.PriceTr * coff <= MaxPrice
+            );
+
+            IOrderedQueryable<Product> result = baseQuery.OrderBy(p => p.Type == "AddOn");
+
+            if (byDiscount)
+            {
+                result = result.OrderByDescending(p =>
+                    region == "UAH" ? p.DiscountPercentUa ?? "0" : p.DiscountPercentTr ?? "0"
+                );
+            }
             if (!string.IsNullOrEmpty(filterName))
             {
                 switch (filterName)
                 {
                     case "Date":
                         result = byDesc
-                            ? result.OrderByDescending(p =>
+                            ? result.ThenByDescending(p =>
                                 p.Type == "Game" ? p.Edition.Release : DateTime.MaxValue
                             )
                             : result.OrderBy(p =>
@@ -285,15 +308,15 @@ namespace Service.Application.Service.ProductQuery
                         break;
                     case "Price":
                         result = byDesc
-                            ? result.OrderByDescending(p =>
+                            ? result.ThenByDescending(p =>
                                 region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff
                             )
-                            : result.OrderBy(p =>
+                            : result.ThenBy(p =>
                                 region == "UAH" ? p.PriceUa * coff : p.PriceTr * coff
                             );
                         break;
                     default:
-                        result = result.OrderByDescending(p =>
+                        result = result.ThenByDescending(p =>
                             p.Type == "Game"
                                 ? Convert.ToInt32(p.Edition.Game.Popular)
                                 : Convert.ToInt32(p.AddOn.Game.Popular)
@@ -303,36 +326,12 @@ namespace Service.Application.Service.ProductQuery
             }
             else
             {
-                result = result.OrderByDescending(p =>
+                result = result.ThenByDescending(p =>
                     p.Type == "Game"
                         ? Convert.ToInt32(p.Edition.Game.Popular)
                         : Convert.ToInt32(p.AddOn.Game.Popular)
                 );
             }
-
-            if (!string.IsNullOrEmpty(platform))
-                result = result.Where(p =>
-                    p.Type == "Game"
-                        ? p.Edition.Platform.Contains(platform)
-                        : p.AddOn.Platform.Contains(platform)
-                );
-
-            if (byDiscount)
-            {
-                result = result.OrderByDescending(p =>
-                    (region == "UAH" ? p.DiscountPercentUa ?? "0" : p.DiscountPercentTr ?? "0")
-                );
-            }
-
-            result = result.Where(p =>
-                region == "UAH"
-                    ? p.PriceUa * coff > 0M
-                        && p.PriceUa * coff >= MinPrice
-                        && p.PriceUa * coff <= MaxPrice
-                    : p.PriceTr * coff > 0M
-                        && p.PriceTr * coff >= MinPrice
-                        && p.PriceTr * coff <= MaxPrice
-            );
 
             return result;
         }
@@ -343,28 +342,34 @@ namespace Service.Application.Service.ProductQuery
             var result = new List<ProductListDto>();
             foreach (var item in source)
             {
-                var t = new ProductListDto();
-                t.ProductId = item.Guid;
-                t.ImageFilepath =
-                    item.Type == "Game"
-                        ? (await _editonRepository.GetById(item.TypeId)).Image
-                        : (await _addOnRepository.GetById(item.TypeId)).Image;
-                t.Name =
-                    item.Type == "Game"
-                        ? (await _editonRepository.GetById(item.TypeId)).Name
-                        : (await _addOnRepository.GetById(item.TypeId)).Name;
-                t.Price = await _calculatePrice.CalcPrice(
-                    item.PriceUa,
-                    item.PriceTr,
-                    item.Type,
-                    item.Guid
-                );
-                t.Jprice = await _calculatePrice.CalcJprice(t.Price);
-                t.Discount =
-                    (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr) ?? "0";
-                result.Add(t);
+                try
+                {
+                    var t = new ProductListDto();
+                    t.ProductId = item.Guid;
+                    t.ImageFilepath =
+                        item.Type == "Game"
+                            ? (await _editonRepository.GetById(item.TypeId)).Image
+                            : (await _addOnRepository.GetById(item.TypeId)).Image;
+                    t.Name =
+                        item.Type == "Game"
+                            ? (await _editonRepository.GetById(item.TypeId)).Name
+                            : (await _addOnRepository.GetById(item.TypeId)).Name;
+                    t.Price = await _calculatePrice.CalcPrice(
+                        item.PriceUa,
+                        item.PriceTr,
+                        item.Type,
+                        item.Guid
+                    );
+                    t.Jprice = await _calculatePrice.CalcJprice(t.Price);
+                    t.Discount =
+                        (region == "UAH" ? item.DiscountPercentUa : item.DiscountPercentTr) ?? "0";
+                    result.Add(t);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message + $" {item.Guid} - {item.Type}");
+                }
             }
-
             return result;
         }
     }

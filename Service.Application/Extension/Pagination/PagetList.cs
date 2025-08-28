@@ -51,10 +51,7 @@ namespace Service.Application.Extension.Pagination
         /// </summary>
         public bool HasPreviousPage
         {
-            get
-            {
-                return (PageIndex > 0);
-            }
+            get { return (PageIndex > 0); }
         }
 
         /// <summary>
@@ -62,10 +59,7 @@ namespace Service.Application.Extension.Pagination
         /// </summary>
         public bool HasNextPage
         {
-            get
-            {
-                return (PageIndex + 1 < TotalPages);
-            }
+            get { return (PageIndex + 1 < TotalPages); }
         }
 
         /// <summary>
@@ -79,8 +73,5 @@ namespace Service.Application.Extension.Pagination
             var result = new PaginatedList<T>(entities, page);
             return result;
         }
-
     }
-
-
 }

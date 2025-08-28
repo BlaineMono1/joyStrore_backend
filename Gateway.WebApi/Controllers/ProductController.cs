@@ -45,16 +45,37 @@ namespace Gateway.WebApi.Controllers
         }
 
         /// <summary>
-        /// Фильтрация продуктов 
+        /// Фильтрация продуктов
         /// </summary>
         [HttpPost("filter")]
-        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(string? name = null, string? filterName = null,  string? platform = null, bool byDesc = false, bool byDiscount = false, List<string>? geners = null, int Page = 0, decimal MinPrice = 0, decimal MaxPrice = 1e18M)
+        public async Task<ActionResult<List<ProductListDto>>> FilterProducts(
+            string? name = null,
+            string? filterName = null,
+            string? platform = null,
+            bool byDesc = false,
+            bool byDiscount = false,
+            List<string>? geners = null,
+            int Page = 0,
+            decimal MinPrice = 0,
+            decimal MaxPrice = 1e18M
+        )
         {
             try
             {
-                var games = await _productQuery.FilterProducts(name, filterName, platform, byDesc, byDiscount, geners, MinPrice, MaxPrice);
+                var games = await _productQuery.FilterProducts(
+                    name,
+                    filterName,
+                    platform,
+                    byDesc,
+                    byDiscount,
+                    geners,
+                    MinPrice,
+                    MaxPrice
+                );
 
-                var result = await _productQuery.MapProducts(new PaginatedList<Product>(games, Page).Entities);
+                var result = await _productQuery.MapProducts(
+                    new PaginatedList<Product>(games, Page).Entities
+                );
                 return Ok(result);
             }
             catch (Exception ex)
