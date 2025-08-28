@@ -5,7 +5,6 @@ using Service.Application.Service.TransactionQuery;
 using Service.Application.Service.TransactionQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
 
-
 namespace Gateway.WebApi.Controllers
 {
     [SetRoute("api/[controller]/[action]")]
@@ -15,14 +14,17 @@ namespace Gateway.WebApi.Controllers
         private readonly TransactionQuery _query;
         private readonly ILogger<TransactionController> _logger;
 
-        public TransactionController(ILogger<TransactionController> logger, TransactionQuery query) { _logger = logger; _query = query; }
-
+        public TransactionController(ILogger<TransactionController> logger, TransactionQuery query)
+        {
+            _logger = logger;
+            _query = query;
+        }
 
         /// <summary>
         /// Вывод joy
         /// </summary>
         /// <returns></returns>
-        /// 
+        ///
         [HttpGet("joy")]
         public ActionResult<List<decimal>> GetJoyDonat()
         {
@@ -30,11 +32,12 @@ namespace Gateway.WebApi.Controllers
 
             return Ok(result.Joy);
         }
+
         /// <summary>
         /// Вывод joy+
         /// </summary>
         /// <returns></returns>
-        /// 
+        ///
         [HttpGet("joy-plus")]
         public ActionResult<List<decimal>> GetJoyPlusDonat()
         {
@@ -48,7 +51,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <param name="JoyAmount"></param>
         /// <returns></returns>
-        /// 
+        ///
         [HttpGet("new-joy-bal")]
         public async Task<ActionResult<decimal>> GetNewJoyBal(decimal JoyAmount)
         {
@@ -74,7 +77,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <param name="JoyAmount"></param>
         /// <returns></returns>
-        /// 
+        ///
         [HttpGet("buy-joy-rub")]
         public async Task<ActionResult> BuyJoyRub(decimal JoyAmount)
         {
@@ -84,17 +87,17 @@ namespace Gateway.WebApi.Controllers
 
                 return Ok();
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(404, "Data not found");
             }
-            catch(BadRequestExeption ex)
+            catch (BadRequestExeption ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(400, ex.Message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, "Server error");
@@ -106,7 +109,7 @@ namespace Gateway.WebApi.Controllers
         /// </summary>
         /// <param name="JoyAmount"></param>
         /// <returns></returns>
-        /// 
+        ///
         [HttpGet("buy-joy-joy-plus")]
         public async Task<ActionResult> BuyJoyJoyPlus(decimal JoyAmount)
         {
