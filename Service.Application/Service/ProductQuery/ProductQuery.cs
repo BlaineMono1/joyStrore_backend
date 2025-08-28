@@ -284,15 +284,16 @@ namespace Service.Application.Service.ProductQuery
                         && p.PriceTr * coff >= MinPrice
                         && p.PriceTr * coff <= MaxPrice
             );
-
-            IOrderedQueryable<Product> result = baseQuery.OrderBy(p => p.Type == "AddOn");
-
             if (byDiscount)
             {
-                result = result.OrderByDescending(p =>
-                    region == "UAH" ? p.DiscountPercentUa ?? "0" : p.DiscountPercentTr ?? "0"
+                baseQuery = baseQuery.Where(p =>
+                    region == "UAH"
+                        ? !string.IsNullOrEmpty(p.DiscountPercentUa)
+                        : !string.IsNullOrEmpty(p.DiscountPercentTr)
                 );
             }
+            IOrderedQueryable<Product> result = baseQuery.OrderBy(p => p.Type == "AddOn");
+
             if (!string.IsNullOrEmpty(filterName))
             {
                 switch (filterName)
