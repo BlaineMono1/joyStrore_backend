@@ -1,15 +1,17 @@
-﻿
+﻿using System.Reflection.Metadata.Ecma335;
+using System.Xml.Linq;
 using Business.Data.Enums;
 using Business.Data.Iterfaces;
 using Business.Data.Iterfaces.Store;
 using Business.Data.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Service.Application.Exceptions;
 using Service.Application.Iterfaces;
+using Service.Application.Response;
 using Service.Application.Service.OrderQuery.Dto;
-using System.Xml.Linq;
 using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Service.Application.Service.OrderQuery
@@ -28,10 +30,23 @@ namespace Service.Application.Service.OrderQuery
         private readonly ILogger<OrderQuery> _logger;
         private readonly IRepository<Admin> _adminRepository;
         private readonly IRepository<LoyaltyOrder> _loyalityOrderRepository;
-        public OrderQuery(IUserRepository<User> userRepository, ICalculationService calculatePrice, IDataFromCookie regionFromCookie, 
-                         IRepository<Cart> cartRepository, IProductRepository<Product> productRepository, IRepository<Order> orderRepository, 
-                         IRepository<CartItem> cartItemRepository, IRepository<Setting> settingRepository, ILogger<OrderQuery> logger, IRepository<LoyaltyCurrency> loyalitiRepository,
-                         IRepository<Admin> adminRepository, IRepository<LoyaltyOrder> loyalityOrderRepository)
+        private readonly IPaymentService _paymentService;
+
+        public OrderQuery(
+            IUserRepository<User> userRepository,
+            ICalculationService calculatePrice,
+            IDataFromCookie regionFromCookie,
+            IRepository<Cart> cartRepository,
+            IProductRepository<Product> productRepository,
+            IRepository<Order> orderRepository,
+            IRepository<CartItem> cartItemRepository,
+            IRepository<Setting> settingRepository,
+            ILogger<OrderQuery> logger,
+            IRepository<LoyaltyCurrency> loyalitiRepository,
+            IRepository<Admin> adminRepository,
+            IRepository<LoyaltyOrder> loyalityOrderRepository,
+            IPaymentService paymentService
+        )
         {
             _userRepository = userRepository;
             _calculatePrice = calculatePrice;
@@ -45,46 +60,96 @@ namespace Service.Application.Service.OrderQuery
             _loyalitiRepository = loyalitiRepository;
             _adminRepository = adminRepository;
             _loyalityOrderRepository = loyalityOrderRepository;
+            _paymentService = paymentService;
         }
 
-        public async Task CreateOrderRub(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
+        public async Task<CreatePaymentResponse> CreateOrderRub(
+            string PsEmail,
+            string PsPass,
+            string PsCode,
+            string ReciptEmail,
+            bool isSave
+        )
         {
-            var (order, totalJPlus) = await ProcessOrder("RUB", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
+            var (order, totalJPlus) = await ProcessOrder(
+                "RUB",
+                PsEmail,
+                PsPass,
+                PsCode,
+                ReciptEmail,
+                isSave
+            );
+
+            if (order == null)
+            {
+                throw new Exception("Заказ не был создан");
+            }
+            var payStatus = await _paymentService.CreatePayment(order);
+            if (payStatus.success == false)
+            {
+                throw new Exception("Заказ не был создан");
+            }
 
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery())
-                .FirstOrDefault(l => l.User.TgUserId == userTgId);
-            if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
+            var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
+                l.User.TgUserId == userTgId
+            );
+            if (loyality is null)
+                throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
             loyality.BalanceJoyPlus += totalJPlus;
 
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
-            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.User.TgUserId == userTgId);
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             // Очистка корзины
             foreach (var item in cart.CartItems)
                 await _cartItemRepository.HardDelete(item.Guid);
 
+            return payStatus;
         }
 
-        public async Task CreateOrderJ(string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
+        public async Task CreateOrderJ(
+            string PsEmail,
+            string PsPass,
+            string PsCode,
+            string ReciptEmail,
+            bool isSave
+        )
         {
-            var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, ReciptEmail, isSave);
+            var (order, totalJPlus) = await ProcessOrder(
+                "J",
+                PsEmail,
+                PsPass,
+                PsCode,
+                ReciptEmail,
+                isSave
+            );
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery())
-                .FirstOrDefault(l => l.User.TgUserId == userTgId);
-            if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
+            var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
+                l.User.TgUserId == userTgId
+            );
+            if (loyality is null)
+                throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
 
             if (loyality.BalanceJoy < order.Price)
-                throw new BadRequestExeption("Your balance is not sufficient for payment, top it up.");
+                throw new BadRequestExeption(
+                    "Your balance is not sufficient for payment, top it up."
+                );
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.User.TgUserId == userTgId);
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.User.TgUserId == userTgId);
 
-            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             loyality.BalanceJoy -= order.Price;
             loyality.BalanceJoyPlus += totalJPlus;
@@ -94,66 +159,21 @@ namespace Service.Application.Service.OrderQuery
 
             foreach (var item in cart.CartItems)
                 await _cartItemRepository.HardDelete(item.Guid);
-
         }
 
         public async Task<List<OrderListDto>> WorkerOrders(Guid WorkerId)
         {
-           
             var result = new List<OrderListDto>();
 
-            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == WorkerId && o.Status != OrderStatus.Completed && o.Status != OrderStatus.Cancelled)
-                .Include(o => o.OrderProductItems).ThenInclude(i => i.Product).ToList();
-            
-            foreach (var order in orders)
-            {
-                var t = new OrderListDto
-                {
-                    OrderId = order.Guid,
-                    OrderCode = order.OrderCode,
-                    UserChatId = order.TgUserId,
-                    Items = new List<OrderItemsDto>(),
-                    UserInfo = new UserPsInfo
-                    {
-                       Login = order.PsLogin,
-                       Password = order.PsPass,
-                       Code = order.Code
-                    }
-                };
-
-                foreach(var item in order.OrderProductItems)
-                {
-                    switch (item.Product.Type)
-                    {
-                        case "Game":
-                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
-                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
-                            break;
-                        case "AddOn":
-                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
-                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
-                            break;
-                        default:
-                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
-                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
-                            break;
-                    }
-
-                }
-
-                result.Add(t);
-            }
-
-            return result;
-
-        }
-
-
-        public async Task<List<OrderListDto>> NotTakenOreders()
-        {
-            var result = new List<OrderListDto>();
-
-            var orders = (await _orderRepository.GetListQuery()).Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
+            var orders = (await _orderRepository.GetListQuery())
+                .Where(o =>
+                    o.WorkerId == WorkerId
+                    && o.Status != OrderStatus.Completed
+                    && o.Status != OrderStatus.Cancelled
+                )
+                .Include(o => o.OrderProductItems)
+                .ThenInclude(i => i.Product)
+                .ToList();
 
             foreach (var order in orders)
             {
@@ -167,8 +187,8 @@ namespace Service.Application.Service.OrderQuery
                     {
                         Login = order.PsLogin,
                         Password = order.PsPass,
-                        Code = order.Code
-                    }
+                        Code = order.Code,
+                    },
                 };
 
                 foreach (var item in order.OrderProductItems)
@@ -176,7 +196,9 @@ namespace Service.Application.Service.OrderQuery
                     switch (item.Product.Type)
                     {
                         case "Game":
-                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            var edition = await _productRepository.GetTypeEntity<Edition>(
+                                item.Product
+                            );
                             t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
                             break;
                         case "AddOn":
@@ -184,11 +206,12 @@ namespace Service.Application.Service.OrderQuery
                             t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
                             break;
                         default:
-                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(
+                                item.Product
+                            );
                             t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
                             break;
                     }
-
                 }
 
                 result.Add(t);
@@ -197,33 +220,91 @@ namespace Service.Application.Service.OrderQuery
             return result;
         }
 
+        public async Task<List<OrderListDto>> NotTakenOreders()
+        {
+            var result = new List<OrderListDto>();
+
+            var orders = (await _orderRepository.GetListQuery())
+                .Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled)
+                .Include(o => o.OrderProductItems)
+                .ThenInclude(i => i.Product)
+                .OrderBy(o => o.DateCreate)
+                .ToList();
+
+            foreach (var order in orders)
+            {
+                var t = new OrderListDto
+                {
+                    OrderId = order.Guid,
+                    OrderCode = order.OrderCode,
+                    UserChatId = order.TgUserId,
+                    Items = new List<OrderItemsDto>(),
+                    UserInfo = new UserPsInfo
+                    {
+                        Login = order.PsLogin,
+                        Password = order.PsPass,
+                        Code = order.Code,
+                    },
+                };
+
+                foreach (var item in order.OrderProductItems)
+                {
+                    switch (item.Product.Type)
+                    {
+                        case "Game":
+                            var edition = await _productRepository.GetTypeEntity<Edition>(
+                                item.Product
+                            );
+                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            break;
+                        case "AddOn":
+                            var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
+                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            break;
+                        default:
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(
+                                item.Product
+                            );
+                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            break;
+                    }
+                }
+
+                result.Add(t);
+            }
+
+            return result;
+        }
 
         public async Task TakeOrder(Guid OrderId, Guid WorkerId)
         {
             var oreder = await _orderRepository.GetById(OrderId);
 
-            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+            if (oreder is null)
+                throw new NotFoundException(nameof(Order), OrderId);
 
-            if (oreder.WorkerId != null) throw new BadRequestExeption("Order is alredy taken");
+            if (oreder.WorkerId != null)
+                throw new BadRequestExeption("Order is alredy taken");
 
             oreder.WorkerId = WorkerId;
             oreder.Status = OrderStatus.Processing;
 
             await _orderRepository.Update(oreder);
-
         }
 
         public async Task RefuseOrder(Guid OrderId, Guid WorkerId)
         {
             var oreder = await _orderRepository.GetById(OrderId);
 
-            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+            if (oreder is null)
+                throw new NotFoundException(nameof(Order), OrderId);
 
-            if (oreder.WorkerId != WorkerId) throw new BadRequestExeption("This is not your order");
+            if (oreder.WorkerId != WorkerId)
+                throw new BadRequestExeption("This is not your order");
 
             oreder.WorkerId = null;
 
-            oreder.Status= OrderStatus.Created;
+            oreder.Status = OrderStatus.Created;
 
             await _orderRepository.Update(oreder);
         }
@@ -232,9 +313,11 @@ namespace Service.Application.Service.OrderQuery
         {
             var oreder = await _orderRepository.GetById(OrderId);
 
-            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+            if (oreder is null)
+                throw new NotFoundException(nameof(Order), OrderId);
 
-            if (oreder.WorkerId != WorkerId) throw new BadRequestExeption("This is not your order");
+            if (oreder.WorkerId != WorkerId)
+                throw new BadRequestExeption("This is not your order");
 
             oreder.Status = OrderStatus.Completed;
 
@@ -243,14 +326,16 @@ namespace Service.Application.Service.OrderQuery
 
         public async Task CancelOrder(Guid OrderId)
         {
-            
             var oreder = await _orderRepository.GetById(OrderId);
 
-            if (oreder is null) throw new NotFoundException(nameof(Order), OrderId);
+            if (oreder is null)
+                throw new NotFoundException(nameof(Order), OrderId);
 
             var loyality = (await _loyalitiRepository.GetListQuery())
-                .Include(l => l.User).FirstOrDefault(l => l.User.TgUserId == oreder.TgUserId);
-            if (loyality is null) throw new NotFoundException(nameof(LoyaltyCurrency), oreder.TgUserId);
+                .Include(l => l.User)
+                .FirstOrDefault(l => l.User.TgUserId == oreder.TgUserId);
+            if (loyality is null)
+                throw new NotFoundException(nameof(LoyaltyCurrency), oreder.TgUserId);
 
             if (!oreder.IsJPayment)
             {
@@ -259,7 +344,6 @@ namespace Service.Application.Service.OrderQuery
             else
             {
                 loyality.BalanceJoy += oreder.Price;
-                                
             }
 
             loyality.BalanceJoyPlus -= Math.Min(loyality.BalanceJoyPlus, oreder.TotalJoyPlus); // какая логика у того что joy+ меньше чем в заказе.
@@ -268,14 +352,17 @@ namespace Service.Application.Service.OrderQuery
 
             await _loyalitiRepository.Update(loyality);
             await _orderRepository.Update(oreder);
-
         }
 
         public async Task<List<AllOrdersDto>> GetAllOrdersList()
         {
             var result = new List<AllOrdersDto>();
 
-            var orders = (await _orderRepository.GetListQuery()).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).OrderBy(o => o.DateCreate).ToList();
+            var orders = (await _orderRepository.GetListQuery())
+                .Include(o => o.OrderProductItems)
+                .ThenInclude(i => i.Product)
+                .OrderBy(o => o.DateCreate)
+                .ToList();
 
             foreach (var order in orders)
             {
@@ -285,15 +372,19 @@ namespace Service.Application.Service.OrderQuery
                     OrderCode = order.OrderCode,
                     UserChatId = order.TgUserId,
                     OrderPrice = order.Price,
-                    ManagerLogin = (order.WorkerId is null ? "" : (await _adminRepository.GetById(order.WorkerId.Value)).Login),
+                    ManagerLogin = (
+                        order.WorkerId is null
+                            ? ""
+                            : (await _adminRepository.GetById(order.WorkerId.Value)).Login
+                    ),
                     Status = order.Status.ToString(),
                     Items = new List<OrderItemsDto>(),
                     UserInfo = new UserPsInfo
                     {
                         Login = order.PsLogin,
                         Password = order.PsPass,
-                        Code = order.Code
-                    }
+                        Code = order.Code,
+                    },
                 };
 
                 foreach (var item in order.OrderProductItems)
@@ -301,7 +392,9 @@ namespace Service.Application.Service.OrderQuery
                     switch (item.Product.Type)
                     {
                         case "Game":
-                            var edition = await _productRepository.GetTypeEntity<Edition>(item.Product);
+                            var edition = await _productRepository.GetTypeEntity<Edition>(
+                                item.Product
+                            );
                             t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
                             break;
                         case "AddOn":
@@ -309,11 +402,12 @@ namespace Service.Application.Service.OrderQuery
                             t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
                             break;
                         default:
-                            var sub = await _productRepository.GetTypeEntity<Subscription>(item.Product);
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(
+                                item.Product
+                            );
                             t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
                             break;
                     }
-
                 }
 
                 result.Add(t);
@@ -327,7 +421,12 @@ namespace Service.Application.Service.OrderQuery
             var result = new List<UserOrdersListDto>();
             var userTgId = _regionFromCookie.GetUserTgID();
 
-            var userOrders = (await _orderRepository.GetListQuery()).Include(o => o.OrderProductItems).ThenInclude(i => i.Product).Where(o => o.TgUserId == userTgId).OrderByDescending(o => o.DateCreate).ToList();
+            var userOrders = (await _orderRepository.GetListQuery())
+                .Include(o => o.OrderProductItems)
+                .ThenInclude(i => i.Product)
+                .Where(o => o.TgUserId == userTgId)
+                .OrderByDescending(o => o.DateCreate)
+                .ToList();
 
             foreach (var o in userOrders)
             {
@@ -335,17 +434,23 @@ namespace Service.Application.Service.OrderQuery
                 {
                     OrderCode = o.OrderCode,
                     CreatedDate = o.DateCreate,
-                    Products = new List<UserOrderItems>()
+                    Products = new List<UserOrderItems>(),
                 };
 
-                foreach(var i in o.OrderProductItems)
+                foreach (var i in o.OrderProductItems)
                 {
-                    string name = "", editionType = "", percent = "", platform = "", url = "";
+                    string name = "",
+                        editionType = "",
+                        percent = "",
+                        platform = "",
+                        url = "";
 
                     switch (i.Product.Type)
                     {
                         case "Game":
-                            var edition = await _productRepository.GetTypeEntity<Edition>(i.Product);
+                            var edition = await _productRepository.GetTypeEntity<Edition>(
+                                i.Product
+                            );
                             name = edition.Name;
                             editionType = edition.EditionType;
                             platform = edition.Platform;
@@ -358,35 +463,43 @@ namespace Service.Application.Service.OrderQuery
                             url = addOn.Image;
                             break;
                         default:
-                            var sub = await _productRepository.GetTypeEntity<Subscription>(i.Product);
+                            var sub = await _productRepository.GetTypeEntity<Subscription>(
+                                i.Product
+                            );
                             name = sub.Name;
                             platform = sub.Platform;
                             url = sub.Image;
                             break;
                     }
 
-
-                    item.Products.Add(new UserOrderItems
-                    {
-                        ProdcuctId = i.ProductId,
-                        Name = name,
-                        Url = url,
-                        EditionType = editionType,
-                        Price = i.Price,
-                        JPrice = i.JPrice,
-                        Percent = i.Discount,
-                        Platform = platform
-
-                    });
+                    item.Products.Add(
+                        new UserOrderItems
+                        {
+                            ProdcuctId = i.ProductId,
+                            Name = name,
+                            Url = url,
+                            EditionType = editionType,
+                            Price = i.Price,
+                            JPrice = i.JPrice,
+                            Percent = i.Discount,
+                            Platform = platform,
+                        }
+                    );
                 }
                 result.Add(item);
             }
 
             return result;
-
         }
 
-        private async Task<(Order order, decimal totalJPlus)> ProcessOrder(string paymentType, string PsEmail, string PsPass, string PsCode, string ReciptEmail, bool isSave)
+        private async Task<(Order order, decimal totalJPlus)> ProcessOrder(
+            string paymentType,
+            string PsEmail,
+            string PsPass,
+            string PsCode,
+            string ReciptEmail,
+            bool isSave
+        )
         {
             var region = _regionFromCookie.GetUserRegion();
             var userTgId = _regionFromCookie.GetUserTgID();
@@ -400,15 +513,21 @@ namespace Service.Application.Service.OrderQuery
                 Region = region,
             };
 
-            var user = (await _userRepository.GetListQuery())
-                .FirstOrDefault(u => u.TgUserId == userTgId);
+            var user = (await _userRepository.GetListQuery()).FirstOrDefault(u =>
+                u.TgUserId == userTgId
+            );
 
-            if (user is null) throw new NotFoundException(nameof(User), userTgId);
+            if (user is null)
+                throw new NotFoundException(nameof(User), userTgId);
 
-            var cart = (await _cartRepository.GetListQuery()).Include(c => c.CartItems).FirstOrDefault(c => c.Guid == user.CartId);
-            if (cart is null) throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.Guid == user.CartId);
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
-            decimal totalPrice = 0, totalJPlus = 0;
+            decimal totalPrice = 0,
+                totalJPlus = 0;
 
             foreach (var item in cart.CartItems)
             {
@@ -421,15 +540,24 @@ namespace Service.Application.Service.OrderQuery
 
                 var orderItem = new OrderProductItem
                 {
-                    Price = await _calculatePrice.CalcPrice(product.PriceUa, product.PriceTr, product.Type),
-                    Discount = (region == "UAH" ? product.DiscountPercentUa ?? "" : product.DiscountPercentTr ?? ""),
+                    Price = await _calculatePrice.CalcPrice(
+                        product.PriceUa,
+                        product.PriceTr,
+                        product.Type
+                    ),
+                    Discount = (
+                        region == "UAH"
+                            ? product.DiscountPercentUa ?? ""
+                            : product.DiscountPercentTr ?? ""
+                    ),
                     OrderId = order.Guid,
-                    ProductId = product.Guid
+                    ProductId = product.Guid,
                 };
 
                 orderItem.JPrice = await _calculatePrice.CalcJprice(orderItem.Price);
 
-                string name = "", cusacode = "";
+                string name = "",
+                    cusacode = "";
                 switch (product.Type)
                 {
                     case "Game":
@@ -454,7 +582,7 @@ namespace Service.Application.Service.OrderQuery
                     Name = name,
                     CusaCode = cusacode,
                     Type = product.Type,
-                    Price = paymentType == "J" ? orderItem.JPrice : orderItem.Price
+                    Price = paymentType == "J" ? orderItem.JPrice : orderItem.Price,
                 };
 
                 totalPrice += orderItemDto.Price;
@@ -465,11 +593,13 @@ namespace Service.Application.Service.OrderQuery
 
             order.Price = totalPrice;
 
-            var userSettings = (await _settingRepository.GetListQuery())
-                .FirstOrDefault(s => s.UserId == user.Guid && s.Region == region);
-            if (userSettings is null) throw new NotFoundException(nameof(Setting), userTgId);
-                       
-            if(isSave)
+            var userSettings = (await _settingRepository.GetListQuery()).FirstOrDefault(s =>
+                s.UserId == user.Guid && s.Region == region
+            );
+            if (userSettings is null)
+                throw new NotFoundException(nameof(Setting), userTgId);
+
+            if (isSave)
             {
                 userSettings.EmailPsStore = PsEmail;
                 userSettings.PasswordPsStore = PsPass;
@@ -479,7 +609,6 @@ namespace Service.Application.Service.OrderQuery
                 await _userRepository.Update(user);
             }
 
-
             order.PsLogin = PsEmail;
             order.PsPass = PsPass;
             order.Code = PsCode;
@@ -488,33 +617,39 @@ namespace Service.Application.Service.OrderQuery
             return (order, totalJPlus);
         }
 
-
-        public async Task<List<TransactionsHistoryDto>> TransacionHistoryParams(string ChatId, string CodeOrder)
+        public async Task<List<TransactionsHistoryDto>> TransacionHistoryParams(
+            string ChatId,
+            string CodeOrder
+        )
         {
             var history = await _loyalityOrderRepository.GetListQuery();
 
-            if (!string.IsNullOrEmpty(ChatId)) history = history.Where(h => h.TgUserId == ChatId);
+            if (!string.IsNullOrEmpty(ChatId))
+                history = history.Where(h => h.TgUserId == ChatId);
 
-            if (!string.IsNullOrEmpty(CodeOrder)) history = history.Where(h => h.CodeOrder == CodeOrder);
-
+            if (!string.IsNullOrEmpty(CodeOrder))
+                history = history.Where(h => h.CodeOrder == CodeOrder);
 
             var result = new List<TransactionsHistoryDto>();
 
-            result.AddRange(history.Select(item => new TransactionsHistoryDto
-            {
-                TgId = item.TgUserId,
-                OrderCode = item.CodeOrder,
-                JoyAmount = item.CountProductJoy,
-                DateCreate = item.DateCreate,
-            }));
+            result.AddRange(
+                history.Select(item => new TransactionsHistoryDto
+                {
+                    TgId = item.TgUserId,
+                    OrderCode = item.CodeOrder,
+                    JoyAmount = item.CountProductJoy,
+                    DateCreate = item.DateCreate,
+                })
+            );
 
             return result;
         }
+
         private static string GenerateCode(Guid guid)
         {
             // Преобразуем GUID в строку и убираем дефисы
-            string guidString = guid.ToString("N"); 
-            
+            string guidString = guid.ToString("N");
+
             string code = guidString.Substring(0, 8).ToUpper();
 
             return code.Insert(4, "-"); // Преобразуем в формат XXXX-XXXX

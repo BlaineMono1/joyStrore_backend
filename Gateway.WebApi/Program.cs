@@ -5,6 +5,7 @@ using CacheService;
 using DataBaseToAccess;
 using DataBaseToAccess.Repositiory;
 using DataBaseToAccess.Repositiory.RepositoryEntity;
+using DotNetEnv;
 using Gateway.WebApi.BackgroundService;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
@@ -22,8 +23,11 @@ using Service.Application.Service.UserQuery;
 using Services.CalculationService;
 using Services.GetRegionFromCookie;
 using Services.ParseService;
+using Services.Payment;
 using StackExchange.Redis;
 
+// Загружаем переменные из .env файла ПЕРЕД созданием builder
+Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BaseDbContext>(options =>
@@ -63,6 +67,7 @@ builder.Services.AddScoped<ICalculationService, CalculatePrice>();
 builder.Services.AddScoped<IDataFromCookie, DataFromCookie>();
 builder.Services.AddScoped<ICacheService, ExchangeRate>();
 builder.Services.AddScoped<IAuthService, Services.Autarization.Auth>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddScoped<FavoriteQuery>();
 builder.Services.AddScoped<CartQuery>();
@@ -75,7 +80,6 @@ builder.Services.AddScoped<SubscriptionsQuerys>();
 builder.Services.AddScoped<OrderQuery>();
 builder.Services.AddScoped<AddOnsQuery>();
 builder.Services.AddScoped<TransactionQuery>();
-
 builder.Services.AddQuartz(q =>
 {
     // Конфигурация Quartz
