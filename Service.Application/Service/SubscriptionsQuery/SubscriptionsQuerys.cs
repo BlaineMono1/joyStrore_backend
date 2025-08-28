@@ -45,6 +45,7 @@ namespace Service.Application.Service.SubscriptionsQuery
             var region = _dataFromCookie.GetUserRegion();
             //подписки ps plus
             var subscriptionsPlus = (await _subscriptionRepository.GetListQuery())
+                .OrderBy(x => x.DateCreate)
                 .Include(s => s.Product)
                 .ToList();
 

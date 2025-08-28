@@ -117,7 +117,7 @@ namespace Service.Application.Service.ProductQuery
                 case "Subscription":
 
                     var sub = await _subscriptionRepository.GetById(product.TypeId);
-                    result.Name = sub.Name;
+                    result.Name = sub.Duration;
                     result.Image = sub.Image;
                     result.Platforms = sub.Platform;
                     break;

@@ -508,7 +508,6 @@ namespace Services.ParseService
                 {
                     await UpdateProduct(item.ProductDto, currentsub.ProductId);
 
-                    currentsub.Name = item.Name;
                     await _subscriptionRepository.Update(currentsub);
                 }
                 else if (currented != null)
@@ -540,7 +539,8 @@ namespace Services.ParseService
             product.PriceTr = ProductInfo.PriceTr;
             product.DiscountPercentUa = ProductInfo.DiscountPercent;
             product.DiscountPercentTr = ProductInfo.DiscountPercentTr;
-
+            product.DiscountDateUa = ProductInfo.DiscountDate;
+            product.DiscountDateTr = ProductInfo.DiscountDateTr;
             await _productRepository.Update(product);
         }
 
