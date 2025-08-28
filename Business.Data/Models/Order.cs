@@ -7,9 +7,9 @@ namespace Business.Data.Models
     /// <summary>
     /// Ордер
     /// </summary>
-    public class Order:BaseEntity
+    public class Order : BaseEntity
     {
-        #region поля 
+        #region поля
         /// <summary>
         /// UserID tg
         /// </summary>
@@ -46,7 +46,6 @@ namespace Business.Data.Models
         /// </summary>
         public decimal Price { get; set; }
 
-
         /// <summary>
         /// Оплечен ли тавар коинами
         /// </summary>
@@ -55,20 +54,19 @@ namespace Business.Data.Models
         /// <summary>
         /// Guid воркера\админа кто взял заказ
         /// </summary>
-        /// 
+        ///
         public Guid? WorkerId { get; set; }
 
         /// <summary>
         /// Регион заказа
         /// </summary>
-        /// 
-        
+        ///
         public string Region { get; set; }
 
         /// <summary>
         /// Количество Joy+ за заказ
         /// </summary>
-        /// 
+        ///
         public decimal TotalJoyPlus { get; set; }
 
         #endregion
@@ -76,7 +74,7 @@ namespace Business.Data.Models
 
         #region связи
         /// <summary>
-        /// Item истории транзакции пользователя 
+        /// Item истории транзакции пользователя
         /// </summary>
         //public Guid ProductTransactionItemId {  get; set; }
         //[ForeignKey("ProductTransactionItemId")]

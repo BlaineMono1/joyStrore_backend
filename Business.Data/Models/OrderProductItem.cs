@@ -5,7 +5,7 @@ namespace Business.Data.Models
     /// <summary>
     /// Item  в ордерах
     /// </summary>
-    public class OrderProductItem:BaseEntity
+    public class OrderProductItem : BaseEntity
     {
         public decimal Price { get; set; }
         public string Discount { get; set; }
