@@ -39,6 +39,8 @@ jobs:
           ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" << 'ENDSSH'
           set -e
           cd joyStrore_backend
+          echo "${{ secrets.API_KEY }}" > Gateway.WebApi/.env
+          echo "${{ secrets.API_KEY }}" > Services/.env
           ASP_ENV=cloud docker compose build && ASP_ENV=cloud docker compose up -d
           docker restart frontend
           cd .. && rm -rf joyStrore_backend
