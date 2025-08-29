@@ -365,3 +365,5 @@ FodyWeavers.xsd
 /Auth.WebApi/.env
 /Auth.WebApi/appsettings.json
 /Gateway.WebApi/appsettings.json
+
+.env
