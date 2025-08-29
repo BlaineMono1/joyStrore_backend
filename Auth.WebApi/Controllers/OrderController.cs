@@ -1,8 +1,6 @@
 ﻿using Auth.WebApi.Attributes;
-using Business.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Service.Application.Exceptions;
 using Service.Application.Extension.Pagination;
 using Service.Application.Service.OrderQuery;
@@ -45,9 +43,8 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-
         /// <summary>
-        /// Список не взятых ордеров 
+        /// Список не взятых ордеров
         /// </summary>
         /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
@@ -79,7 +76,7 @@ namespace Auth.WebApi.Controllers
                 await _query.TakeOrder(OrderId, WorkerId);
                 return Ok();
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(404, ex.Message);
@@ -95,7 +92,6 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
 
         /// <summary>
         /// Отказаться от заказа
@@ -187,7 +183,6 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-
         /// <summary>
         /// Список всех ордеров
         /// </summary>
@@ -198,7 +193,7 @@ namespace Auth.WebApi.Controllers
         {
             try
             {
-                var result =  (await _query.GetAllOrdersList()).AsQueryable();
+                var result = (await _query.GetAllOrdersList()).AsQueryable();
                 return Ok(new PaginatedList<AllOrdersDto>(result, Page).Entities);
             }
             catch (NotFoundException ex)
@@ -224,19 +219,21 @@ namespace Auth.WebApi.Controllers
         /// <returns></returns>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("all-transactions-list")]
-        public async Task<ActionResult<List<TransactionsHistoryDto>>> GetAllTransactions(string ChatId = "", string OrderCode = "")
+        public async Task<ActionResult<List<TransactionsHistoryDto>>> GetAllTransactions(
+            string ChatId = "",
+            string OrderCode = ""
+        )
         {
             try
             {
                 var result = await _query.TransacionHistoryParams(ChatId, OrderCode);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return StatusCode(500, "Server error");
             }
         }
-
     }
 }

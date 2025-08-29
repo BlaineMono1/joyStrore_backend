@@ -182,6 +182,8 @@ namespace Service.Application.Service.OrderQuery
                     OrderId = order.Guid,
                     OrderCode = order.OrderCode,
                     UserChatId = order.TgUserId,
+                    Status = order.Status.ToString(),
+                    Region = order.Region,
                     Items = new List<OrderItemsDto>(),
                     UserInfo = new UserPsInfo
                     {
@@ -196,20 +198,59 @@ namespace Service.Application.Service.OrderQuery
                     switch (item.Product.Type)
                     {
                         case "Game":
+
                             var edition = await _productRepository.GetTypeEntity<Edition>(
                                 item.Product
                             );
-                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            string cusaCode = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCode = edition.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCode = edition.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto { ItemName = edition.Name, CusaCode = cusaCode }
+                            );
                             break;
                         case "AddOn":
+
                             var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
-                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            string cusaCodeAddOn = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCodeAddOn = addOn.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCodeAddOn = addOn.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto
+                                {
+                                    ItemName = addOn.Name,
+                                    CusaCode = cusaCodeAddOn,
+                                }
+                            );
                             break;
                         default:
                             var sub = await _productRepository.GetTypeEntity<Subscription>(
                                 item.Product
                             );
-                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            string cusaCodeSub = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCodeSub = sub.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCodeSub = sub.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto { ItemName = sub.Name, CusaCode = cusaCodeSub }
+                            );
                             break;
                     }
                 }
@@ -238,6 +279,8 @@ namespace Service.Application.Service.OrderQuery
                     OrderId = order.Guid,
                     OrderCode = order.OrderCode,
                     UserChatId = order.TgUserId,
+                    Status = order.Status.ToString(),
+                    Region = order.Region,
                     Items = new List<OrderItemsDto>(),
                     UserInfo = new UserPsInfo
                     {
@@ -255,17 +298,54 @@ namespace Service.Application.Service.OrderQuery
                             var edition = await _productRepository.GetTypeEntity<Edition>(
                                 item.Product
                             );
-                            t.Items.Add(new OrderItemsDto { ItemName = edition.Name });
+                            string cusaCode = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCode = edition.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCode = edition.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto { ItemName = edition.Name, CusaCode = cusaCode }
+                            );
                             break;
                         case "AddOn":
                             var addOn = await _productRepository.GetTypeEntity<AddOn>(item.Product);
-                            t.Items.Add(new OrderItemsDto { ItemName = addOn.Name });
+                            string cusaCodeAddOn = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCodeAddOn = addOn.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCodeAddOn = addOn.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto
+                                {
+                                    ItemName = addOn.Name,
+                                    CusaCode = cusaCodeAddOn,
+                                }
+                            );
                             break;
                         default:
                             var sub = await _productRepository.GetTypeEntity<Subscription>(
                                 item.Product
                             );
-                            t.Items.Add(new OrderItemsDto { ItemName = sub.Name });
+                            string cusaCodeSub = "";
+                            if (order.Region == "UAH")
+                            {
+                                cusaCodeSub = sub.CusaCodeUa;
+                            }
+                            else
+                            {
+                                cusaCodeSub = sub.CusaCodeTr;
+                            }
+                            t.Items.Add(
+                                new OrderItemsDto { ItemName = sub.Name, CusaCode = cusaCodeSub }
+                            );
                             break;
                     }
                 }
