@@ -140,6 +140,7 @@ namespace Gateway.WebApi.Controllers
         private bool VerifySignature(PaymentResultModel model)
         {
             string expectedSignature = GetSignature(model.OutSum, model.InvId, _apiKey);
+            _logger.LogInformation($"Сигнатура: {expectedSignature}");
             return string.Equals(
                 model.SignatureValue,
                 expectedSignature,
