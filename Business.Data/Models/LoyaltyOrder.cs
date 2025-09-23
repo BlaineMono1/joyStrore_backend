@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Business.Data.BaseEntities;
+using Business.Data.Enums;
 
 namespace Business.Data.Models
 {
@@ -22,7 +23,7 @@ namespace Business.Data.Models
         /// <summary>
         /// Кол-во оплаты
         /// </summary>
-        public decimal? AmountPayment { get; set; }
+        public decimal AmountPayment { get; set; }
 
         /// <summary>
         /// Номер заказа
@@ -33,6 +34,8 @@ namespace Business.Data.Models
         /// Чем оплачено
         /// </summary>
         public bool ByJoyPlus { get; set; }
+
+        public OrderStatus Status { get; set; }
 
         #endregion
     }

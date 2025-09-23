@@ -1,8 +1,10 @@
-﻿using Business.Data.Iterfaces;
+﻿using Business.Data.Enums;
+using Business.Data.Iterfaces;
 using Business.Data.Models;
 using Microsoft.Extensions.Logging;
 using Service.Application.Exceptions;
 using Service.Application.Iterfaces;
+using Service.Application.Response;
 using Service.Application.Service.TransactionQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
 
@@ -14,18 +16,21 @@ namespace Service.Application.Service.TransactionQuery
         private readonly IRepository<LoyaltyOrder> _orderRepository;
         private readonly ILogger<TransactionQuery> _logger;
         private readonly IDataFromCookie _dataFromCookie;
+        private readonly IPaymentService _paymentService;
 
         public TransactionQuery(
             IRepository<LoyaltyCurrency> joyBalRepository,
             ILogger<TransactionQuery> logger,
             IDataFromCookie dataFromCookie,
-            IRepository<LoyaltyOrder> orderRepository
+            IRepository<LoyaltyOrder> orderRepository,
+            IPaymentService paymentService
         )
         {
             _joyBalRepository = joyBalRepository;
             _logger = logger;
             _dataFromCookie = dataFromCookie;
             _orderRepository = orderRepository;
+            _paymentService = paymentService;
         }
 
         public async Task IncUserJoyBal(string tgId, decimal amount)
@@ -115,17 +120,11 @@ namespace Service.Application.Service.TransactionQuery
             return setting.BalanceJoy + Joy;
         }
 
-        public async Task BuyJoyRub(decimal JoyAmount)
+        public async Task<CreatePaymentResponse> BuyJoyRub(decimal JoyAmount)
         {
             var tgId = _dataFromCookie.GetUserTgID();
 
             var amount = new JoyesDonsDto();
-
-            var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s =>
-                s.User.TgUserId == tgId
-            );
-            if (setting == null)
-                throw new NotFoundException(nameof(LoyaltyCurrency), tgId);
 
             if (!amount.Joy.Contains(JoyAmount))
                 throw new BadRequestExeption("Invalid amount of joy");
@@ -137,12 +136,15 @@ namespace Service.Application.Service.TransactionQuery
                 AmountPayment = JoyAmount,
                 ByJoyPlus = false,
             };
-
-            setting.BalanceJoy += JoyAmount;
             order.CodeOrder = GenerateCode(order.Guid);
+            var payStatus = await _paymentService.CreatePayment(order);
+            if (payStatus.success == false)
+            {
+                throw new Exception("Заказ не был создан");
+            }
 
-            await _joyBalRepository.Update(setting);
             await _orderRepository.Add(order);
+            return payStatus;
         }
 
         public async Task BuyJoy(decimal JoyAmount)
@@ -173,6 +175,7 @@ namespace Service.Application.Service.TransactionQuery
                 CountProductJoy = JoyAmount,
                 AmountPayment = JoyAmount,
                 ByJoyPlus = true,
+                Status = OrderStatus.Paid,
             };
 
             order.CodeOrder = GenerateCode(order.Guid);

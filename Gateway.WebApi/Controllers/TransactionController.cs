@@ -83,9 +83,9 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                await _query.BuyJoyRub(JoyAmount);
+                var result = await _query.BuyJoyRub(JoyAmount);
 
-                return Ok();
+                return Ok(result);
             }
             catch (NotFoundException ex)
             {

@@ -144,6 +144,7 @@ namespace Service.Application.Service.OrderQuery
                 throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             loyality.BalanceJoy -= order.Price;
+            order.Status = OrderStatus.Paid;
 
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
