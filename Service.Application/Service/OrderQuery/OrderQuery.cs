@@ -91,16 +91,8 @@ namespace Service.Application.Service.OrderQuery
             }
 
             var userTgId = _regionFromCookie.GetUserTgID();
-            var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
-                l.User.TgUserId == userTgId
-            );
-            if (loyality is null)
-                throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
-
-            loyality.BalanceJoyPlus += totalJPlus;
 
             await _orderRepository.Add(order);
-            await _loyalitiRepository.Update(loyality);
 
             var cart = (await _cartRepository.GetListQuery())
                 .Include(c => c.CartItems)
@@ -152,7 +144,6 @@ namespace Service.Application.Service.OrderQuery
                 throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             loyality.BalanceJoy -= order.Price;
-            loyality.BalanceJoyPlus += totalJPlus;
 
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
@@ -399,8 +390,16 @@ namespace Service.Application.Service.OrderQuery
             if (oreder.WorkerId != WorkerId)
                 throw new BadRequestExeption("This is not your order");
 
-            oreder.Status = OrderStatus.Completed;
+            var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
+                l.User.TgUserId == oreder.TgUserId
+            );
+            if (loyality is null)
+                throw new NotFoundException(nameof(LoyaltyCurrency), oreder.TgUserId);
 
+            loyality.BalanceJoyPlus += oreder.TotalJoyPlus;
+            await _loyalitiRepository.Update(loyality);
+
+            oreder.Status = OrderStatus.Completed;
             await _orderRepository.Update(oreder);
         }
 
