@@ -6,20 +6,21 @@ namespace Business.Data.Models
     /// <summary>
     /// Баланс Joy и JoyPlus пользователя
     /// </summary>
-    public class LoyaltyCurrency:BaseEntity
+    public class LoyaltyCurrency : BaseEntity
     {
-        #region поля 
+        #region поля
         /// <summary>
         /// Joy
         /// </summary>
         public decimal BalanceJoy { get; set; } = default(decimal);
+
         /// <summary>
         /// JoyPlus
         /// </summary>
-        public decimal BalanceJoyPlus {  get; set; } = default(decimal);
+        public decimal BalanceJoyPlus { get; set; } = default(decimal);
         #endregion
 
-        #region связи 
+        #region связи
         /// <summary>
         /// Пользователь
         /// </summary>
