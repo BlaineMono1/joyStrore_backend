@@ -3,11 +3,13 @@ using System.Reflection.Emit;
 using System.Text.Json;
 using Business.Data.Models;
 using Microsoft.EntityFrameworkCore;
+
 namespace DataBaseToAccess
 {
-    public class BaseDbContext:DbContext
+    public class BaseDbContext : DbContext
     {
-        public BaseDbContext(DbContextOptions<BaseDbContext> options) : base(options) { }
+        public BaseDbContext(DbContextOptions<BaseDbContext> options)
+            : base(options) { }
 
         public DbSet<AddOn> AddOns { get; set; }
         public DbSet<Admin> Admins { get; set; }
@@ -37,13 +39,11 @@ namespace DataBaseToAccess
         public DbSet<SettingPrice> SettingsPrice { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Geners> Gener { get; set; }          
+        public DbSet<Geners> Gener { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Order>()
-            .Property(o => o.Status)
-                .HasConversion<string>();
+            builder.Entity<Order>().Property(o => o.Status).HasConversion<string>();
             base.OnModelCreating(builder);
         }
     }

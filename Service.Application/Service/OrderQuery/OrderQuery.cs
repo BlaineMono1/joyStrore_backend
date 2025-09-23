@@ -269,7 +269,7 @@ namespace Service.Application.Service.OrderQuery
                 .Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled)
                 .Include(o => o.OrderProductItems)
                 .ThenInclude(i => i.Product)
-                .OrderBy(o => o.DateCreate)
+                .OrderByDescending(o => o.DateCreate)
                 .ToList();
 
             foreach (var order in orders)

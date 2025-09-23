@@ -51,7 +51,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 });
 
 builder.Services.AddSingleton<IRedisRepository, RedisRepository>();
-
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddHttpContextAccessor();
