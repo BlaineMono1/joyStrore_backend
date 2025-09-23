@@ -69,16 +69,6 @@ namespace Gateway.WebApi.Controllers
                     return BadRequest("Missing required fields");
                 }
 
-                // Проверяем подпись
-                if (!VerifySignature(model))
-                {
-                    _logger.LogWarning(
-                        "Invalid signature for postback: {SignatureValue}",
-                        model.SignatureValue
-                    );
-                    return BadRequest("Invalid signature");
-                }
-
                 // Находим заказ
                 var order = (await _orderRepository.GetListQuery()).FirstOrDefault(o =>
                     o.OrderCode == model.InvId
