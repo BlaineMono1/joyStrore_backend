@@ -426,8 +426,6 @@ namespace Service.Application.Service.OrderQuery
                 loyality.BalanceJoy += oreder.Price;
             }
 
-            loyality.BalanceJoyPlus -= Math.Min(loyality.BalanceJoyPlus, oreder.TotalJoyPlus); // какая логика у того что joy+ меньше чем в заказе.
-
             oreder.Status = OrderStatus.Cancelled;
 
             await _loyalitiRepository.Update(loyality);
