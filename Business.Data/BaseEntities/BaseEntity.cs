@@ -12,6 +12,7 @@ namespace Business.Data.BaseEntities
         /// </summary>
         [Key]
         public Guid Guid { get; set; } = Guid.NewGuid();
+
         /// <summary>
         /// Флаг удаления
         /// </summary>

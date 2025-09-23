@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text.Json.Serialization;
 using Business.Data.Iterfaces;
 
@@ -18,7 +17,8 @@ namespace Business.Data.BaseEntities
         /// </summary>
         [ReadOnly(true)]
         [JsonIgnore]
-        public DateTime DateCreate { get ; set ; }
+        public DateTime DateCreate { get; set; }
+
         /// <summary>
         /// Дата обновления записи
         /// </summary>

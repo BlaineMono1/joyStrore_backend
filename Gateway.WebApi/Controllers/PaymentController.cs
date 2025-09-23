@@ -55,7 +55,7 @@ namespace Gateway.WebApi.Controllers
                     SignatureValue = form["SignatureValue"],
                 };
 
-                _logger.LogInformation("Received postback: {@PostbackModel}", model);
+                _logger.LogInformation($"Received postback: {model.SignatureValue}");
 
                 // Проверяем обязательные поля
                 if (
