@@ -12,6 +12,6 @@
 
         public string PsLogin { get; set; }
         public string PsPass { get; set; }
-        public string PsCode {  get; set; }
+        public string PsCode { get; set; }
     }
 }

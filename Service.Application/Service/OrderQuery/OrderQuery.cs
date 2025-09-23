@@ -144,6 +144,7 @@ namespace Service.Application.Service.OrderQuery
                 throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
 
             loyality.BalanceJoy -= order.Price;
+            order.Status = OrderStatus.Paid;
 
             await _orderRepository.Add(order);
             await _loyalitiRepository.Update(loyality);
@@ -424,8 +425,6 @@ namespace Service.Application.Service.OrderQuery
             {
                 loyality.BalanceJoy += oreder.Price;
             }
-
-            loyality.BalanceJoyPlus -= Math.Min(loyality.BalanceJoyPlus, oreder.TotalJoyPlus); // какая логика у того что joy+ меньше чем в заказе.
 
             oreder.Status = OrderStatus.Cancelled;
 

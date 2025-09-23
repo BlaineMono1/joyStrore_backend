@@ -6,6 +6,7 @@ using Business.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.OrderQuery;
 using Services.Payment.Dto;
+using static Service.Application.Exceptions.NotFoundExeption;
 
 namespace Gateway.WebApi.Controllers
 {
@@ -15,13 +16,17 @@ namespace Gateway.WebApi.Controllers
     {
         private readonly OrderQuery _query;
         private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<LoyaltyOrder> _loyaltyOrderRepository;
+        private readonly IRepository<LoyaltyCurrency> _joyBalRepository;
         private readonly string _apiKey;
         ILogger<OrderController> _logger;
 
         public PaymentController(
             OrderQuery query,
             IRepository<Order> orderRepository,
+            IRepository<LoyaltyOrder> loyaltyOrder,
             ILogger<OrderController> logger,
+            IRepository<LoyaltyCurrency> joyBalRepository,
             IConfiguration configuration
         )
         {
@@ -29,6 +34,8 @@ namespace Gateway.WebApi.Controllers
             _orderRepository = orderRepository;
             _logger = logger;
             _apiKey = Environment.GetEnvironmentVariable("PAYMENT_API_KEY");
+            _loyaltyOrderRepository = loyaltyOrder;
+            _joyBalRepository = joyBalRepository;
         }
 
         /// <summary>
@@ -68,57 +75,115 @@ namespace Gateway.WebApi.Controllers
                     _logger.LogWarning("Missing required fields in postback");
                     return BadRequest("Missing required fields");
                 }
-
                 // Находим заказ
-                var order = (await _orderRepository.GetListQuery()).FirstOrDefault(o =>
-                    o.OrderCode == model.InvId
+                var loyaltyOrder = (await _loyaltyOrderRepository.GetListQuery()).FirstOrDefault(
+                    o => o.CodeOrder == model.InvId
                 );
-
-                if (order == null)
+                if (loyaltyOrder != null)
                 {
-                    _logger.LogWarning("Order not found for InvId: {InvId}", model.InvId);
-                    return BadRequest("Order not found");
-                }
+                    // Проверяем, не был ли уже обработан этот платеж
+                    if (
+                        (loyaltyOrder.Status == OrderStatus.Paid && model.Status == "SUCCESS")
+                        || (loyaltyOrder.Status == OrderStatus.NotPaid && model.Status == "FAIL")
+                    )
+                    {
+                        _logger.LogInformation(
+                            "Postback for order {InvId} already processed",
+                            model.InvId
+                        );
+                        return Ok(); // Возвращаем 200 OK, чтобы платежная система не повторяла уведомление
+                    }
 
-                // Проверяем, не был ли уже обработан этот платеж
-                if (
-                    (order.Status == OrderStatus.Paid && model.Status == "SUCCESS")
-                    || (order.Status == OrderStatus.NotPaid && model.Status == "FAIL")
-                )
-                {
-                    _logger.LogInformation(
-                        "Postback for order {InvId} already processed",
-                        model.InvId
+                    // Обновляем статус
+                    if (model.Status == "SUCCESS")
+                    {
+                        loyaltyOrder.Status = OrderStatus.Paid;
+                        var setting = (await _joyBalRepository.GetListQuery()).FirstOrDefault(s =>
+                            s.User.TgUserId == loyaltyOrder.TgUserId
+                        );
+                        if (setting == null)
+                            throw new NotFoundException(
+                                nameof(LoyaltyCurrency),
+                                loyaltyOrder.TgUserId
+                            );
+
+                        setting.BalanceJoy += loyaltyOrder.AmountPayment;
+                        await _joyBalRepository.Update(setting);
+                        await _loyaltyOrderRepository.Update(loyaltyOrder);
+
+                        _logger.LogInformation("Order {InvId} marked as paid", model.InvId);
+                        return Ok();
+                    }
+                    else if (model.Status == "FAIL")
+                    {
+                        loyaltyOrder.Status = OrderStatus.NotPaid;
+
+                        await _loyaltyOrderRepository.Update(loyaltyOrder);
+
+                        _logger.LogInformation("Order {InvId} marked as failed", model.InvId);
+                        return Ok();
+                    }
+
+                    _logger.LogWarning(
+                        "Unknown status received for order {InvId}: {Status}",
+                        model.InvId,
+                        model.Status
                     );
-                    return Ok(); // Возвращаем 200 OK, чтобы платежная система не повторяла уведомление
+                    return BadRequest("Unknown status");
                 }
-
-                // Обновляем статус
-                if (model.Status == "SUCCESS")
+                else
                 {
-                    order.Status = OrderStatus.Paid;
+                    // Находим заказ
+                    var order = (await _orderRepository.GetListQuery()).FirstOrDefault(o =>
+                        o.OrderCode == model.InvId
+                    );
 
-                    await _orderRepository.Update(order);
+                    if (order == null)
+                    {
+                        _logger.LogWarning("Order not found for InvId: {InvId}", model.InvId);
+                        return BadRequest("Order not found");
+                    }
 
-                    _logger.LogInformation("Order {InvId} marked as paid", model.InvId);
-                    return Ok();
+                    // Проверяем, не был ли уже обработан этот платеж
+                    if (
+                        (order.Status == OrderStatus.Paid && model.Status == "SUCCESS")
+                        || (order.Status == OrderStatus.NotPaid && model.Status == "FAIL")
+                    )
+                    {
+                        _logger.LogInformation(
+                            "Postback for order {InvId} already processed",
+                            model.InvId
+                        );
+                        return Ok(); // Возвращаем 200 OK, чтобы платежная система не повторяла уведомление
+                    }
+
+                    // Обновляем статус
+                    if (model.Status == "SUCCESS")
+                    {
+                        order.Status = OrderStatus.Paid;
+
+                        await _orderRepository.Update(order);
+
+                        _logger.LogInformation("Order {InvId} marked as paid", model.InvId);
+                        return Ok();
+                    }
+                    else if (model.Status == "FAIL")
+                    {
+                        order.Status = OrderStatus.NotPaid;
+
+                        await _orderRepository.Update(order);
+
+                        _logger.LogInformation("Order {InvId} marked as failed", model.InvId);
+                        return Ok();
+                    }
+
+                    _logger.LogWarning(
+                        "Unknown status received for order {InvId}: {Status}",
+                        model.InvId,
+                        model.Status
+                    );
+                    return BadRequest("Unknown status");
                 }
-                else if (model.Status == "FAIL")
-                {
-                    order.Status = OrderStatus.NotPaid;
-
-                    await _orderRepository.Update(order);
-
-                    _logger.LogInformation("Order {InvId} marked as failed", model.InvId);
-                    return Ok();
-                }
-
-                _logger.LogWarning(
-                    "Unknown status received for order {InvId}: {Status}",
-                    model.InvId,
-                    model.Status
-                );
-                return BadRequest("Unknown status");
             }
             catch (Exception ex)
             {

@@ -6,4 +6,5 @@ namespace Service.Application.Iterfaces;
 public interface IPaymentService
 {
     Task<CreatePaymentResponse> CreatePayment(Order order);
+    Task<CreatePaymentResponse> CreatePayment(LoyaltyOrder order);
 }

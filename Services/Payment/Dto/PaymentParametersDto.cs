@@ -2,7 +2,7 @@ namespace Services.Payment.Dto;
 
 public class PaymentParametersDto
 {
-    public decimal Ammount { get; set; }
+    public decimal? Ammount { get; set; }
     public string? Order_Id { get; set; }
     public string Type { get; set; }
 
