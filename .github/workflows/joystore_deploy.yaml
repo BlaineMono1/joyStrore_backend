@@ -39,8 +39,8 @@ jobs:
           ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" << 'ENDSSH'
           set -e
           cd joyStrore_backend
-          API_KEY="${{ secrets.API_KEY }}" ASP_ENV="cloud" docker compose build
-          API_KEY="${{ secrets.API_KEY }}" ASP_ENV="cloud" docker compose up -d
+          SITE_API_KEY=${{ secrets.SITE_API_KEY }} API_KEY="${{ secrets.API_KEY }}" ASP_ENV="cloud" docker compose build
+          SITE_API_KEY=${{ secrets.SITE_API_KEY }} API_KEY="${{ secrets.API_KEY }}" ASP_ENV="cloud" docker compose up -d
           docker restart frontend
           cd .. && rm -rf joyStrore_backend
           ENDSSH

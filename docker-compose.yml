@@ -10,6 +10,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASP_ENV} 
       PAYMENT_API_KEY: ${API_KEY}
+      SITE_API_KEY: ${SITE_API_KEY}
     networks:
       - joystore
     ports:
