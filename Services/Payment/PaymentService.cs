@@ -56,8 +56,8 @@ public class PaymentService : IPaymentService
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"{_apiKey}");
             var response = await _httpClient.PostAsync(urlPay, content);
             var responseContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError(
-                $"API Error: {response.StatusCode} - {response.ReasonPhrase}\nResponse body: {responseContent}"
+            _logger.LogInformation(
+                $"API: {response.StatusCode} - {response.ReasonPhrase}\nResponse body: {responseContent}"
             );
             switch (response.StatusCode)
             {

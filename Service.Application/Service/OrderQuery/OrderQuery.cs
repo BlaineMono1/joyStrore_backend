@@ -63,7 +63,7 @@ namespace Service.Application.Service.OrderQuery
             _paymentService = paymentService;
         }
 
-        public async Task<CreatePaymentResponse> CreateOrderRub(
+        public async Task<(CreatePaymentResponse, Order)> CreateOrderRub(
             string PsEmail,
             string PsPass,
             string PsCode,
@@ -104,7 +104,7 @@ namespace Service.Application.Service.OrderQuery
             foreach (var item in cart.CartItems)
                 await _cartItemRepository.HardDelete(item.Guid);
 
-            return payStatus;
+            return (payStatus, order);
         }
 
         public async Task CreateOrderJ(
