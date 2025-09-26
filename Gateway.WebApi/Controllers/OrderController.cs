@@ -84,8 +84,9 @@ namespace Gateway.WebApi.Controllers
                 {
                     // Логируйте исключение
                     _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
+                    return Ok("Ошибка: Заказ не был сформирован");
                 }
-                return Ok(result.Item1);
+                return Ok("Ваш заказ сформирован — перейдите в Telegram-бота для оплаты.");
             }
             catch (BadRequestExeption ex)
             {
