@@ -120,7 +120,7 @@ namespace Service.Application.Service.TransactionQuery
             return setting.BalanceJoy + Joy;
         }
 
-        public async Task<CreatePaymentResponse> BuyJoyRub(decimal JoyAmount)
+        public async Task<(CreatePaymentResponse, LoyaltyOrder)> BuyJoyRub(decimal JoyAmount)
         {
             var tgId = _dataFromCookie.GetUserTgID();
 
@@ -144,7 +144,7 @@ namespace Service.Application.Service.TransactionQuery
             }
 
             await _orderRepository.Add(order);
-            return payStatus;
+            return (payStatus, order);
         }
 
         public async Task BuyJoy(decimal JoyAmount)

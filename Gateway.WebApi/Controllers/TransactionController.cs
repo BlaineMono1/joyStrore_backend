@@ -1,4 +1,7 @@
-﻿using Gateway.WebApi.Attributes;
+﻿using System.Text;
+using System.Text.Json;
+using Gateway.WebApi.Attributes;
+using Gateway.WebApi.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Exceptions;
 using Service.Application.Service.TransactionQuery;
@@ -13,11 +16,13 @@ namespace Gateway.WebApi.Controllers
     {
         private readonly TransactionQuery _query;
         private readonly ILogger<TransactionController> _logger;
+        private readonly string _apiKey;
 
         public TransactionController(ILogger<TransactionController> logger, TransactionQuery query)
         {
             _logger = logger;
             _query = query;
+            _apiKey = Environment.GetEnvironmentVariable("SITE_API_KEY");
         }
 
         /// <summary>
@@ -84,8 +89,42 @@ namespace Gateway.WebApi.Controllers
             try
             {
                 var result = await _query.BuyJoyRub(JoyAmount);
+                HttpClient _httpClient = new HttpClient();
+                var request = new TelegramPaymentRequest
+                {
+                    user_id = result.Item2.TgUserId,
+                    order_id = result.Item2.CodeOrder,
+                    price = result.Item2.AmountPayment,
+                    link = result.Item1.link_page_url,
+                };
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                string _botApiUrl = "http://bot:5000/api/send";
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
+                try
+                {
+                    var response = await _httpClient.PostAsync(_botApiUrl, content);
 
-                return Ok(result);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Успешно отправлено
+                        _logger.LogInformation("Success Telegram Api");
+                    }
+                    else
+                    {
+                        var errorBody = await response.Content.ReadAsStringAsync();
+                        _logger.LogError(
+                            $"Telegram API error: {response.StatusCode} - {errorBody}"
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Логируйте исключение
+                    _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
+                }
+                return Ok("Оплата прошла успешно");
             }
             catch (NotFoundException ex)
             {

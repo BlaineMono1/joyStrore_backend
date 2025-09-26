@@ -621,7 +621,8 @@ namespace Service.Application.Service.OrderQuery
                     Price = await _calculatePrice.CalcPrice(
                         product.PriceUa,
                         product.PriceTr,
-                        product.Type
+                        product.Type,
+                        product.Guid
                     ),
                     Discount = (
                         region == "UAH"
