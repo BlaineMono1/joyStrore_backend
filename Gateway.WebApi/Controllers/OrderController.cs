@@ -53,10 +53,10 @@ namespace Gateway.WebApi.Controllers
                 );
                 var request = new TelegramPaymentRequest
                 {
-                    UserId = result.Item2.TgUserId,
-                    OrderId = result.Item2.OrderCode,
-                    Price = result.Item2.Price,
-                    Link = result.Item1.link_page_url,
+                    user_Id = result.Item2.TgUserId,
+                    order_id = result.Item2.OrderCode,
+                    price = result.Item2.Price,
+                    link = result.Item1.link_page_url,
                 };
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
