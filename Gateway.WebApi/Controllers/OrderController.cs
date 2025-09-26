@@ -18,20 +18,14 @@ namespace Gateway.WebApi.Controllers
     public class OrderController : ControllerBase
     {
         private readonly OrderQuery _query;
-        private readonly HttpClient _httpClient;
         private readonly ILogger<OrderController> _logger;
         private readonly string _apiKey;
 
-        public OrderController(
-            OrderQuery query,
-            ILogger<OrderController> logger,
-            HttpClient httpClient
-        )
+        public OrderController(OrderQuery query, ILogger<OrderController> logger)
         {
             _query = query;
             _logger = logger;
             _apiKey = Environment.GetEnvironmentVariable("SITE_API_KEY");
-            _httpClient = httpClient;
         }
 
         /// <summary>
@@ -49,6 +43,7 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
+                HttpClient _httpClient = new HttpClient();
                 var result = await _query.CreateOrderRub(
                     PsEmail,
                     PsPass,
