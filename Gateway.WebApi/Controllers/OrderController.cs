@@ -38,7 +38,8 @@ namespace Gateway.WebApi.Controllers
             string PsPass,
             string PsCode,
             string ReciptEmail,
-            bool isSave
+            bool isSave,
+            bool isNewAccount = false
         )
         {
             try
@@ -49,7 +50,8 @@ namespace Gateway.WebApi.Controllers
                     PsPass,
                     PsCode,
                     ReciptEmail,
-                    isSave
+                    isSave,
+                    isNewAccount
                 );
                 var request = new TelegramPaymentRequest
                 {

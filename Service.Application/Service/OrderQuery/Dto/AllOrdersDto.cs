@@ -1,5 +1,4 @@
-﻿
-namespace Service.Application.Service.OrderQuery.Dto
+﻿namespace Service.Application.Service.OrderQuery.Dto
 {
     public class AllOrdersDto
     {
@@ -9,6 +8,8 @@ namespace Service.Application.Service.OrderQuery.Dto
         public string ManagerLogin { get; set; }
         public string Status { get; set; }
         public string UserChatId { get; set; }
+        public string NewAccount { get; set; }
+
         public UserPsInfo UserInfo { get; set; }
         public List<OrderItemsDto> Items { get; set; }
     }
