@@ -53,7 +53,7 @@ namespace Gateway.WebApi.Controllers
                 );
                 var request = new TelegramPaymentRequest
                 {
-                    user_Id = result.Item2.TgUserId,
+                    user_id = result.Item2.TgUserId,
                     order_id = result.Item2.OrderCode,
                     price = result.Item2.Price,
                     link = result.Item1.link_page_url,
@@ -85,7 +85,7 @@ namespace Gateway.WebApi.Controllers
                     // Логируйте исключение
                     _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
                 }
-                return Ok(result);
+                return Ok(result.Item1);
             }
             catch (BadRequestExeption ex)
             {
