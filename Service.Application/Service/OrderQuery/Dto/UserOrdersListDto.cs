@@ -1,5 +1,4 @@
-﻿
-namespace Service.Application.Service.OrderQuery.Dto
+﻿namespace Service.Application.Service.OrderQuery.Dto
 {
     public class UserOrdersListDto
     {

@@ -68,7 +68,8 @@ namespace Service.Application.Service.OrderQuery
             string PsPass,
             string PsCode,
             string ReciptEmail,
-            bool isSave
+            bool isSave,
+            bool isNewAccount
         )
         {
             var (order, totalJPlus) = await ProcessOrder(
@@ -79,6 +80,14 @@ namespace Service.Application.Service.OrderQuery
                 ReciptEmail,
                 isSave
             );
+            if (isNewAccount == true)
+            {
+                order.NewAccount = "Новый акк";
+            }
+            else
+            {
+                order.NewAccount = "Текущий акк";
+            }
 
             if (order == null)
             {
@@ -176,6 +185,7 @@ namespace Service.Application.Service.OrderQuery
                     UserChatId = order.TgUserId,
                     Status = order.Status.ToString(),
                     Region = order.Region,
+                    NewAccount = order.NewAccount,
                     Items = new List<OrderItemsDto>(),
                     UserInfo = new UserPsInfo
                     {
@@ -261,6 +271,7 @@ namespace Service.Application.Service.OrderQuery
                 .Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled)
                 .Include(o => o.OrderProductItems)
                 .ThenInclude(i => i.Product)
+                .OrderBy(o => o.Status == OrderStatus.Paid ? 0 : 1)
                 .OrderByDescending(o => o.DateCreate)
                 .ToList();
 
@@ -273,6 +284,7 @@ namespace Service.Application.Service.OrderQuery
                     UserChatId = order.TgUserId,
                     Status = order.Status.ToString(),
                     Region = order.Region,
+                    NewAccount = order.NewAccount,
                     Items = new List<OrderItemsDto>(),
                     UserInfo = new UserPsInfo
                     {
@@ -344,7 +356,6 @@ namespace Service.Application.Service.OrderQuery
 
                 result.Add(t);
             }
-
             return result;
         }
 
@@ -457,6 +468,7 @@ namespace Service.Application.Service.OrderQuery
                     ),
                     Status = order.Status.ToString(),
                     Items = new List<OrderItemsDto>(),
+                    NewAccount = order.NewAccount,
                     UserInfo = new UserPsInfo
                     {
                         Login = order.PsLogin,

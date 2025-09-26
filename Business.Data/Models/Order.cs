@@ -69,6 +69,8 @@ namespace Business.Data.Models
         ///
         public decimal TotalJoyPlus { get; set; }
 
+        public string NewAccount { get; set; }
+
         #endregion
 
 

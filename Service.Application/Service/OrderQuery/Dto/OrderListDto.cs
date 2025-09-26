@@ -11,5 +11,6 @@ namespace Service.Application.Service.OrderQuery.Dto
         public List<OrderItemsDto> Items { get; set; }
         public string Status { get; set; }
         public string Region { get; set; }
+        public string NewAccount { get; set; }
     }
 }
