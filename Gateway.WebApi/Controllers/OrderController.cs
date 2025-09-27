@@ -47,7 +47,7 @@ namespace Gateway.WebApi.Controllers
             {
                 HttpClient _httpClient = new HttpClient();
                 (CreatePaymentResponse paymentResponse, Order order) = isNewAccount
-                    ? await _query.CreateOrderRubAsNewAccount()
+                    ? await _query.CreateOrderRubAsNewAccount(PsEmail)
                     : await _query.CreateOrderRub(PsEmail, PsPass, PsCode, isSave);
                 var request = new TelegramPaymentRequest
                 {
@@ -112,13 +112,20 @@ namespace Gateway.WebApi.Controllers
             string PsEmail,
             string PsPass,
             string PsCode,
-            string ReciptEmail,
-            bool isSave
+            bool isSave,
+            bool isNewAccount = false
         )
         {
             try
             {
-                await _query.CreateOrderJ(PsEmail, PsPass, PsCode, ReciptEmail, isSave);
+                if (isNewAccount = true)
+                {
+                    await _query.CreateOrderJNewAccount(PsEmail);
+                }
+                else
+                {
+                    await _query.CreateOrderJ(PsEmail, PsPass, PsCode, isSave);
+                }
                 return Ok();
             }
             catch (BadRequestExeption ex)
