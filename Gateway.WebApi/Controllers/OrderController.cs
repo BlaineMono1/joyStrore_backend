@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Business.Data.Models;
 using Gateway.WebApi.Attributes;
 using Gateway.WebApi.Dto;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Service.Application.Exceptions;
 using Service.Application.Extension.Pagination;
+using Service.Application.Response;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.OrderQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
@@ -37,7 +39,6 @@ namespace Gateway.WebApi.Controllers
             string PsEmail,
             string PsPass,
             string PsCode,
-            string ReciptEmail,
             bool isSave,
             bool isNewAccount = false
         )
@@ -45,20 +46,15 @@ namespace Gateway.WebApi.Controllers
             try
             {
                 HttpClient _httpClient = new HttpClient();
-                var result = await _query.CreateOrderRub(
-                    PsEmail,
-                    PsPass,
-                    PsCode,
-                    ReciptEmail,
-                    isSave,
-                    isNewAccount
-                );
+                (CreatePaymentResponse paymentResponse, Order order) = isNewAccount
+                    ? await _query.CreateOrderRubAsNewAccount()
+                    : await _query.CreateOrderRub(PsEmail, PsPass, PsCode, isSave);
                 var request = new TelegramPaymentRequest
                 {
-                    user_id = result.Item2.TgUserId,
-                    order_id = result.Item2.OrderCode,
-                    price = result.Item2.Price,
-                    link = result.Item1.link_page_url,
+                    user_id = order.TgUserId,
+                    order_id = order.OrderCode,
+                    price = order.Price,
+                    link = paymentResponse.link_page_url,
                 };
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
