@@ -67,27 +67,45 @@ namespace Service.Application.Service.OrderQuery
             string PsEmail,
             string PsPass,
             string PsCode,
-            string ReciptEmail,
-            bool isSave,
-            bool isNewAccount
+            bool isSave
         )
         {
-            var (order, totalJPlus) = await ProcessOrder(
-                "RUB",
-                PsEmail,
-                PsPass,
-                PsCode,
-                ReciptEmail,
-                isSave
-            );
-            if (isNewAccount == true)
+            var (order, totalJPlus) = await ProcessOrder("RUB", PsEmail, PsPass, PsCode, isSave);
+
+            order.NewAccount = "Текущий акк";
+
+            if (order == null)
             {
-                order.NewAccount = "Новый акк";
+                throw new Exception("Заказ не был создан");
             }
-            else
+            var payStatus = await _paymentService.CreatePayment(order);
+            if (payStatus.success == false)
             {
-                order.NewAccount = "Текущий акк";
+                throw new Exception("Заказ не был создан");
             }
+
+            var userTgId = _regionFromCookie.GetUserTgID();
+
+            await _orderRepository.Add(order);
+
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.User.TgUserId == userTgId);
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+
+            // Очистка корзины
+            foreach (var item in cart.CartItems)
+                await _cartItemRepository.HardDelete(item.Guid);
+
+            return (payStatus, order);
+        }
+
+        public async Task<(CreatePaymentResponse, Order)> CreateOrderRubAsNewAccount()
+        {
+            var (order, totalJPlus) = await ProcessOrderAsNewAccount("RUB");
+
+            order.NewAccount = "Новый акк";
 
             if (order == null)
             {
@@ -124,14 +142,7 @@ namespace Service.Application.Service.OrderQuery
             bool isSave
         )
         {
-            var (order, totalJPlus) = await ProcessOrder(
-                "J",
-                PsEmail,
-                PsPass,
-                PsCode,
-                ReciptEmail,
-                isSave
-            );
+            var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, isSave);
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
@@ -587,7 +598,6 @@ namespace Service.Application.Service.OrderQuery
             string PsEmail,
             string PsPass,
             string PsCode,
-            string ReciptEmail,
             bool isSave
         )
         {
@@ -695,7 +705,6 @@ namespace Service.Application.Service.OrderQuery
                 userSettings.EmailPsStore = PsEmail;
                 userSettings.PasswordPsStore = PsPass;
                 userSettings.Code = PsCode;
-                user.Email = ReciptEmail;
                 await _settingRepository.Update(userSettings);
                 await _userRepository.Update(user);
             }
@@ -703,6 +712,117 @@ namespace Service.Application.Service.OrderQuery
             order.PsLogin = PsEmail;
             order.PsPass = PsPass;
             order.Code = PsCode;
+            order.TotalJoyPlus = totalJPlus;
+
+            return (order, totalJPlus);
+        }
+
+        private async Task<(Order order, decimal totalJPlus)> ProcessOrderAsNewAccount(
+            string paymentType
+        )
+        {
+            var region = _regionFromCookie.GetUserRegion();
+            var userTgId = _regionFromCookie.GetUserTgID();
+
+            var order = new Order
+            {
+                OrderProductItems = new List<OrderProductItem>(),
+                Status = Business.Data.Enums.OrderStatus.Created,
+                OrderCode = GenerateCode(Guid.NewGuid()),
+                TgUserId = userTgId,
+                Region = region,
+            };
+
+            var user = (await _userRepository.GetListQuery()).FirstOrDefault(u =>
+                u.TgUserId == userTgId
+            );
+
+            if (user is null)
+                throw new NotFoundException(nameof(User), userTgId);
+
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.Guid == user.CartId);
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+
+            decimal totalPrice = 0,
+                totalJPlus = 0;
+
+            foreach (var item in cart.CartItems)
+            {
+                var product = await _productRepository.GetById(item.ProductId);
+                if (product is null)
+                {
+                    _logger.LogError($"Not found product with GUID {item.ProductId}");
+                    continue;
+                }
+
+                var orderItem = new OrderProductItem
+                {
+                    Price = await _calculatePrice.CalcPrice(
+                        product.PriceUa,
+                        product.PriceTr,
+                        product.Type,
+                        product.Guid
+                    ),
+                    Discount = (
+                        region == "UAH"
+                            ? product.DiscountPercentUa ?? ""
+                            : product.DiscountPercentTr ?? ""
+                    ),
+                    OrderId = order.Guid,
+                    ProductId = product.Guid,
+                };
+
+                orderItem.JPrice = await _calculatePrice.CalcJprice(orderItem.Price);
+
+                string name = "",
+                    cusacode = "";
+                switch (product.Type)
+                {
+                    case "Game":
+                        var edition = await _productRepository.GetTypeEntity<Edition>(product);
+                        name = edition.Name;
+                        cusacode = region == "UAH" ? edition.CusaCodeUa : edition.CusaCodeTr;
+                        break;
+                    case "AddOn":
+                        var addOn = await _productRepository.GetTypeEntity<AddOn>(product);
+                        name = addOn.Name;
+                        cusacode = region == "UAH" ? addOn.CusaCodeUa : addOn.CusaCodeTr;
+                        break;
+                    case "Subscription":
+                        var sub = await _productRepository.GetTypeEntity<Subscription>(product);
+                        name = sub.Name;
+                        cusacode = region == "UAH" ? sub.CusaCodeUa : sub.CusaCodeTr;
+                        break;
+                }
+
+                var orderItemDto = new OrderItemDto
+                {
+                    Name = name,
+                    CusaCode = cusacode,
+                    Type = product.Type,
+                    Price = paymentType == "J" ? orderItem.JPrice : orderItem.Price,
+                };
+
+                totalPrice += orderItemDto.Price;
+                totalJPlus += await _calculatePrice.CalcJplus(orderItem.JPrice);
+
+                order.OrderProductItems.Add(orderItem);
+            }
+
+            order.Price = totalPrice;
+
+            var userSettings = (await _settingRepository.GetListQuery()).FirstOrDefault(s =>
+                s.UserId == user.Guid && s.Region == region
+            );
+            if (userSettings is null)
+                throw new NotFoundException(nameof(Setting), userTgId);
+
+            order.PsLogin = "newAccount";
+            order.PsPass = "newAccount";
+            order.Code = "newAccount";
             order.TotalJoyPlus = totalJPlus;
 
             return (order, totalJPlus);
