@@ -101,9 +101,9 @@ namespace Service.Application.Service.OrderQuery
             return (payStatus, order);
         }
 
-        public async Task<(CreatePaymentResponse, Order)> CreateOrderRubAsNewAccount()
+        public async Task<(CreatePaymentResponse, Order)> CreateOrderRubAsNewAccount(string PsEmail)
         {
-            var (order, totalJPlus) = await ProcessOrderAsNewAccount("RUB");
+            var (order, totalJPlus) = await ProcessOrderAsNewAccount("RUB", PsEmail);
 
             order.NewAccount = "Новый акк";
 
@@ -134,15 +134,42 @@ namespace Service.Application.Service.OrderQuery
             return (payStatus, order);
         }
 
-        public async Task CreateOrderJ(
-            string PsEmail,
-            string PsPass,
-            string PsCode,
-            string ReciptEmail,
-            bool isSave
-        )
+        public async Task CreateOrderJ(string PsEmail, string PsPass, string PsCode, bool isSave)
         {
             var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, isSave);
+            order.IsJPayment = true;
+            var userTgId = _regionFromCookie.GetUserTgID();
+            var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
+                l.User.TgUserId == userTgId
+            );
+            if (loyality is null)
+                throw new NotFoundException(nameof(LoyaltyCurrency), userTgId);
+
+            if (loyality.BalanceJoy < order.Price)
+                throw new BadRequestExeption(
+                    "Your balance is not sufficient for payment, top it up."
+                );
+
+            var cart = (await _cartRepository.GetListQuery())
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.User.TgUserId == userTgId);
+
+            if (cart is null)
+                throw new NotFoundException(nameof(Cart), $"for user {userTgId}");
+
+            loyality.BalanceJoy -= order.Price;
+            order.Status = OrderStatus.Paid;
+
+            await _orderRepository.Add(order);
+            await _loyalitiRepository.Update(loyality);
+
+            foreach (var item in cart.CartItems)
+                await _cartItemRepository.HardDelete(item.Guid);
+        }
+
+        public async Task CreateOrderJNewAccount(string PsEmail)
+        {
+            var (order, totalJPlus) = await ProcessOrderAsNewAccount("J", PsEmail);
             order.IsJPayment = true;
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
@@ -718,7 +745,8 @@ namespace Service.Application.Service.OrderQuery
         }
 
         private async Task<(Order order, decimal totalJPlus)> ProcessOrderAsNewAccount(
-            string paymentType
+            string paymentType,
+            string PsEmail
         )
         {
             var region = _regionFromCookie.GetUserRegion();
@@ -820,7 +848,7 @@ namespace Service.Application.Service.OrderQuery
             if (userSettings is null)
                 throw new NotFoundException(nameof(Setting), userTgId);
 
-            order.PsLogin = "newAccount";
+            order.PsLogin = PsEmail;
             order.PsPass = "newAccount";
             order.Code = "newAccount";
             order.TotalJoyPlus = totalJPlus;
