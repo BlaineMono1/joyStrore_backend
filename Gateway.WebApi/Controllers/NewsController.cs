@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Application.Service.GamesQuery;
 using Service.Application.Service.GetNewsList;
 using Service.Application.Service.GetNewsList.Dto;
+
 namespace Gateway.WebApi.Controllers
 {
     [SetRoute("news")]
@@ -11,13 +12,13 @@ namespace Gateway.WebApi.Controllers
     {
         private readonly NewsQuery _newsQuery;
         ILogger<NewsController> _logger;
+
         public NewsController(NewsQuery newsQuery, ILogger<NewsController> logger)
         {
             _newsQuery = newsQuery;
             _logger = logger;
         }
 
-        
         /// <summary>
         /// Получение новостника
         /// </summary>
