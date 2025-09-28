@@ -138,6 +138,7 @@ namespace Service.Application.Service.OrderQuery
         {
             var (order, totalJPlus) = await ProcessOrder("J", PsEmail, PsPass, PsCode, isSave);
             order.IsJPayment = true;
+            order.NewAccount = "Текущий акк";
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
                 l.User.TgUserId == userTgId
@@ -171,6 +172,7 @@ namespace Service.Application.Service.OrderQuery
         {
             var (order, totalJPlus) = await ProcessOrderAsNewAccount("J", PsEmail);
             order.IsJPayment = true;
+            order.NewAccount = "Новый акк";
             var userTgId = _regionFromCookie.GetUserTgID();
             var loyality = (await _loyalitiRepository.GetListQuery()).FirstOrDefault(l =>
                 l.User.TgUserId == userTgId
