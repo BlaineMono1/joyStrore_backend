@@ -41,6 +41,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Изменение имени секции в админ панели
         /// </summary>
@@ -66,6 +67,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Удаление секции в админ панели
         /// </summary>
@@ -98,7 +100,6 @@ namespace Auth.WebApi.Controllers
         [HttpGet("get-section-list")]
         public async Task<ActionResult<List<SectionsDto>>> GetSectionsList()
         {
-
             try
             {
                 var result = await _query.SectionsList();
@@ -117,7 +118,6 @@ namespace Auth.WebApi.Controllers
         /// <param name="SectionId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("get-section")]
-
         public async Task<ActionResult<Section>> GetSection(Guid SectionId)
         {
             try
@@ -136,6 +136,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Добавление продукта в секцию
         /// </summary>
@@ -143,7 +144,6 @@ namespace Auth.WebApi.Controllers
         /// /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpPut("add-product")]
-
         public async Task<ActionResult> AddProduct(Guid SectionId, Guid ProductId)
         {
             try
@@ -162,6 +162,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Удаление продукта из секции
         /// </summary>
@@ -169,7 +170,6 @@ namespace Auth.WebApi.Controllers
         /// /// <param name="ProductId"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpDelete("delete-product")]
-
         public async Task<ActionResult> DeleteProduct(Guid SectionId, Guid ProductId)
         {
             try
@@ -196,8 +196,10 @@ namespace Auth.WebApi.Controllers
         /// /// <param name="isEdition"></param>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("get-prodcut-list")]
-
-        public async Task<ActionResult<List<ProductDto>>> GetEditionsList(string Name = "", bool isEdition = true)
+        public async Task<ActionResult<List<ProductDto>>> GetEditionsList(
+            string Name = "",
+            bool isEdition = true
+        )
         {
             try
             {
@@ -239,7 +241,6 @@ namespace Auth.WebApi.Controllers
             }
         }
 
-
         /// <summary>
         /// Получение списка донатов в админ панели
         /// </summary>
@@ -247,7 +248,6 @@ namespace Auth.WebApi.Controllers
         [HttpGet("get-addon-list")]
         public async Task<ActionResult<List<AddOnSectionList>>> GetAddOnsGroups()
         {
-
             try
             {
                 var result = await _query.GetAddOnsGroups();
@@ -265,12 +265,14 @@ namespace Auth.WebApi.Controllers
         /// </summary>
         [Authorize(Roles = "Admin,Worker")]
         [HttpGet("add-addon-group")]
-        public async Task<ActionResult<List<AddOnSectionList>>> CreateAddOnGroup(string Name, string Url)
+        public async Task<ActionResult<List<AddOnSectionList>>> CreateAddOnGroup(
+            string Name,
+            string Url
+        )
         {
-
             try
             {
-               await _query.CreateAddOnGroup(Name, Url);
+                await _query.CreateAddOnGroup(Name, Url);
                 return Ok();
             }
             catch (Exception ex)
@@ -306,6 +308,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Удаление списка донатов в админ панели
         /// </summary>
