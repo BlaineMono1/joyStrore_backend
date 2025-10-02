@@ -61,6 +61,7 @@ namespace Service.Application.Service.GamesQuery
             var sections = (await _sectionRepository.GetListQuery())
                 .Include(s => s.Products)
                 .ThenInclude(se => se.Product)
+                .OrderByDescending(s => s.DateCreate)
                 .ToList();
 
             foreach (var section in sections)
