@@ -87,27 +87,27 @@ builder.Services.AddQuartz(q =>
     q.UseInMemoryStore();
     q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
 
-    // Создаем задание для ParseGames
-    var parseGamesJobKey = new JobKey("ParseGamesJob");
-    q.AddJob<ParseGamesJob>(opts => opts.WithIdentity(parseGamesJobKey));
+    // // Создаем задание для ParseGames
+    // var parseGamesJobKey = new JobKey("ParseGamesJob");
+    // q.AddJob<ParseGamesJob>(opts => opts.WithIdentity(parseGamesJobKey));
 
-    // Создаем триггер для ParseGames (каждый день в 4:00)
-    q.AddTrigger(opts =>
-        opts.ForJob(parseGamesJobKey)
-            .WithIdentity("ParseGamesJob-trigger")
-            .WithCronSchedule("0 20 3 * * ?") // секунды минуты часы день месяц день_недели
-    );
+    // // Создаем триггер для ParseGames (каждый день в 4:00)
+    // q.AddTrigger(opts =>
+    //     opts.ForJob(parseGamesJobKey)
+    //         .WithIdentity("ParseGamesJob-trigger")
+    //         .WithCronSchedule("0 20 3 * * ?") // секунды минуты часы день месяц день_недели
+    // );
 
-    // Создаем задание для UpdateProductsPrice
-    var updatePriceJobKey = new JobKey("UpdateProductsPriceJob");
-    q.AddJob<UpdateProductsPriceJob>(opts => opts.WithIdentity(updatePriceJobKey));
+    // // Создаем задание для UpdateProductsPrice
+    // var updatePriceJobKey = new JobKey("UpdateProductsPriceJob");
+    // q.AddJob<UpdateProductsPriceJob>(opts => opts.WithIdentity(updatePriceJobKey));
 
-    // Создаем триггер для UpdateProductsPrice (каждый день в 4:05)
-    q.AddTrigger(opts =>
-        opts.ForJob(updatePriceJobKey)
-            .WithIdentity("UpdateProductsPriceJob-trigger")
-            .WithCronSchedule("0 35 3 * * ?") // секунды минуты часы день месяц день_недели
-    );
+    // // Создаем триггер для UpdateProductsPrice (каждый день в 4:05)
+    // q.AddTrigger(opts =>
+    //     opts.ForJob(updatePriceJobKey)
+    //         .WithIdentity("UpdateProductsPriceJob-trigger")
+    //         .WithCronSchedule("0 35 3 * * ?") // секунды минуты часы день месяц день_недели
+    // );
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
