@@ -164,7 +164,18 @@ namespace Services.CalculationService
                     }
                     p = t;
                 }
-                string? cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
+                string? cachedData;
+                if (region == "UAH")
+                {
+                    cachedData = await _redis.GetAsync($"MarkUpGame-{p}");
+                    _logger.LogInformation($"Наценка по {cachedData} UAH ");
+                }
+                else
+                {
+                    cachedData = await _redis.GetAsync($"MarkUpGameTR-{p}");
+                    _logger.LogInformation($"Наценка по {cachedData} TRY ");
+                }
+
                 if (cachedData is null)
                 {
                     await _cacheService.UpdateMarkUp();
