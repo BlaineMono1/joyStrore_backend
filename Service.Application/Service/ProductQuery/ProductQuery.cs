@@ -143,20 +143,26 @@ namespace Service.Application.Service.ProductQuery
                         .Include(g => g.Editions)
                         .FirstOrDefault(g => g.Editions.Contains(edition))
                         .Editions;
-
-                    result.AddRange(
-                        await Task.WhenAll(
-                            editions
-                                .Where(e => e.Guid != product.TypeId)
-                                .Select(async item => new DropDownListDto
-                                {
-                                    Name = item.Name,
-                                    ProductId = (
-                                        await _productRepository.GetEntityType(item.Guid)
-                                    ).Guid,
-                                })
-                        )
-                    );
+                    try
+                    {
+                        result.AddRange(
+                            await Task.WhenAll(
+                                editions
+                                    .Where(e => e.Guid != product.TypeId)
+                                    .Select(async item => new DropDownListDto
+                                    {
+                                        Name = item.Name,
+                                        ProductId = (
+                                            await _productRepository.GetEntityType(item.Guid)
+                                        ).Guid,
+                                    })
+                            )
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine(ex.Message);
+                    }
 
                     break;
                 case "AddOn":

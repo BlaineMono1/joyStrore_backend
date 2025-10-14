@@ -136,7 +136,7 @@ builder.Services.AddCors(options =>
         "AllowAll",
         policy =>
         {
-            policy.AllowAnyHeader();
+            policy.WithOrigins("http://gateway:8080");
             policy.AllowAnyMethod();
             policy.AllowAnyOrigin();
         }

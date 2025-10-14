@@ -150,7 +150,7 @@ builder.Services.AddCors(options =>
         "AllowAll",
         policy =>
         {
-            policy.AllowAnyHeader();
+            policy.WithOrigins("http://panel:8080");
             policy.AllowAnyMethod();
             policy.AllowAnyOrigin();
         }
