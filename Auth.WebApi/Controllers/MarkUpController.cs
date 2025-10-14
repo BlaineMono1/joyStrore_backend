@@ -15,13 +15,13 @@ namespace Auth.WebApi.Controllers
     {
         private readonly MarkUpQUery _query;
         private readonly ILogger<MarkUpController> _logger;
-        
 
         public MarkUpController(ILogger<MarkUpController> logger, MarkUpQUery query)
         {
             _query = query;
             _logger = logger;
         }
+
         /// <summary>
         /// Спиоск наценок на игры и аддоны в адимн панеле
         /// </summary>
@@ -41,6 +41,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Обновление наценки на игры и аддоны
         /// </summary>
@@ -71,6 +72,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Спиоск наценок на подписки в адимн панеле
         /// </summary>
@@ -90,6 +92,7 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         /// <summary>
         /// Обновление наценки на подписки
         /// </summary>
@@ -102,6 +105,35 @@ namespace Auth.WebApi.Controllers
             try
             {
                 await _query.UpdatePercentSub(MarkUpId, Percent);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (BadRequestExeption ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(400, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Обновление наценки на игры c пд фулл
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        [HttpPut("update-mark-up-percent-full-db")]
+        public async Task<ActionResult> UpdateMarkUpFullDB()
+        {
+            try
+            {
+                await _query.UpdatePercetProductAllFromDb();
                 return Ok();
             }
             catch (NotFoundException ex)
