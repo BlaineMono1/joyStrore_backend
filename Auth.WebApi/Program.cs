@@ -145,17 +145,17 @@ builder.Services.AddSwaggerGen(config =>
 });
 
 //To Do: ��������� Cors
-builder.Services.AddCors(options =>
-    options.AddPolicy(
-        "AllowAll",
-        policy =>
-        {
-            policy.WithOrigins("http://panel:8080");
-            policy.AllowAnyMethod();
-            policy.AllowAnyOrigin();
-        }
-    )
-);
+// builder.Services.AddCors(options =>
+//     options.AddPolicy(
+//         "AllowAll",
+//         policy =>
+//         {
+//             policy.WithOrigins("http://panel:8080");
+//             policy.AllowAnyMethod();
+//             policy.AllowAnyOrigin();
+//         }
+//     )
+// );
 
 var app = builder.Build();
 
@@ -170,7 +170,8 @@ app.UseSwaggerUI(options =>
 app.UseRouting();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
+// app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
