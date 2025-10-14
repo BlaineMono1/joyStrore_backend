@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Application.Exceptions;
 using Service.Application.Extension.Pagination;
+using Service.Application.Iterfaces;
 using Service.Application.Service.OrderQuery;
 using Service.Application.Service.OrderQuery.Dto;
 using static Service.Application.Exceptions.NotFoundExeption;
@@ -16,11 +17,17 @@ namespace Auth.WebApi.Controllers
         private readonly OrderQuery _query;
 
         private readonly ILogger<OrderController> _logger;
+        private readonly ICacheService _cacheService;
 
-        public OrderController(OrderQuery query, ILogger<OrderController> logger)
+        public OrderController(
+            OrderQuery query,
+            ILogger<OrderController> logger,
+            ICacheService cacheService
+        )
         {
             _query = query;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         /// <summary>
@@ -228,6 +235,26 @@ namespace Auth.WebApi.Controllers
             {
                 var result = await _query.TransacionHistoryParams(ChatId, OrderCode);
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, "Server error");
+            }
+        }
+
+        /// <summary>
+        /// Список поплнения joy
+        /// </summary>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin")]
+        [HttpGet("update-cash-back")]
+        public async Task<ActionResult<List<TransactionsHistoryDto>>> UpdateReddisCashback()
+        {
+            try
+            {
+                await _cacheService.UpdateCashBack();
+                return Ok();
             }
             catch (Exception ex)
             {

@@ -5,7 +5,7 @@ namespace Business.Data.Models
     /// <summary>
     /// Настройка кешбэка при покупке Joy-ями
     /// </summary>
-    public class LoyaltyCashback:BaseEntity
+    public class LoyaltyCashback : BaseEntity
     {
         #region поля
         /// <summary>
