@@ -118,7 +118,7 @@ namespace Gateway.WebApi.Controllers
         {
             try
             {
-                if (isNewAccount = true)
+                if (isNewAccount)
                 {
                     await _query.CreateOrderJNewAccount(PsEmail);
                 }
