@@ -5,6 +5,5 @@
         public string Name { get; set; }
 
         public List<GamesListDto> Editions { get; set; } = new List<GamesListDto>();
-
     }
 }
