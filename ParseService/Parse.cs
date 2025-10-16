@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using ParseService.Dto;
 using Service.Application.Exceptions;
 using StackExchange.Redis;
 
@@ -448,23 +449,37 @@ namespace Services.ParseService
             public string CusaCodeUA { get; set; }
             public string CusaCodeTR { get; set; }
             public string Name { get; set; }
+            public string Subscription { get; set; }
+
             public ProductDto ProductDto { get; set; }
         }
 
         public async Task UpdateProductsPrice()
         {
-            var cusacodes = (await _subscriptionRepository.GetListQuery())
-                .Select(sub => sub.CusaCodeUa)
+            var cusaCode = (await _editionRepository.GetListQuery())
+                .Select(p => new CusaCodeRequest
+                {
+                    сusaCodeUa = p.CusaCodeUa,
+                    сusaCodeTr = p.CusaCodeTr,
+                })
                 .ToList();
-
-            cusacodes.AddRange(
-                (await _editionRepository.GetListQuery()).Select(ed => ed.CusaCodeUa).ToList()
+            cusaCode.AddRange(
+                (await _subscriptionRepository.GetListQuery()).Select(p => new CusaCodeRequest
+                {
+                    сusaCodeUa = p.CusaCodeUa,
+                    сusaCodeTr = p.CusaCodeTr,
+                })
+            );
+            cusaCode.AddRange(
+                (await _addOnRepository.GetListQuery()).Select(p => new CusaCodeRequest
+                {
+                    сusaCodeUa = p.CusaCodeUa,
+                    сusaCodeTr = p.CusaCodeTr,
+                })
             );
 
-            cusacodes.AddRange((await _addOnRepository.GetListQuery()).Select(ed => ed.CusaCodeUa));
-
             const int BatchSize = 100;
-            var allCodes = cusacodes;
+            var allCodes = cusaCode;
             var data = new List<ResponceDto>();
             int updated = 0;
 
@@ -475,17 +490,24 @@ namespace Services.ParseService
             )
             {
                 var content = new StringContent(
-                    JsonSerializer.Serialize(batch),
+                    JsonSerializer.Serialize(batch.ToList()),
                     Encoding.UTF8,
                     "application/json"
                 );
                 var resp = await _httpClient.PostAsync("current-price", content);
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var errorContent = await resp.Content.ReadAsStringAsync();
+                    _logger.LogError($"Сервер вернул {resp.StatusCode}: {errorContent}");
+
+                    // Для отладки — можно бросить исключение с деталями
+                    throw new HttpRequestException($"Bad Request: {errorContent}");
+                }
                 var part =
                     await resp.Content.ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions)
                     ?? new List<ResponceDto>();
                 updated += part.Count;
-                _logger.LogInformation($"Updated {updated} of {cusacodes.Count}");
+                _logger.LogInformation($"Updated {updated} of {cusaCode.Count}");
                 data.AddRange(part);
             }
 
@@ -515,6 +537,7 @@ namespace Services.ParseService
                     await UpdateProduct(item.ProductDto, currented.ProductId);
 
                     currented.Name = item.Name;
+                    currented.Subscription = item.Subscription;
                     await _editionRepository.Update(currented);
                 }
                 else if (currentadd != null)
