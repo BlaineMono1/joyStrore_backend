@@ -129,13 +129,13 @@ namespace Gateway.WebApi.Controllers
                 }
                 HttpClient _httpClient = new HttpClient();
                 string _botApiUrl = "http://bot:5000/api/admin/new_order";
-
+                var jsonContent = new StringContent("{}", Encoding.UTF8, "application/json");
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
 
                 try
                 {
-                    var response = await _httpClient.PostAsync(_botApiUrl, null);
+                    var response = await _httpClient.PostAsync(_botApiUrl, jsonContent);
 
                     if (response.IsSuccessStatusCode)
                     {
