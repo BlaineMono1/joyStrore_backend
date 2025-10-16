@@ -59,6 +59,7 @@ namespace Gateway.WebApi.Controllers
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 string _botApiUrl = "http://bot:5000/api/send";
+
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
                 try
@@ -125,6 +126,35 @@ namespace Gateway.WebApi.Controllers
                 else
                 {
                     await _query.CreateOrderJ(PsEmail, PsPass, PsCode, isSave);
+                }
+                HttpClient _httpClient = new HttpClient();
+                string _botApiUrl = "http://bot:5000/api/admin/new_order";
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
+
+                try
+                {
+                    var response = await _httpClient.PostAsync(_botApiUrl, null);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Успешно отправлено
+                        _logger.LogInformation("Success Telegram Api");
+                    }
+                    else
+                    {
+                        var errorBody = await response.Content.ReadAsStringAsync();
+                        _logger.LogError(
+                            $"Telegram API error: {response.StatusCode} - {errorBody}"
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Логируйте исключение
+                    _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
+                    return Ok("Ошибка: Заказ не был сформирован");
                 }
                 return Ok();
             }
