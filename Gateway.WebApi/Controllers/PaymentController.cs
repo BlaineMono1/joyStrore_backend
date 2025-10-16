@@ -19,6 +19,8 @@ namespace Gateway.WebApi.Controllers
         private readonly IRepository<LoyaltyOrder> _loyaltyOrderRepository;
         private readonly IRepository<LoyaltyCurrency> _joyBalRepository;
         private readonly string _apiKey;
+        private readonly string _apiTgKey;
+
         ILogger<OrderController> _logger;
 
         public PaymentController(
@@ -36,6 +38,7 @@ namespace Gateway.WebApi.Controllers
             _apiKey = Environment.GetEnvironmentVariable("PAYMENT_API_KEY");
             _loyaltyOrderRepository = loyaltyOrder;
             _joyBalRepository = joyBalRepository;
+            _apiTgKey = Environment.GetEnvironmentVariable("SITE_API_KEY");
         }
 
         /// <summary>
@@ -165,6 +168,37 @@ namespace Gateway.WebApi.Controllers
                         await _orderRepository.Update(order);
 
                         _logger.LogInformation("Order {InvId} marked as paid", model.InvId);
+
+                        HttpClient _httpClient = new HttpClient();
+                        string _botApiUrl = "http://bot:5000/api/admin/new_order";
+
+                        _httpClient.DefaultRequestHeaders.Clear();
+                        _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiTgKey);
+
+                        try
+                        {
+                            var response = await _httpClient.PostAsync(_botApiUrl, null);
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                // Успешно отправлено
+                                _logger.LogInformation("Success Telegram Api");
+                            }
+                            else
+                            {
+                                var errorBody = await response.Content.ReadAsStringAsync();
+                                _logger.LogError(
+                                    $"Telegram API error: {response.StatusCode} - {errorBody}"
+                                );
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Логируйте исключение
+                            _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
+                            return Ok("Ошибка: Заказ не был сформирован");
+                        }
+
                         return Ok();
                     }
                     else if (model.Status == "FAIL")
