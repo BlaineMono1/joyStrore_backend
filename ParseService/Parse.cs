@@ -227,11 +227,13 @@ namespace Services.ParseService
 
         public async Task ParseGames(int startPage, int endPage)
         {
-            try
+            for (var i = startPage; i <= endPage; i++)
             {
-                Dictionary<string, List<Guid>> keyValuePairs = new Dictionary<string, List<Guid>>();
-                for (var i = startPage; i <= endPage; i++)
+                try
                 {
+                    Dictionary<string, List<Guid>> keyValuePairs =
+                        new Dictionary<string, List<Guid>>();
+
                     string requestUri = $"game-full?startPage={i}&endPage={i}";
 
                     HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
@@ -381,10 +383,10 @@ namespace Services.ParseService
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
             }
         }
 
