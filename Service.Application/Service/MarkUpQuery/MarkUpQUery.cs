@@ -108,7 +108,6 @@ namespace Service.Application.Service.MarkUpQuery
                 var jsonData = JsonSerializer.Serialize(item.Percent);
                 var key = $"MarkUpGame-{item.Price}";
                 await _redis.SetAsync(key, jsonData, null);
-                await _setingPriceRepository.Update(item);
                 _logger.LogInformation(
                     $"Наценка успешно обновлена >{item.Price} - {item.Percent} - {item.Region}"
                 );
@@ -118,7 +117,6 @@ namespace Service.Application.Service.MarkUpQuery
                 var jsonData = JsonSerializer.Serialize(item.Percent);
                 var keyTr = $"MarkUpGameTR-{item.Price}";
                 await _redis.SetAsync(keyTr, jsonData, null);
-                await _setingPriceRepository.Update(item);
                 _logger.LogInformation(
                     $"Наценка успешно обновлена >{item.Price} - {item.Percent} - {item.Region}"
                 );
