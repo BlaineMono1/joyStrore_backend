@@ -152,5 +152,71 @@ namespace Auth.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        /// <summary>
+        /// Обновление цены на подписки
+        /// </summary>
+        /// <param name="subscriptionGuid"></param>
+        /// <param name="priceUa"></param>
+        /// <param name="pricTr"></param>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin")]
+        [HttpPut("update-price-sub")]
+        public async Task<ActionResult> UpdatePriceSub(
+            Guid subscriptionGuid,
+            decimal priceUa,
+            decimal pricTr
+        )
+        {
+            try
+            {
+                await _query.UpdatePriceSub(subscriptionGuid, priceUa, pricTr);
+                return Ok();
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (BadRequestExeption ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(400, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// вывод цены на подписки
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        [HttpGet("get-price-sub")]
+        public async Task<ActionResult> GetPriceSub()
+        {
+            try
+            {
+                var result = await _query.GetPriceSub();
+                return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(404, ex.Message);
+            }
+            catch (BadRequestExeption ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(400, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

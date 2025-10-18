@@ -14,6 +14,9 @@ namespace Service.Application.Service.MarkUpQuery
     {
         private readonly IRepository<SettingPrice> _setingPriceRepository;
         private readonly IRepository<PriceSettingSubscription> _subSettingPrice;
+        private readonly IRepository<Subscription> _subscriptionRepository;
+        private readonly IRepository<Product> _productRepository;
+
         private readonly IRedisRepository _redis;
         private readonly ILogger<MarkUpQUery> _logger;
 
@@ -21,13 +24,17 @@ namespace Service.Application.Service.MarkUpQuery
             IRepository<SettingPrice> setingPriceRepository,
             IRepository<PriceSettingSubscription> subSettingPrice,
             ILogger<MarkUpQUery> logger,
-            IRedisRepository redis
+            IRedisRepository redis,
+            IRepository<Subscription> subscriptionRepository,
+            IRepository<Product> productRepository
         )
         {
             _setingPriceRepository = setingPriceRepository;
             _subSettingPrice = subSettingPrice;
             _redis = redis;
             _logger = logger;
+            _subscriptionRepository = subscriptionRepository;
+            _productRepository = productRepository;
         }
 
         public async Task<List<PercentDto>> GetMarkUpsProductList()
@@ -85,6 +92,7 @@ namespace Service.Application.Service.MarkUpQuery
 
                 await _setingPriceRepository.Update(current);
             }
+            await UpdatePercetProductAllFromDb();
         }
 
         public async Task UpdatePercetProductAllFromDb()
@@ -155,6 +163,54 @@ namespace Service.Application.Service.MarkUpQuery
             current.Percent = Percent;
 
             await _subSettingPrice.Update(current);
+        }
+
+        public async Task UpdatePriceSub(Guid subscriptionGuid, decimal priceUa, decimal pricTr)
+        {
+            var productSub = (await _productRepository.GetListQuery()).FirstOrDefault(p =>
+                p.TypeId == subscriptionGuid
+            );
+            if (productSub == null)
+            {
+                _logger.LogInformation("Данная подписка не найдена");
+                throw new NotFoundException("Данная подписка не найдена");
+            }
+
+            productSub.PriceRubUa = priceUa;
+            productSub.PriceRubTr = pricTr;
+
+            await _productRepository.Update(productSub);
+        }
+
+        public async Task<List<SubPriceList>> GetPriceSub()
+        {
+            List<SubPriceList> result = new List<SubPriceList>();
+
+            var subscriptions = await (await _subscriptionRepository.GetListQuery())
+                .Include(s => s.Product)
+                .ToListAsync();
+            if (subscriptions == null)
+                throw new NotFoundException("Подписки не найдены");
+
+            var grouped = subscriptions
+                .Where(s => !string.IsNullOrEmpty(s.Duration))
+                .GroupBy(s => s.Duration)
+                .Select(g => new SubPriceList
+                {
+                    Duration = g.Key,
+                    Items = g.Select(s => new SubscriptionItem
+                        {
+                            Id = s.Guid,
+                            Name = s.Name ?? "Без названия",
+                            PriceUa = s.Product.PriceRubUa,
+                            PriceTr = s.Product.PriceRubTr,
+                        })
+                        .ToList(),
+                })
+                .OrderBy(x => x.Duration) // или по логике сортировки (например, по числу месяцев)
+                .ToList();
+
+            return grouped;
         }
     }
 }

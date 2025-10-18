@@ -207,13 +207,16 @@ namespace Services.CalculationService
                         var product = await _productRepository.GetById(id.Value);
                         if (product is null)
                             throw new Exception($"product with Guid {id} not found");
-                        var sub = await _productRepository.GetTypeEntity<Subscription>(product);
-                        var markupSub = (await _priceSettingSubscription.GetListQuery())
-                            .Where(p => p.SubscriptionId == sub.Guid)
-                            .FirstOrDefault(p => p.Region == region);
-                        if (markupSub is null)
-                            throw new Exception($"markup for Sub with Guid {sub.Guid} not found");
-                        priceWithMarkup = rubPrice * (markupSub.Percent / 100) + rubPrice;
+
+                        if (region == "UAH")
+                        {
+                            priceWithMarkup = product.PriceRubUa;
+                        }
+                        else if (region == "TRY")
+                        {
+                            priceWithMarkup = product.PriceRubTr;
+                        }
+
                         break;
 
                     default:
@@ -226,7 +229,7 @@ namespace Services.CalculationService
                     "Calculated price with markup: {PriceWithMarkup}",
                     priceWithMarkup
                 );
-                return Math.Round(priceWithMarkup, MidpointRounding.AwayFromZero);
+                return Math.Round(priceWithMarkup / 10m, MidpointRounding.AwayFromZero) * 10m;
             }
             catch (Exception ex)
             {
@@ -269,7 +272,7 @@ namespace Services.CalculationService
 
                 decimal jPrice = price.Value - price.Value * (loyality.DiscountPercent / 100);
                 _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
-                return Math.Round(jPrice, MidpointRounding.AwayFromZero);
+                return Math.Round(jPrice / 10m, MidpointRounding.AwayFromZero) * 10m;
                 ;
             }
             catch (Exception ex)
