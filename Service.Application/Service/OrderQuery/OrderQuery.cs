@@ -308,7 +308,7 @@ namespace Service.Application.Service.OrderQuery
             var result = new List<OrderListDto>();
 
             var orders = (await _orderRepository.GetListQuery())
-                .Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled)
+                .Where(o => o.WorkerId == null && o.Status != OrderStatus.Paid)
                 .Include(o => o.OrderProductItems)
                 .ThenInclude(i => i.Product)
                 .OrderBy(o => o.Status == OrderStatus.Paid ? 0 : 1)
