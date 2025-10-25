@@ -740,7 +740,14 @@ namespace Service.Application.Service.OrderQuery
 
             order.PsLogin = PsEmail;
             order.PsPass = PsPass;
-            order.Code = PsCode;
+            if (PsCode == null)
+            {
+                order.Code = "";
+            }
+            else
+            {
+                order.Code = PsCode;
+            }
             order.TotalJoyPlus = totalJPlus;
 
             return (order, totalJPlus);
