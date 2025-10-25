@@ -308,7 +308,7 @@ namespace Service.Application.Service.OrderQuery
             var result = new List<OrderListDto>();
 
             var orders = (await _orderRepository.GetListQuery())
-                .Where(o => o.WorkerId == null && o.Status != OrderStatus.Paid)
+                .Where(o => o.WorkerId == null && o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Created)
                 .Include(o => o.OrderProductItems)
                 .ThenInclude(i => i.Product)
                 .OrderBy(o => o.Status == OrderStatus.Paid ? 0 : 1)
@@ -427,7 +427,7 @@ namespace Service.Application.Service.OrderQuery
 
             oreder.WorkerId = null;
 
-            oreder.Status = OrderStatus.Created;
+            oreder.Status = OrderStatus.Paid;
 
             await _orderRepository.Update(oreder);
         }
