@@ -38,7 +38,7 @@ namespace Gateway.WebApi.Controllers
         public async Task<ActionResult<OrdersDto>> CreateOrderRub(
             string PsEmail,
             string PsPass,
-            string PsCode,
+            string? PsCode,
             bool isSave,
             bool isNewAccount = false
         )
@@ -112,7 +112,7 @@ namespace Gateway.WebApi.Controllers
         public async Task<ActionResult<OrdersDto>> CreateOrderJ(
             string PsEmail,
             string PsPass,
-            string PsCode,
+            string? PsCode,
             bool isSave,
             bool isNewAccount = false
         )
