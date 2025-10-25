@@ -128,34 +128,34 @@ namespace Gateway.WebApi.Controllers
                     await _query.CreateOrderJ(PsEmail, PsPass, PsCode, isSave);
                 }
                 HttpClient _httpClient = new HttpClient();
-                // string _botApiUrl = "http://bot:5000/api/admin/new_order";
-                // var jsonContent = new StringContent("{}", Encoding.UTF8, "application/json");
-                // _httpClient.DefaultRequestHeaders.Clear();
-                // _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
+                string _botApiUrl = "http://bot:5000/api/admin/new_order";
+                var jsonContent = new StringContent("{}", Encoding.UTF8, "application/json");
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("X-API-Key", _apiKey);
 
-                // try
-                // {
-                //     var response = await _httpClient.PostAsync(_botApiUrl, jsonContent);
+                try
+                {
+                    var response = await _httpClient.PostAsync(_botApiUrl, jsonContent);
 
-                //     if (response.IsSuccessStatusCode)
-                //     {
-                //         // Успешно отправлено
-                //         _logger.LogInformation("Success Telegram Api");
-                //     }
-                //     else
-                //     {
-                //         var errorBody = await response.Content.ReadAsStringAsync();
-                //         _logger.LogError(
-                //             $"Telegram API error: {response.StatusCode} - {errorBody}"
-                //         );
-                //     }
-                // }
-                // catch (Exception ex)
-                // {
-                //     // Логируйте исключение
-                //     _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
-                //     return Ok("Ошибка: Заказ не был сформирован");
-                // }
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Успешно отправлено
+                        _logger.LogInformation("Success Telegram Api");
+                    }
+                    else
+                    {
+                        var errorBody = await response.Content.ReadAsStringAsync();
+                        _logger.LogError(
+                            $"Telegram API error: {response.StatusCode} - {errorBody}"
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Логируйте исключение
+                    _logger.LogError($"Exception calling Telegram bot API: {ex.Message}");
+                    return Ok("Ошибка: Заказ не был сформирован");
+                }
                 return Ok();
             }
             catch (BadRequestExeption ex)
