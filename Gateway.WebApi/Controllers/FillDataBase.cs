@@ -100,7 +100,19 @@ namespace Gateway.WebApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        [HttpGet]
+        public async Task<ActionResult> ParseGame(string concept)
+        {
+            try
+            {
+                await _parse.ParseGame(concept);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
         [HttpGet]
         public async Task<ActionResult> UpdateProductsPrice()
         {
