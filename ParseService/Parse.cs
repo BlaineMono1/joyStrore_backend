@@ -738,6 +738,169 @@ namespace Services.ParseService
 
             return sub.Guid;
         }
+     public async Task ParseGame(string concept)
+        {
+        
+                try
+                {
+                    Dictionary<string, List<Guid>> keyValuePairs =
+                        new Dictionary<string, List<Guid>>();
+
+                    string requestUri = $"game?concept={concept}";
+
+                    HttpResponseMessage response = await _httpClient.GetAsync(requestUri);
+
+                    response.EnsureSuccessStatusCode();
+
+                    string rawJson = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation("Raw JSON from API: {json}", rawJson);
+
+                    var games =
+                        JsonSerializer.Deserialize<List<GameInfo>>(rawJson, _jsonOptions)
+                        ?? new List<GameInfo>();
+
+                    if (games != null)
+                    {
+                        foreach (var game in games)
+                        {
+                            foreach (var edition in game.Editions)
+                            {
+                                var g = edition.Geners.Split('|');
+                                foreach (var e in g)
+                                {
+                                    if (!keyValuePairs.ContainsKey(e))
+                                    {
+                                        keyValuePairs.Add(e, new List<Guid>());
+                                    }
+                                }
+                            }
+                        }
+
+                        foreach (var key in keyValuePairs.Keys)
+                        {
+                            var gener = (await _genersRepository.GetListQuery()).FirstOrDefault(g =>
+                                g.Name == key
+                            );
+
+                            if (gener is null)
+                            {
+                                var add = new Geners
+                                {
+                                    Name = key,
+                                    Editions = new List<GenersToEdition>(),
+                                };
+
+                                await _genersRepository.Add(add);
+                            }
+                        }
+
+                        _logger.LogInformation($"Всего игр загружено: {games.Count}");
+
+                        foreach (var game in games)
+                        {
+                            if (
+                                (await _gameRepository.GetListQuery()).Any(e =>
+                                    e.ConceptId == game.ConceptId
+                                )
+                            )
+                            {
+                                continue;
+                            }
+                            var gameDto = new Game
+                            {
+                                Name = game.Name,
+                                ConceptId = game.ConceptId,
+                                Popular = game.StarCount.ToString(),
+                                Languages = DetermineLanguage(
+                                    game.LanguagesInterface,
+                                    game.LanguagesVoice
+                                ),
+                            };
+
+                            if (game.Editions != null)
+                            {
+                                foreach (var edition in game.Editions.Where(e => e != null))
+                                {
+                                    var productDto = new Product
+                                    {
+                                        Type = "Game",
+                                        PriceUa = edition.Product.PriceUa ?? 0,
+                                        PriceTr = edition.Product.PriceTr ?? 0,
+                                        DiscountPercentUa = edition.Product.DiscountPercent,
+                                        DiscountPercentTr = edition.Product.DiscountPercent,
+                                        DiscountDateTr = edition.Product.DiscountDate ?? null,
+                                        DiscountDateUa = edition.Product.DiscountDate ?? null,
+                                    };
+
+                                    var editionDto = new Edition
+                                    {
+                                        CusaCodeUa = edition.CusaCodeUA,
+                                        CusaCodeTr = edition.CusaCodeTR ?? string.Empty,
+                                        Type = edition.Type,
+                                        EditionType = edition.EditionType,
+                                        Name = edition.EditionName,
+                                        Image = edition.Image,
+                                        Features = edition.Features,
+                                        Platform = edition.Platform,
+                                        Subscription = edition.Subscription,
+                                        Region = edition.CodeRegion,
+                                        Release = DateTime.SpecifyKind(
+                                            DateTime.ParseExact(
+                                                edition.Release ?? null,
+                                                "d.M.yyyy",
+                                                CultureInfo.InvariantCulture
+                                            ),
+                                            DateTimeKind.Utc
+                                        ),
+                                        Game = gameDto,
+                                        GameId = gameDto.Guid,
+                                        Product = productDto,
+                                        ProductId = productDto.Guid,
+                                        EditionGeners = new List<GenersToEdition>(),
+                                    };
+
+                                    var eg = edition.Geners.Split('|');
+                                    var geners = (await _genersRepository.GetListQuery())
+                                        .AsTracking()
+                                        .Where(g => eg.Contains(g.Name));
+
+                                    foreach (var g in geners)
+                                    {
+                                        if (!editionDto.EditionGeners.Any(e => e.GenerId == g.Guid))
+                                        {
+                                            editionDto.EditionGeners.Add(
+                                                new GenersToEdition
+                                                {
+                                                    GenerId = g.Guid,
+                                                    Geners = g,
+                                                    EdtitonId = editionDto.Guid,
+                                                    Edition = editionDto,
+                                                }
+                                            );
+                                        }
+                                    }
+
+                                    await _editionRepository.Add(editionDto);
+
+                                    productDto.TypeId = editionDto.Guid;
+
+                                    gameDto.Editions ??= new List<Edition>();
+                                    gameDto.Editions.Add(editionDto);
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Editions is null for game: {game.Name}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+           
+        }
 
         public async Task<Guid> CreateProduct(
             decimal PriceUa,
