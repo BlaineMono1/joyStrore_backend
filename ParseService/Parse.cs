@@ -460,8 +460,6 @@ namespace Services.ParseService
         public async Task UpdateProductsPrice()
         {
             var cusaCode = (await _editionRepository.GetListQuery())
-                .Include(e => e.Product)
-                .OrderByDescending(e => e.Product.DateUpdate)
                 .Select(p => new CusaCodeRequest
                 {
                     сusaCodeUa = p.CusaCodeUa,
