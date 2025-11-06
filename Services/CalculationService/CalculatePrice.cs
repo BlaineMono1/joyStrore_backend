@@ -271,9 +271,8 @@ namespace Services.CalculationService
                 }
 
                 decimal jPrice = price.Value - price.Value * (loyality.DiscountPercent / 100);
-                _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
+                // _logger.LogInformation("Calculated JPrice: {JPrice}", jPrice);
                 return Math.Round(jPrice / 10m, MidpointRounding.AwayFromZero) * 10m;
-                ;
             }
             catch (Exception ex)
             {
