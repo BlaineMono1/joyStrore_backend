@@ -461,7 +461,7 @@ namespace Services.ParseService
         {
             var cusaCode = (await _editionRepository.GetListQuery())
                 .Include(e => e.Product)
-                .OrderBy(e => e.Product.DateUpdate)
+                .OrderByDescending(e => e.Product.DateUpdate)
                 .Select(p => new CusaCodeRequest
                 {
                     сusaCodeUa = p.CusaCodeUa,
@@ -469,14 +469,11 @@ namespace Services.ParseService
                 })
                 .ToList();
             cusaCode.AddRange(
-                (await _subscriptionRepository.GetListQuery())
-                    .Include(e => e.Product)
-                    .OrderBy(e => e.Product.DateUpdate)
-                    .Select(p => new CusaCodeRequest
-                    {
-                        сusaCodeUa = p.CusaCodeUa,
-                        сusaCodeTr = p.CusaCodeTr,
-                    })
+                (await _subscriptionRepository.GetListQuery()).Select(p => new CusaCodeRequest
+                {
+                    сusaCodeUa = p.CusaCodeUa,
+                    сusaCodeTr = p.CusaCodeTr,
+                })
             );
             cusaCode.AddRange(
                 (await _addOnRepository.GetListQuery()).Select(p => new CusaCodeRequest
@@ -486,7 +483,7 @@ namespace Services.ParseService
                 })
             );
 
-            const int BatchSize = 1;
+            const int BatchSize = 100;
             var allCodes = cusaCode;
             int updated = 0;
 
