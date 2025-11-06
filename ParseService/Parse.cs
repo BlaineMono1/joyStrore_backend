@@ -449,7 +449,6 @@ namespace Services.ParseService
 
         public class ResponceDto
         {
-            public string ConceptId { get; set; }
             public string CusaCodeUA { get; set; }
             public string CusaCodeTR { get; set; }
             public string Name { get; set; }
@@ -461,6 +460,8 @@ namespace Services.ParseService
         public async Task UpdateProductsPrice()
         {
             var cusaCode = (await _editionRepository.GetListQuery())
+                .Include(e => e.Product)
+                .OrderBy(e => e.Product.DateUpdate)
                 .Select(p => new CusaCodeRequest
                 {
                     сusaCodeUa = p.CusaCodeUa,
@@ -468,11 +469,14 @@ namespace Services.ParseService
                 })
                 .ToList();
             cusaCode.AddRange(
-                (await _subscriptionRepository.GetListQuery()).Select(p => new CusaCodeRequest
-                {
-                    сusaCodeUa = p.CusaCodeUa,
-                    сusaCodeTr = p.CusaCodeTr,
-                })
+                (await _subscriptionRepository.GetListQuery())
+                    .Include(e => e.Product)
+                    .OrderBy(e => e.Product.DateUpdate)
+                    .Select(p => new CusaCodeRequest
+                    {
+                        сusaCodeUa = p.CusaCodeUa,
+                        сusaCodeTr = p.CusaCodeTr,
+                    })
             );
             cusaCode.AddRange(
                 (await _addOnRepository.GetListQuery()).Select(p => new CusaCodeRequest
@@ -482,7 +486,7 @@ namespace Services.ParseService
                 })
             );
 
-            const int BatchSize = 100;
+            const int BatchSize = 1;
             var allCodes = cusaCode;
             int updated = 0;
 
@@ -492,7 +496,7 @@ namespace Services.ParseService
                     .GroupBy(x => x.i / BatchSize, x => x.code)
             )
             {
-                _logger.LogInformation("Обновление - {item}", batch.First().сusaCodeUa);
+                // _logger.LogInformation("Обновление - {item}", batch.First().сusaCodeUa);
                 var data = new List<ResponceDto>();
 
                 var content = new StringContent(
