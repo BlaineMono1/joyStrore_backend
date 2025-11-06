@@ -459,68 +459,70 @@ namespace Services.ParseService
 
         public async Task UpdateProductsPrice()
         {
-            var cusaCode = (await _editionRepository.GetListQuery())
-                .Select(p => new CusaCodeRequest
-                {
-                    сusaCodeUa = p.CusaCodeUa,
-                    сusaCodeTr = p.CusaCodeTr,
-                })
-                .ToList();
-            cusaCode.AddRange(
-                (await _subscriptionRepository.GetListQuery()).Select(p => new CusaCodeRequest
-                {
-                    сusaCodeUa = p.CusaCodeUa,
-                    сusaCodeTr = p.CusaCodeTr,
-                })
-            );
-            cusaCode.AddRange(
-                (await _addOnRepository.GetListQuery()).Select(p => new CusaCodeRequest
-                {
-                    сusaCodeUa = p.CusaCodeUa,
-                    сusaCodeTr = p.CusaCodeTr,
-                })
-            );
-
-            const int BatchSize = 100;
-            var allCodes = cusaCode;
-            int updated = 0;
-
-            foreach (
-                var batch in allCodes
-                    .Select((code, i) => new { code, i })
-                    .GroupBy(x => x.i / BatchSize, x => x.code)
-            )
+            try
             {
-                // _logger.LogInformation("Обновление - {item}", batch.First().сusaCodeUa);
+                var cusaCode = (await _editionRepository.GetListQuery())
+                    .Select(p => new CusaCodeRequest
+                    {
+                        сusaCodeUa = p.CusaCodeUa,
+                        сusaCodeTr = p.CusaCodeTr,
+                    })
+                    .ToList();
+                cusaCode.AddRange(
+                    (await _subscriptionRepository.GetListQuery()).Select(p => new CusaCodeRequest
+                    {
+                        сusaCodeUa = p.CusaCodeUa,
+                        сusaCodeTr = p.CusaCodeTr,
+                    })
+                );
+                // cusaCode.AddRange(
+                //     (await _addOnRepository.GetListQuery()).Select(p => new CusaCodeRequest
+                //     {
+                //         сusaCodeUa = p.CusaCodeUa,
+                //         сusaCodeTr = p.CusaCodeTr,
+                //     })
+                // );
+
+                const int BatchSize = 100;
+                var allCodes = cusaCode;
+                int updated = 0;
                 var data = new List<ResponceDto>();
 
-                var content = new StringContent(
-                    JsonSerializer.Serialize(batch.ToList()),
-                    Encoding.UTF8,
-                    "application/json"
-                );
-                var resp = await _httpClient.PostAsync("current-price", content);
-                if (!resp.IsSuccessStatusCode)
+                foreach (
+                    var batch in allCodes
+                        .Select((code, i) => new { code, i })
+                        .GroupBy(x => x.i / BatchSize, x => x.code)
+                )
                 {
-                    var errorContent = await resp.Content.ReadAsStringAsync();
-                    _logger.LogError($"Сервер вернул {resp.StatusCode}: {errorContent}");
+                    // _logger.LogInformation("Обновление - {item}", batch.First().сusaCodeUa);
 
-                    // Для отладки — можно бросить исключение с деталями
-                    throw new HttpRequestException($"Bad Request: {errorContent}");
+                    var content = new StringContent(
+                        JsonSerializer.Serialize(batch.ToList()),
+                        Encoding.UTF8,
+                        "application/json"
+                    );
+                    var resp = await _httpClient.PostAsync("current-price", content);
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        var errorContent = await resp.Content.ReadAsStringAsync();
+                        _logger.LogError($"Сервер вернул {resp.StatusCode}: {errorContent}");
+
+                        // Для отладки — можно бросить исключение с деталями
+                        throw new HttpRequestException($"Bad Request: {errorContent}");
+                    }
+                    var part =
+                        await resp.Content.ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions)
+                        ?? new List<ResponceDto>();
+                    updated += part.Count;
+                    _logger.LogInformation($"Updated {updated} of {cusaCode.Count}");
+                    if (part == null)
+                    {
+                        _logger.LogError("Сервер вернул пустой ответ.");
+                        continue;
+                    }
+
+                    data.AddRange(part);
                 }
-                var part =
-                    await resp.Content.ReadFromJsonAsync<List<ResponceDto>>(_jsonOptions)
-                    ?? new List<ResponceDto>();
-                updated += part.Count;
-                _logger.LogInformation($"Updated {updated} of {cusaCode.Count}");
-                if (part == null)
-                {
-                    _logger.LogError("Сервер вернул пустой ответ.");
-                    continue;
-                }
-
-                data.AddRange(part);
-
                 foreach (var item in data)
                 {
                     var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(
@@ -529,9 +531,9 @@ namespace Services.ParseService
                     var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub =>
                         sub.CusaCodeUa == item.CusaCodeUA
                     );
-                    var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(sub =>
-                        sub.CusaCodeUa == item.CusaCodeUA
-                    );
+                    // var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(
+                    //     sub => sub.CusaCodeUa == item.CusaCodeUA
+                    // );
 
                     if (currentsub != null)
                     {
@@ -547,18 +549,22 @@ namespace Services.ParseService
                         currented.Subscription = item.Subscription;
                         await _editionRepository.Update(currented);
                     }
-                    else if (currentadd != null)
-                    {
-                        await UpdateProduct(item.ProductDto, currentadd.ProductId);
+                    // else if (currentadd != null)
+                    // {
+                    //     await UpdateProduct(item.ProductDto, currentadd.ProductId);
 
-                        currentadd.Name = item.Name;
-                        await _addOnRepository.Update(currentadd);
-                    }
+                    //     currentadd.Name = item.Name;
+                    //     await _addOnRepository.Update(currentadd);
+                    // }
                     else
                     {
                         _logger.LogError($"No product with CUSACODE UA {item.CusaCodeUA}");
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
             }
         }
 
