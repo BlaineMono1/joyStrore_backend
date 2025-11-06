@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc.DataAnnotations;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using ParseService.Dto;
@@ -23,7 +24,7 @@ namespace Services.ParseService
     public class Parse
     {
         private readonly ILogger<Parse> _logger;
-
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly IRepository<Game> _gameRepository;
         private readonly IRepository<Edition> _editionRepository;
         private readonly IRepository<GenersToEdition> _edRepository;
@@ -58,7 +59,8 @@ namespace Services.ParseService
             IRepository<Section> sectionRepository,
             IRepository<Subscription> subscriptionRepository,
             IRepository<AddOn> addOnRepository,
-            IRepository<GenersToEdition> edRopository
+            IRepository<GenersToEdition> edRopository,
+            IServiceScopeFactory scopeFactory
         )
         {
             _logger = logger;
@@ -76,7 +78,7 @@ namespace Services.ParseService
             _subscriptionRepository = subscriptionRepository;
             _addOnRepository = addOnRepository;
             _edRepository = edRopository;
-
+            _scopeFactory = scopeFactory;
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri("http://static.41.188.179.185.ip.webhost1.net:8080/"),
@@ -486,7 +488,6 @@ namespace Services.ParseService
                 const int BatchSize = 100;
                 var allCodes = cusaCode;
                 int updated = 0;
-                var data = new List<ResponceDto>();
 
                 foreach (
                     var batch in allCodes
@@ -494,7 +495,13 @@ namespace Services.ParseService
                         .GroupBy(x => x.i / BatchSize, x => x.code)
                 )
                 {
+                    var data = new List<ResponceDto>();
+
                     // _logger.LogInformation("Обновление - {item}", batch.First().сusaCodeUa);
+                    using var scope = _scopeFactory.CreateScope();
+                    var scopedProductRepo = scope.ServiceProvider.GetRequiredService<
+                        IProductRepository<Product>
+                    >();
 
                     var content = new StringContent(
                         JsonSerializer.Serialize(batch.ToList()),
@@ -522,43 +529,47 @@ namespace Services.ParseService
                     }
 
                     data.AddRange(part);
-                }
-                foreach (var item in data)
-                {
-                    var currentsub = (await _subscriptionRepository.GetListQuery()).FirstOrDefault(
-                        sub => sub.CusaCodeUa == item.CusaCodeUA
-                    );
-                    var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(sub =>
-                        sub.CusaCodeUa == item.CusaCodeUA
-                    );
-                    // var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(
-                    //     sub => sub.CusaCodeUa == item.CusaCodeUA
-                    // );
-
-                    if (currentsub != null)
+                    foreach (var item in data)
                     {
-                        await UpdateProduct(item.ProductDto, currentsub.ProductId);
+                        var currentsub = (
+                            await _subscriptionRepository.GetListQuery()
+                        ).FirstOrDefault(sub => sub.CusaCodeUa == item.CusaCodeUA);
+                        var currented = (await _editionRepository.GetListQuery()).FirstOrDefault(
+                            sub => sub.CusaCodeUa == item.CusaCodeUA
+                        );
+                        // var currentadd = (await _addOnRepository.GetListQuery()).FirstOrDefault(
+                        //     sub => sub.CusaCodeUa == item.CusaCodeUA
+                        // );
 
-                        await _subscriptionRepository.Update(currentsub);
-                    }
-                    else if (currented != null)
-                    {
-                        await UpdateProduct(item.ProductDto, currented.ProductId);
+                        if (currentsub != null)
+                        {
+                            await UpdateProduct(
+                                item.ProductDto,
+                                currentsub.ProductId,
+                                scopedProductRepo
+                            );
 
-                        currented.Name = item.Name;
-                        currented.Subscription = item.Subscription;
-                        await _editionRepository.Update(currented);
-                    }
-                    // else if (currentadd != null)
-                    // {
-                    //     await UpdateProduct(item.ProductDto, currentadd.ProductId);
+                            await _subscriptionRepository.Update(currentsub);
+                        }
+                        else if (currented != null)
+                        {
+                            await UpdateProduct(item.ProductDto, currented.ProductId,scopedProductRepo);
 
-                    //     currentadd.Name = item.Name;
-                    //     await _addOnRepository.Update(currentadd);
-                    // }
-                    else
-                    {
-                        _logger.LogError($"No product with CUSACODE UA {item.CusaCodeUA}");
+                            currented.Name = item.Name;
+                            currented.Subscription = item.Subscription;
+                            await _editionRepository.Update(currented);
+                        }
+                        // else if (currentadd != null)
+                        // {
+                        //     await UpdateProduct(item.ProductDto, currentadd.ProductId);
+
+                        //     currentadd.Name = item.Name;
+                        //     await _addOnRepository.Update(currentadd);
+                        // }
+                        else
+                        {
+                            _logger.LogError($"No product with CUSACODE UA {item.CusaCodeUA}");
+                        }
                     }
                 }
             }
@@ -568,9 +579,13 @@ namespace Services.ParseService
             }
         }
 
-        private async Task UpdateProduct(ProductDto ProductInfo, Guid ProductId)
+        private async Task UpdateProduct(
+            ProductDto ProductInfo,
+            Guid ProductId,
+            IProductRepository<Product> productRepo
+        )
         {
-            var product = await _productRepository.GetById(ProductId);
+            var product = await productRepo.GetById(ProductId);
             product.DateUpdate = DateTime.UtcNow;
             product.PriceUa = ProductInfo.PriceUa;
             product.PriceTr = ProductInfo.PriceTr;
