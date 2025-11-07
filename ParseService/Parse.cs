@@ -321,7 +321,17 @@ namespace Services.ParseService
                                         DiscountDateTr = edition.Product.DiscountDate ?? null,
                                         DiscountDateUa = edition.Product.DiscountDate ?? null,
                                     };
-
+                                    DateTime releaseDate = DateTime.MinValue;
+                                    if (!string.IsNullOrEmpty(edition.Release))
+                                    {
+                                        DateTime.TryParseExact(
+                                            edition.Release,
+                                            "d.M.yyyy",
+                                            CultureInfo.InvariantCulture,
+                                            DateTimeStyles.None,
+                                            out releaseDate
+                                        );
+                                    }
                                     var editionDto = new Edition
                                     {
                                         CusaCodeUa = edition.CusaCodeUA,
@@ -335,11 +345,7 @@ namespace Services.ParseService
                                         Subscription = edition.Subscription,
                                         Region = edition.CodeRegion,
                                         Release = DateTime.SpecifyKind(
-                                            DateTime.ParseExact(
-                                                edition.Release ?? null,
-                                                "d.M.yyyy",
-                                                CultureInfo.InvariantCulture
-                                            ),
+                                            releaseDate,
                                             DateTimeKind.Utc
                                         ),
                                         Game = gameDto,
@@ -369,13 +375,12 @@ namespace Services.ParseService
                                             );
                                         }
                                     }
-
-                                    await _editionRepository.Add(editionDto);
-
                                     productDto.TypeId = editionDto.Guid;
+
 
                                     gameDto.Editions ??= new List<Edition>();
                                     gameDto.Editions.Add(editionDto);
+                                    await _editionRepository.Add(editionDto);
                                 }
                             }
                             else
@@ -553,7 +558,11 @@ namespace Services.ParseService
                         }
                         else if (currented != null)
                         {
-                            await UpdateProduct(item.ProductDto, currented.ProductId,scopedProductRepo);
+                            await UpdateProduct(
+                                item.ProductDto,
+                                currented.ProductId,
+                                scopedProductRepo
+                            );
 
                             currented.Name = item.Name;
                             currented.Subscription = item.Subscription;
@@ -855,7 +864,17 @@ namespace Services.ParseService
                                     DiscountDateTr = edition.Product.DiscountDate ?? null,
                                     DiscountDateUa = edition.Product.DiscountDate ?? null,
                                 };
-
+                                DateTime releaseDate = DateTime.MinValue;
+                                if (!string.IsNullOrEmpty(edition.Release))
+                                {
+                                    DateTime.TryParseExact(
+                                        edition.Release,
+                                        "d.M.yyyy",
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.None,
+                                        out releaseDate
+                                    );
+                                }
                                 var editionDto = new Edition
                                 {
                                     CusaCodeUa = edition.CusaCodeUA,
@@ -868,14 +887,7 @@ namespace Services.ParseService
                                     Platform = edition.Platform,
                                     Subscription = edition.Subscription,
                                     Region = edition.CodeRegion,
-                                    Release = DateTime.SpecifyKind(
-                                        DateTime.ParseExact(
-                                            edition.Release ?? null,
-                                            "d.M.yyyy",
-                                            CultureInfo.InvariantCulture
-                                        ),
-                                        DateTimeKind.Utc
-                                    ),
+                                    Release = DateTime.SpecifyKind(releaseDate, DateTimeKind.Utc),
                                     Game = gameDto,
                                     GameId = gameDto.Guid,
                                     Product = productDto,
@@ -903,13 +915,11 @@ namespace Services.ParseService
                                         );
                                     }
                                 }
-
-                                await _editionRepository.Add(editionDto);
-
                                 productDto.TypeId = editionDto.Guid;
 
                                 gameDto.Editions ??= new List<Edition>();
                                 gameDto.Editions.Add(editionDto);
+                                await _editionRepository.Add(editionDto);
                             }
                         }
                         else
