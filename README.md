@@ -34,7 +34,7 @@ Client (Telegram Mini App)
 ```
 ## Tech Stack
 
-- **Language / Platform:** C#, .NET 6
+- **Language / Platform:** C#, .NET 9
 - **Database:** PostgreSQL
 - **Caching:** Redis
 - **Containerization:** Docker, Docker Compose
